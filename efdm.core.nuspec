@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
+    <metadata>
+		<id>EFDM.Core</id>
+		<version>0.1.0</version>
+        <authors>Pavel Kambalin</authors>
+        <owners>kambalin</owners>
+		<requireLicenseAcceptance>false</requireLicenseAcceptance>
+        <projectUrl>https://github.com/contoso/UsefulStuff</projectUrl>
+        <license type="expression">MIT</license>       
+        <releaseNotes>Initial release</releaseNotes>
+        <description>Entity framework data manager</description>
+        <tags>entityframeworkcore</tags>		
+         
+        <dependencies>
+			<group targetFramework="net5.0" />
+            <!--<dependency id="Microsoft.EntityFrameworkCore" version="5.0.13" />
+			<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="5.0.27" />
+			-->
+        </dependencies>
+		
+    </metadata>
+	<files>
+		<file src=".\EFDM.Core\bin\Release\net5.0\EFDM.Core.dll" target="lib\net5.0\EFDM.Core.dll" />
+		<file src=".\EFDM.Abstractions\bin\Release\net5.0\EFDM.Abstractions.dll" target="lib\net5.0\EFDM.Abstractions.dll" />
+	</files>
+</package>
