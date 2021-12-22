@@ -21,3 +21,7 @@ jobs:
       run: dotnet restore
     - name: Build
       run: dotnet build --no-restore
+    - name: Create package
+      run: dotnet pack "EFDM.Core/EFDM.Core.csproj" -p:NuspecFile="EFDM.Core.nuspec" --no-build --output nupkgs
+    - name: Push to nuget.org
+      run: dotnet nuget push "nupkgs/*.nupkg" --source https://api.nuget.org/v3/index.json --api-key ${{secrets.NUGET_ORG_KEY}} --skip-duplicate
