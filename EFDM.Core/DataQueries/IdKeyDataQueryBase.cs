@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace EFDM.Core.DataQueries {
 
-    public abstract class IdKeyDataQueryBase<TModel, TKey> : DataQueryBase<TModel>, IDataQuery<TModel, TKey>
+    public class IdKeyDataQueryBase<TModel, TKey> : DataQueryBase<TModel>, IDataQuery<TModel, TKey>
         where TModel : class, IIdKeyEntity<TKey>
         where TKey : IComparable, IEquatable<TKey> {
 

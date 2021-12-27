@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\EFDM.Abstractions\EFDM.Abstractions.csproj" />
+    <ProjectReference Include="..\EFDM.Core\EFDM.Core.csproj" />
+    <ProjectReference Include="..\Test\EFDM.Test.Core\EFDM.Test.Core.csproj" />
+  </ItemGroup>
+
+</Project>

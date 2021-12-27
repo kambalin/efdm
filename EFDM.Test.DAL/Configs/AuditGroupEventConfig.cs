@@ -2,13 +2,8 @@
 using EFDM.Test.Core.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace EFDM.Test.Core.DAL.Configs {
+namespace EFDM.Test.DAL.Configs {
 
     public class AuditGroupEventConfig : IEntityTypeConfiguration<AuditGroupEvent> {
 

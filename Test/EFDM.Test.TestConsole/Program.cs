@@ -1,6 +1,6 @@
 ﻿using EFDM.Core.DataQueries;
 using EFDM.Test.Core.Constants.ModelValues;
-using EFDM.Test.Core.DAL.Providers;
+using EFDM.Test.DAL.Providers;
 using EFDM.Test.Core.DataQueries.Models;
 using EFDM.Test.Core.Models.Domain;
 using EFDM.Test.Core.Services.Domain.Interfaces;

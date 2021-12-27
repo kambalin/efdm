@@ -1,26 +1,18 @@
 ﻿using EFDM.Abstractions.Audit;
-using EFDM.Abstractions.Models.Domain;
-using EFDM.Core.Audit;
 using EFDM.Core.Constants;
 using EFDM.Core.DAL.Providers;
 using EFDM.Core.Extensions;
 using EFDM.Test.Core.Constants.ModelValues;
-using EFDM.Test.Core.DAL.Configs;
 using EFDM.Test.Core.Models.Audit;
 using EFDM.Test.Core.Models.Domain;
-using EFDM.Test.Core.Models.Domain.Base;
 using EFDM.Test.Core.Models.Domain.Interfaces;
+using EFDM.Test.DAL.Configs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace EFDM.Test.Core.DAL.Providers {
+namespace EFDM.Test.DAL.Providers {
 
     public class TestDatabaseContext : EFDMDatabaseContext {
 

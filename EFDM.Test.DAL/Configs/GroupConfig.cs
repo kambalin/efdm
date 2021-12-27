@@ -1,13 +1,8 @@
 ﻿using EFDM.Test.Core.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace EFDM.Test.Core.DAL.Configs {
+namespace EFDM.Test.DAL.Configs {
 
     public class GroupConfig : IEntityTypeConfiguration<Group> {
 
@@ -19,13 +14,6 @@ namespace EFDM.Test.Core.DAL.Configs {
             builder.HasOne(x => x.Type)
                 .WithMany(y => y.Groups)
                 .HasForeignKey(x => x.TypeId);
-
-            //builder.HasOne(x => x.CreatedBy)
-            //    .WithMany()
-            //    .HasForeignKey(x => x.CreatedById);
-            //builder.HasOne(x => x.ModifiedBy)
-            //    .WithMany()
-            //    .HasForeignKey(x => x.ModifiedById);
         }
     }
 }
