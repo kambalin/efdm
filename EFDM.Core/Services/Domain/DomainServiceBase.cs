@@ -73,8 +73,8 @@ namespace EFDM.Core.Services.Domain {
             return result;
         }
 
-        public virtual void Add(TModel model) {
-            Repository.Add(model);
+        public virtual void Add(params TModel[] models) {
+            Repository.Add(models);
         }
 
         public virtual TModel Save(TModel model) {

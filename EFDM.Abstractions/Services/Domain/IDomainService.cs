@@ -21,7 +21,7 @@ namespace EFDM.Abstractions.Services.Domain {
         IEnumerable<TModel> FetchLite(TQuery query, Expression<Func<TModel, TModel>> select, bool tracking = false);
         IEnumerable<TModel> FetchLite(TQuery query, bool tracking = false);
         int Count(TQuery query = null);
-        void Add(TModel model);
+        void Add(params TModel[] models);
         TModel Save(TModel model);
         void Delete(TKey id, bool forceDeleteEvenDeletable = false);
         void Delete(IEnumerable<TModel> entities, bool forceDeleteEvenDeletable = false);
