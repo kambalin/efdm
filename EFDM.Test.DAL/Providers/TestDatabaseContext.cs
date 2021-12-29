@@ -49,10 +49,11 @@ namespace EFDM.Test.DAL.Providers {
         #region context config
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+            //optionsBuilder.EnableSensitiveDataLogging(true);
             base.OnConfiguring(optionsBuilder);
             
-            if (!string.IsNullOrEmpty(ConnectionString))
-                optionsBuilder.UseSqlServer(ConnectionString);
+            //if (!string.IsNullOrEmpty(ConnectionString))
+            //    optionsBuilder.UseSqlServer(ConnectionString);
         }
 
         protected override void OnModelCreating(ModelBuilder builder) {

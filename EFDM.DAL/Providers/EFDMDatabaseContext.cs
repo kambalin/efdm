@@ -7,10 +7,7 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFDM.Core.DAL.Providers {
 
@@ -112,7 +109,6 @@ namespace EFDM.Core.DAL.Providers {
         #region context config
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
-            optionsBuilder.EnableSensitiveDataLogging(true);
             if (_loggerFactory != null)
                 optionsBuilder.UseLoggerFactory(_loggerFactory);
         }
