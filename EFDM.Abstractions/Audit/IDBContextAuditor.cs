@@ -9,7 +9,7 @@ namespace EFDM.Abstractions.Audit {
 
     public interface IDBContextAuditor {
 
-        bool Disabled { get; set; }
+        bool Enabled { get; set; }
         HashSet<string> GlobalIgnoredProperties { get; }
         HashSet<Type> IncludedTypes { get; }
 

@@ -173,7 +173,7 @@ namespace EFDM.Core.Services.Domain {
         }
 
         public virtual bool IsCreator(TModel model, int userId) {
-            IAuditableEntity auditable = model as IAuditableEntity;
+            var auditable = model as IAuditablePrincipalEntity;
             if (model != null)
                 return auditable.CreatedById == userId;
             return false;

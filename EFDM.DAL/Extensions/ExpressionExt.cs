@@ -1,12 +1,9 @@
 ﻿using EFDM.Abstractions.DataQueries;
-using EFDM.Core.DataQueries;
 using LinqKit;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFDM.Core.Extensions {
 

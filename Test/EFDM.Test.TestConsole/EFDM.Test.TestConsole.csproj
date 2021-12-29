@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\EFDM.Abstractions\EFDM.Abstractions.csproj" />
     <ProjectReference Include="..\..\EFDM.Core\EFDM.Core.csproj" />
+    <ProjectReference Include="..\..\EFDM.DAL\EFDM.DAL.csproj" />
     <ProjectReference Include="..\..\EFDM.Test.DAL\EFDM.Test.DAL.csproj" />    
     <ProjectReference Include="..\EFDM.Test.Core\EFDM.Test.Core.csproj" />
     <ProjectReference Include="..\EFDM.Test.IOC\EFDM.Test.IOC.csproj" />

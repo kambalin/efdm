@@ -21,7 +21,7 @@ namespace EFDM.Core.Audit {
 
         #region fields & properties
 
-        public bool Disabled { get; set; }
+        public bool Enabled { get; set; }
         public HashSet<string> GlobalIgnoredProperties { get; } = new HashSet<string>();
         public HashSet<Type> IncludedTypes { get; } = new HashSet<Type>();
         protected Dictionary<Type, IMappingInfo> Mappings { get; }  = new Dictionary<Type, IMappingInfo>();
@@ -39,7 +39,7 @@ namespace EFDM.Core.Audit {
             Context = context ?? throw new ArgumentNullException(nameof(context));
 
             if (auditSettings != null) {
-                Disabled = auditSettings.AuditDisabled;
+                Enabled = auditSettings.Enabled;
                 foreach (var glIgProp in auditSettings.GlobalIgnoredProperties) {
                     GlobalIgnoredProperties.Add(glIgProp);
                 }
@@ -55,7 +55,7 @@ namespace EFDM.Core.Audit {
         #region IDBContextAuditor implementation
 
         public int SaveChanges(Func<int> baseSaveChanges) {
-            if (Disabled)
+            if (!Enabled)
                 return baseSaveChanges();
             var auditEvent = CreateAuditEvent();
             if (auditEvent == null)

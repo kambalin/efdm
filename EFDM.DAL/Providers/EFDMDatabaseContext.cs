@@ -56,25 +56,34 @@ namespace EFDM.Core.DAL.Providers {
             if (this.CommitTime.HasValue)
                 modified = this.CommitTime.Value;
 
-            foreach (var auditableEntity in ChangeTracker.Entries<IAuditableEntity>()) {
-                if (auditableEntity.State == EntityState.Added || auditableEntity.State == EntityState.Modified) {
-                    if (!auditableEntity.Entity.PreserveLastModifiedInfo) {
-                        auditableEntity.Entity.Modified = modified;
-                        auditableEntity.Entity.ModifiedById = this.ExecutorId;
+            foreach (var entry in ChangeTracker.Entries<IAuditableEntity>()) {
+                if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {                    
+                    var auditDateEntity = entry.Entity as IAuditableDateEntity;
+                    var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
+                    if (!entry.Entity.PreserveLastModifiedInfo) {
+                        if (auditDateEntity != null)
+                            auditDateEntity.Modified = modified;
+                        if (auditPrincipalEntity != null)
+                            auditPrincipalEntity.ModifiedById = ExecutorId;
                     }
-                    switch (auditableEntity.State) {
+                    switch (entry.State) {
                         case EntityState.Added:
-                            auditableEntity.Entity.Created = modified;
-                            if (auditableEntity.Entity.CreatedById < 1) { // if the creator was not forcibly set (for example, when it has to be system user)
-                                auditableEntity.Entity.CreatedById = this.ExecutorId;
-                            }
-                            else { // if the creator was forcibly set, then "hide" who modified
-                                auditableEntity.Entity.ModifiedById = auditableEntity.Entity.CreatedById;
+                            if (auditDateEntity != null)
+                                auditDateEntity.Created = modified;
+                            if (auditPrincipalEntity != null) {
+                                if (auditPrincipalEntity.CreatedById < 1) { // if the creator was not forcibly set (for example, when it has to be system user)
+                                    auditPrincipalEntity.CreatedById = this.ExecutorId;
+                                }
+                                else { // if the creator was forcibly set, then "hide" who modified
+                                    auditPrincipalEntity.ModifiedById = auditPrincipalEntity.CreatedById;
+                                }
                             }
                             break;
                         case EntityState.Modified:
-                            auditableEntity.Property(x => x.Created).IsModified = false;
-                            auditableEntity.Property(x => x.CreatedById).IsModified = false;
+                            if (auditDateEntity != null)                                
+                                entry.Property($"{nameof(auditDateEntity.Created)}").IsModified = false;
+                            if (auditPrincipalEntity != null)
+                                entry.Property($"{nameof(auditPrincipalEntity.CreatedById)}").IsModified = false;
                             break;
                         case EntityState.Deleted:
                             break;
@@ -90,12 +99,12 @@ namespace EFDM.Core.DAL.Providers {
         }
 
         protected virtual void SetDefaultGlobalIgnoredProperties() {
-            Auditor.ExcludeProperty<IAuditableEntity>(x => x.Created);
-            Auditor.ExcludeProperty<IAuditableEntity>(x => x.CreatedBy);
-            Auditor.ExcludeProperty<IAuditableEntity>(x => x.CreatedById);
-            Auditor.ExcludeProperty<IAuditableEntity>(x => x.Modified);
-            Auditor.ExcludeProperty<IAuditableEntity>(x => x.ModifiedBy);
-            Auditor.ExcludeProperty<IAuditableEntity>(x => x.ModifiedById);
+            Auditor.ExcludeProperty<IAuditableDateEntity>(x => x.Created);
+            Auditor.ExcludeProperty<IAuditablePrincipalEntity>(x => x.CreatedBy);
+            Auditor.ExcludeProperty<IAuditablePrincipalEntity>(x => x.CreatedById);
+            Auditor.ExcludeProperty<IAuditableDateEntity>(x => x.Modified);
+            Auditor.ExcludeProperty<IAuditablePrincipalEntity>(x => x.ModifiedBy);
+            Auditor.ExcludeProperty<IAuditablePrincipalEntity>(x => x.ModifiedById);
         }
 
         #endregion audit config

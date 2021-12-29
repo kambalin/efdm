@@ -1,10 +1,6 @@
 ﻿using EFDM.Abstractions.Models.Domain;
 using EFDM.Test.Core.Models.Domain.Interfaces;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFDM.Test.Core.Models.Domain.Base {
 

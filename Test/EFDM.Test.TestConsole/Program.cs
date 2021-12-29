@@ -28,7 +28,7 @@ namespace EFDM.Test.TestConsole {
 
             using (var serviceProvider = RegisterServices(config)) {
                 using (var scope = serviceProvider.CreateScope()) {
-                    //AddGroupWithSvc(scope);
+                    AddGroupWithSvc(scope);
                     //AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
@@ -37,20 +37,20 @@ namespace EFDM.Test.TestConsole {
                     //AddNTimesGroupsWithSvc(scope);
                     //ChangeNGroupsWithSvc(scope);
 
-                    ChangeDisabledDBContextAuditor(scope, true);
-                    ChangeNGroupsWithSvc(scope);
-                    ChangeDisabledDBContextAuditor(scope, false);
-                    ChangeNGroupsWithSvc(scope);
+                    //ChangeEnabledDBContextAuditor(scope, false);
+                    //ChangeNGroupsWithSvc(scope);
+                    //ChangeEnabledDBContextAuditor(scope, true);
+                    //ChangeNGroupsWithSvc(scope);
                 }
             }
             Console.WriteLine("press any key...");
             Console.ReadKey();
         }
 
-        static void ChangeDisabledDBContextAuditor(IServiceScope scope, bool disabled) {
+        static void ChangeEnabledDBContextAuditor(IServiceScope scope, bool enabled) {
             var dbContext = scope.ServiceProvider.GetRequiredService<TestDatabaseContext>();
-            dbContext.Auditor.Disabled = disabled;
-            Console.WriteLine($"DBContextAuditor disabled: {disabled}");
+            dbContext.Auditor.Enabled = enabled;
+            Console.WriteLine($"DBContextAuditor enabled: {enabled}");
         }
 
         static void ChangeNGroupsWithSvc(IServiceScope scope) {
