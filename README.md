@@ -1,6 +1,17 @@
 # EFDM
 Entity framework data manager
 
+## [NuGet](https://www.nuget.org/packages/EFDM.Core/)
+
+[![NuGet Status](https://img.shields.io/nuget/v/EFDM.Core.svg?style=flat)](https://www.nuget.org/packages/EFDM.Core/)
+[![NuGet Count](https://img.shields.io/nuget/dt/EFDM.Core.svg)](https://www.nuget.org/packages/EFDM.Core/)
+
+To install the package run the following command on the Package Manager Console:
+
+```
+PM> Install-Package EFDM.Core
+```
+
 ## Usage
 You can find working example in `EFDM.Test.*` projects in `Test` folder
 
