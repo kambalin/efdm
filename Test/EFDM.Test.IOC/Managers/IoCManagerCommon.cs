@@ -23,6 +23,7 @@ namespace EFDM.Test.IOC.Managers {
             #region db & repos
 
             var auditSettings = new AuditSettings() {
+                Enabled = true,
                 IncludedTypes = new HashSet<Type>() { 
                     typeof(Group), typeof(GroupUser) 
                 },

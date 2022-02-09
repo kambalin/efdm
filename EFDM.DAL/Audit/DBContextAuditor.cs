@@ -24,7 +24,7 @@ namespace EFDM.Core.Audit {
         public bool Enabled { get; set; }
         public HashSet<string> GlobalIgnoredProperties { get; } = new HashSet<string>();
         public HashSet<Type> IncludedTypes { get; } = new HashSet<Type>();
-        protected Dictionary<Type, IMappingInfo> Mappings { get; }  = new Dictionary<Type, IMappingInfo>();
+        protected Dictionary<Type, IMappingInfo> Mappings { get; } = new Dictionary<Type, IMappingInfo>();
         protected Dictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new Dictionary<Type, List<int>>();
         protected Func<IAuditEvent, IEventEntry, object, Task<bool>> EventCommonAction { get; set; }
 
@@ -80,7 +80,7 @@ namespace EFDM.Core.Audit {
         }
 
         public Func<IAuditEvent, IEventEntry, object, Task<bool>> GetMapperEventAction(Type type) {
-            return async (auditEvent, entry, auditObj) => {                
+            return async (auditEvent, entry, auditObj) => {
                 Mappings.TryGetValue(type, out IMappingInfo map);
                 await map?.EventAction?.Invoke(auditEvent, entry, auditObj);
                 if (EventCommonAction != null)
@@ -201,7 +201,7 @@ namespace EFDM.Core.Audit {
             return result;
         }
 
-        protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry, 
+        protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry,
             List<INavigation> navigations, IProperty prop) {
 
             var eec = new EventEntryChange() {
@@ -241,9 +241,9 @@ namespace EFDM.Core.Audit {
             if (entityType == null)
                 return true;
             var ignoredProperties = EnsurePropertiesIgnoreAttrCache(entityType);
-            if (ignoredProperties != null && ignoredProperties.Contains(propName))                
+            if (ignoredProperties != null && ignoredProperties.Contains(propName))
                 return false;
-            if (GlobalIgnoredProperties != null 
+            if (GlobalIgnoredProperties != null
                 && GlobalIgnoredProperties.Contains(propName)) {
                 return false;
             }
@@ -266,9 +266,9 @@ namespace EFDM.Core.Audit {
             return result;
         }
 
-        protected IEntityType GetDefiningType(EntityEntry entry) {
-            IEntityType definingType = entry.Metadata.FindOwnership()?.DeclaringEntityType ?? 
-                entry.Metadata.DefiningEntityType ??
+        protected IReadOnlyEntityType GetDefiningType(EntityEntry entry) {
+            IReadOnlyEntityType definingType =
+                entry.Metadata.FindOwnership()?.DeclaringEntityType ??
                 Context.DbContext.Model.FindEntityType(entry.Metadata.Name);
             return definingType;
         }

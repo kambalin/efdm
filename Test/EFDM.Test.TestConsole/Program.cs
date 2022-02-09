@@ -28,14 +28,14 @@ namespace EFDM.Test.TestConsole {
 
             using (var serviceProvider = RegisterServices(config)) {
                 using (var scope = serviceProvider.CreateScope()) {
-                    AddGroupWithSvc(scope);
+                    //AddGroupWithSvc(scope);
                     //AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
                     //ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
                     //AddNTimesGroupsWithSvc(scope);
-                    //ChangeNGroupsWithSvc(scope);
+                    ChangeNGroupsWithSvc(scope);
 
                     //ChangeEnabledDBContextAuditor(scope, false);
                     //ChangeNGroupsWithSvc(scope);
@@ -54,7 +54,7 @@ namespace EFDM.Test.TestConsole {
         }
 
         static void ChangeNGroupsWithSvc(IServiceScope scope) {
-            var take = 100;
+            var take = 3;
             var sw = new Stopwatch();
             sw.Start();
 
