@@ -1,6 +1,5 @@
 ﻿using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Abstractions.DataQueries;
-using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
 using EFDM.Core.DAL.Providers;
 using EFDM.Core.Extensions;
@@ -15,8 +14,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFDM.Core.DAL.Repositories {
 
@@ -26,8 +23,8 @@ namespace EFDM.Core.DAL.Repositories {
 
         #region fields & properties
 
-        public EFDMDatabaseContext Context { get; }
-        public DbSet<TEntity> DbSet { get; }
+        public virtual EFDMDatabaseContext Context { get; }
+        public DbSet<TEntity> DbSet { get; protected set; }
         public bool AutoDetectChanges { get; set; } = true;
 
         #endregion fields & properties
@@ -36,10 +33,15 @@ namespace EFDM.Core.DAL.Repositories {
 
         public Repository(EFDMDatabaseContext dbContext) {
             Context = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
-            DbSet = Context.Set<TEntity>();
+            InitDbSet();
         }
 
         #endregion constructors
+
+        protected virtual void InitDbSet() {
+            if (Context != null)
+                DbSet = Context.Set<TEntity>();
+        }
 
         #region IRepository implementation
 

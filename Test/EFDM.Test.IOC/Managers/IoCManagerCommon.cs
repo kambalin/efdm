@@ -9,6 +9,7 @@ using EFDM.Test.Core.Models.Domain;
 using EFDM.Test.Core.Services.Domain;
 using EFDM.Test.Core.Services.Domain.Interfaces;
 using EFDM.Test.DAL.Providers;
+using EFDM.Test.DAL.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -36,7 +37,7 @@ namespace EFDM.Test.IOC.Managers {
                 GetDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings)
             );
             services.AddScoped<EFDMDatabaseContext>(sp => sp.GetRequiredService<TestDatabaseContext>());
-            services.AddScoped(typeof(IRepository<,>), typeof(Repository<,>));
+            services.AddScoped(typeof(IRepository<,>), typeof(TestRepository<,>));
 
             #endregion db & repos
 

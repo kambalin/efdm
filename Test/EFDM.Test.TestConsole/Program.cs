@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace EFDM.Test.TestConsole {
 
@@ -35,16 +36,24 @@ namespace EFDM.Test.TestConsole {
                     //ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
                     //AddNTimesGroupsWithSvc(scope);
-                    ChangeNGroupsWithSvc(scope);
+                    //ChangeNGroupsWithSvc(scope);
 
                     //ChangeEnabledDBContextAuditor(scope, false);
                     //ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
                     //ChangeNGroupsWithSvc(scope);
+
+                    TestDeserialization(scope);
                 }
             }
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestDeserialization(IServiceScope scope) {
+            var queryStr = "{\"Take\":20,\"Skip\":0,\"Sorts\":[{\"Field\":\"Id\",\"Desc\":true}]}";
+            var typedQuery = JsonConvert.DeserializeObject<UserQuery>(queryStr ?? string.Empty);
+            Console.WriteLine($"typedQuery: {typedQuery.Skip}");
         }
 
         static void ChangeEnabledDBContextAuditor(IServiceScope scope, bool enabled) {
