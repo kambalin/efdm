@@ -23,13 +23,12 @@ namespace EFDM.Core.Audit {
         public bool Enabled { get; set; }
         public HashSet<string> GlobalIgnoredProperties { get; } = new HashSet<string>();
         public HashSet<Type> IncludedTypes { get; } = new HashSet<Type>();
+        public ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
+
         protected Dictionary<Type, IMappingInfo> Mappings { get; } = new Dictionary<Type, IMappingInfo>();
         protected Dictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new Dictionary<Type, List<int>>();
         protected Func<IAuditEvent, IEventEntry, object, Task<bool>> EventCommonAction { get; set; }
-
         protected readonly IAuditableDBContext Context;
-        // TODO not implemented work with
-        private static readonly ConcurrentDictionary<Type, HashSet<string>> _propertiesIgnoreAttrCache = new ConcurrentDictionary<Type, HashSet<string>>();
 
         #endregion fields & properties
 
@@ -40,11 +39,14 @@ namespace EFDM.Core.Audit {
 
             if (auditSettings != null) {
                 Enabled = auditSettings.Enabled;
-                ExcludedTypeStateActions = auditSettings.ExcludedTypeStateActions;
-                foreach (var glIgProp in auditSettings.GlobalIgnoredProperties)
-                    GlobalIgnoredProperties.Add(glIgProp);
-                foreach (var inclType in auditSettings.IncludedTypes)
-                    IncludedTypes.Add(inclType);                
+                if (auditSettings.ExcludedTypeStateActions != null)
+                    ExcludedTypeStateActions = auditSettings.ExcludedTypeStateActions;
+                if (auditSettings.GlobalIgnoredProperties != null)
+                    GlobalIgnoredProperties = auditSettings.GlobalIgnoredProperties;
+                if (auditSettings.IncludedTypes != null)
+                    IncludedTypes = auditSettings.IncludedTypes;
+                if (auditSettings.IgnoredTypeProperties != null)
+                    IgnoredTypeProperties = auditSettings.IgnoredTypeProperties;
             }
         }
 
@@ -249,9 +251,9 @@ namespace EFDM.Core.Audit {
         }
 
         protected HashSet<string> EnsurePropertiesIgnoreAttrCache(Type type) {
-            if (!_propertiesIgnoreAttrCache.ContainsKey(type))
-                _propertiesIgnoreAttrCache[type] = null;
-            return _propertiesIgnoreAttrCache[type];
+            if (!IgnoredTypeProperties.ContainsKey(type))
+                IgnoredTypeProperties[type] = null;
+            return IgnoredTypeProperties[type];
         }
 
         protected EntityDBData GetEntityName(EntityEntry entry) {

@@ -154,8 +154,8 @@ public class TestDatabaseContext : EFDMDatabaseContext {
 }
 ```
 
-### Database context audit
-Configure audit in own database context by overriding InitAuditMapping method
+### Audit entities creation in database context
+Configure audit entities creation in own database context by overriding InitAuditMapping method
 
 ```c#
 public override void InitAuditMapping() {
@@ -189,7 +189,7 @@ public override void InitAuditMapping() {
 				foreach (var columnVal in entry.ColumnValues) {
 					var propertyEntity = createPropertyEntity();
 					propertyEntity.Name = columnVal.Key;
-					propertyEntity.NewValue = columnVal.Value.ToString();
+					propertyEntity.NewValue = Convert.ToString(columnVal.Value);
 					savePropertyEntity(propertyEntity);
 				}
 				break;
@@ -197,7 +197,7 @@ public override void InitAuditMapping() {
 				foreach (var columnVal in entry.ColumnValues) {
 					var propertyEntity = createPropertyEntity();
 					propertyEntity.Name = columnVal.Key;
-					propertyEntity.OldValue = columnVal.Value.ToString();
+					propertyEntity.OldValue = Convert.ToString(columnVal.Value);
 					savePropertyEntity(propertyEntity);
 				}
 				break;
@@ -205,8 +205,8 @@ public override void InitAuditMapping() {
 				foreach (var change in entry.Changes) {
 					var propertyEntity = createPropertyEntity();
 					propertyEntity.Name = change.ColumnName;
-					propertyEntity.NewValue = change.NewValue.ToString();
-					propertyEntity.OldValue = change.OriginalValue.ToString();
+					propertyEntity.NewValue = Convert.ToString(change.NewValue);
+					propertyEntity.OldValue = Convert.ToString(change.OriginalValue);
 					savePropertyEntity(propertyEntity);
 				}
 				break;
@@ -215,6 +215,30 @@ public override void InitAuditMapping() {
 		}
 	});
 }
+```
+### Configure database audit for entities & properties
+On database context creation configure audit for entities & properties
+
+```c#
+ var auditSettings = new AuditSettings() {
+	Enabled = true,
+	IncludedTypes = new HashSet<Type>() {
+		typeof(Group), typeof(GroupUser)
+	},
+	ExcludedTypeStateActions = new Dictionary<Type, List<int>>() {
+		{  typeof(Group), new List<int>() { AuditStateActionVals.Insert } },
+	},
+	IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
+};
+auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>() {
+	$"{nameof(Group.TextField1)}"
+});
+
+services.AddScoped(provider => new TestDatabaseContext(
+	GetDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings)
+);
+services.AddScoped<EFDMDatabaseContext>(sp => sp.GetRequiredService<TestDatabaseContext>());
+
 ```
 ## Examples
 You can find examples in EFDM.Test.TestConsole project

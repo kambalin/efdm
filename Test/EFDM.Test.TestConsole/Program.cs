@@ -41,9 +41,9 @@ namespace EFDM.Test.TestConsole {
                     //ChangeEnabledDBContextAuditor(scope, false);
                     //ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
-                    //ChangeNGroupsWithSvc(scope);
+                    ChangeNGroupsWithSvc(scope);
 
-                    TestDeserialization(scope);
+                    //TestDeserialization(scope);
                 }
             }
             Console.WriteLine("press any key...");
@@ -80,6 +80,8 @@ namespace EFDM.Test.TestConsole {
             foreach (var group in groups) {
                 group.Title = $"Group_{Guid.NewGuid()}";
                 group.TypeId = group.TypeId == GroupTypeVals.Admins ? GroupTypeVals.Users : GroupTypeVals.Admins;
+                group.TextField1 = $"textfield1 {DateTime.Now}";
+                group.TextField2 = $"textfield2 {DateTime.Now}";
                 //groupSvc.Save(group);
             }
             groupSvc.SaveChanges();

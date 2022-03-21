@@ -14,6 +14,8 @@ namespace EFDM.Test.DAL.Configs {
             builder.HasOne(x => x.Type)
                 .WithMany(y => y.Groups)
                 .HasForeignKey(x => x.TypeId);
+            builder.Property(x => x.TextField1).HasMaxLength(150);
+            builder.Property(x => x.TextField2).HasMaxLength(150);
         }
     }
 }
