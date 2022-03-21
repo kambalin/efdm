@@ -105,7 +105,7 @@ namespace EFDM.Test.DAL.Providers {
                         foreach (var columnVal in entry.ColumnValues) {
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = columnVal.Key;
-                            propertyEntity.NewValue = columnVal.Value.ToString();
+                            propertyEntity.NewValue = Convert.ToString(columnVal.Value);
                             savePropertyEntity(propertyEntity);
                         }
                         break;
@@ -113,7 +113,7 @@ namespace EFDM.Test.DAL.Providers {
                         foreach (var columnVal in entry.ColumnValues) {
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = columnVal.Key;
-                            propertyEntity.OldValue = columnVal.Value.ToString();
+                            propertyEntity.OldValue = Convert.ToString(columnVal.Value);
                             savePropertyEntity(propertyEntity);
                         }
                         break;
@@ -121,8 +121,8 @@ namespace EFDM.Test.DAL.Providers {
                         foreach (var change in entry.Changes) {
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = change.ColumnName;
-                            propertyEntity.NewValue = change.NewValue.ToString();
-                            propertyEntity.OldValue = change.OriginalValue.ToString();
+                            propertyEntity.NewValue = Convert.ToString(change.NewValue);
+                            propertyEntity.OldValue = Convert.ToString(change.OriginalValue);
                             savePropertyEntity(propertyEntity);
                         }
                         break;

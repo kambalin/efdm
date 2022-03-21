@@ -29,6 +29,7 @@ namespace EFDM.Core.Audit {
         protected Func<IAuditEvent, IEventEntry, object, Task<bool>> EventCommonAction { get; set; }
 
         protected readonly IAuditableDBContext Context;
+        // TODO not implemented work with
         private static readonly ConcurrentDictionary<Type, HashSet<string>> _propertiesIgnoreAttrCache = new ConcurrentDictionary<Type, HashSet<string>>();
 
         #endregion fields & properties
