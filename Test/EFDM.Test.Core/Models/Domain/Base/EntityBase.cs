@@ -1,5 +1,4 @@
-﻿using EFDM.Abstractions.Models.Domain;
-using EFDM.Test.Core.Models.Domain.Interfaces;
+﻿using EFDM.Test.Core.Models.Domain.Interfaces;
 using System;
 
 namespace EFDM.Test.Core.Models.Domain.Base {

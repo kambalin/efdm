@@ -257,7 +257,7 @@ namespace EFDM.Core.DAL.Repositories {
         private (PropertyInfo[] NavProps, IEnumerable<PropertyInfo> ColProps, IEnumerable<PropertyInfo> NotColProps) GetEntityProperties(TEntity model) {
             var navigationProps = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.CanRead && x.CanWrite && _isIncludable(x.PropertyType) && x.GetValue(model) != null)
-                .ToArray();            
+                .ToArray();
             var collectionProps = navigationProps.Where(x => typeof(IEnumerable).IsAssignableFrom(x.PropertyType));
             var notCollectionProps = navigationProps.Where(x => !typeof(IEnumerable).IsAssignableFrom(x.PropertyType));
             return (navigationProps, collectionProps, notCollectionProps);
@@ -283,7 +283,7 @@ namespace EFDM.Core.DAL.Repositories {
             return expr != null ? dbQuery.AsExpandable().Where(expr) : dbQuery;
         }
 
-        internal IQueryable<TEntity> IncludeByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query) {            
+        internal IQueryable<TEntity> IncludeByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query) {
             return query.Includes?.Aggregate(dbQuery, (current, include) => current.Include(include)) ?? dbQuery;
         }
 

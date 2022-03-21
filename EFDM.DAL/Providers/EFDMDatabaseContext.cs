@@ -21,7 +21,7 @@ namespace EFDM.Core.DAL.Providers {
             get { return _auditor; }
         }
         public DbContext DbContext { get { return this; } }
-        
+
         protected readonly string ConnectionString;
         private readonly ILoggerFactory _loggerFactory;
         private IDBContextAuditor _auditor;
@@ -54,7 +54,7 @@ namespace EFDM.Core.DAL.Providers {
                 modified = this.CommitTime.Value;
 
             foreach (var entry in ChangeTracker.Entries<IAuditableEntity>()) {
-                if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {                    
+                if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {
                     var auditDateEntity = entry.Entity as IAuditableDateEntity;
                     var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
                     if (!entry.Entity.PreserveLastModifiedInfo) {
@@ -77,7 +77,7 @@ namespace EFDM.Core.DAL.Providers {
                             }
                             break;
                         case EntityState.Modified:
-                            if (auditDateEntity != null)                                
+                            if (auditDateEntity != null)
                                 entry.Property($"{nameof(auditDateEntity.Created)}").IsModified = false;
                             if (auditPrincipalEntity != null)
                                 entry.Property($"{nameof(auditPrincipalEntity.CreatedById)}").IsModified = false;
@@ -87,7 +87,7 @@ namespace EFDM.Core.DAL.Providers {
                     }
                 }
             }
-        }        
+        }
 
         protected virtual void InitAuditor(IAuditSettings auditSettings = null) {
             _auditor = new DBContextAuditor(this, auditSettings);

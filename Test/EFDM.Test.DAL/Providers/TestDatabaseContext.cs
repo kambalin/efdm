@@ -51,7 +51,7 @@ namespace EFDM.Test.DAL.Providers {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
             //optionsBuilder.EnableSensitiveDataLogging(true);
             base.OnConfiguring(optionsBuilder);
-            
+
             //if (!string.IsNullOrEmpty(ConnectionString))
             //    optionsBuilder.UseSqlServer(ConnectionString);
         }

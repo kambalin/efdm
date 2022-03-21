@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using EFDM.Abstractions.DAL.Repositories;
+﻿using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Core.Audit;
 using EFDM.Core.DAL.Providers;
-using EFDM.Core.DAL.Repositories;
 using EFDM.Test.Core.Constants.System;
 using EFDM.Test.Core.Models.Domain;
 using EFDM.Test.Core.Services.Domain;
@@ -14,6 +11,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 
 namespace EFDM.Test.IOC.Managers {
 
@@ -25,8 +24,8 @@ namespace EFDM.Test.IOC.Managers {
 
             var auditSettings = new AuditSettings() {
                 Enabled = true,
-                IncludedTypes = new HashSet<Type>() { 
-                    typeof(Group), typeof(GroupUser) 
+                IncludedTypes = new HashSet<Type>() {
+                    typeof(Group), typeof(GroupUser)
                 },
                 ExcludedTypeStateActions = new Dictionary<Type, List<int>>() {
                     //{  typeof(Group), new List<int>() { AuditStateActionVals.Insert } },
@@ -46,7 +45,7 @@ namespace EFDM.Test.IOC.Managers {
             services.AddScoped<IGroupService, GroupService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IGroupTypeService, GroupTypeService>();
-            
+
             #endregion domain services
         }
 

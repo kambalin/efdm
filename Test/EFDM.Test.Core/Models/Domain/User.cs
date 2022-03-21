@@ -1,12 +1,6 @@
 ﻿using EFDM.Abstractions.Models.Domain;
 using EFDM.Test.Core.Models.Domain.Base;
-using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace EFDM.Test.Core.Models.Domain {
 

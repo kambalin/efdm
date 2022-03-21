@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFDM.Abstractions.Audit {
 
@@ -15,7 +12,7 @@ namespace EFDM.Abstractions.Audit {
         IDictionary<string, object> ColumnValues { get; set; }
         bool Valid { get; set; }
         List<string> ValidationResults { get; set; }
-        Type EntityType { get; set; }        
+        Type EntityType { get; set; }
         /// <summary>
         /// Returns the EntityEntry associated to this audit event entry
         /// </summary>

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EFDM.Abstractions.Models.Validation {
+﻿namespace EFDM.Abstractions.Models.Validation {
 
     public interface IValidationError {
         string Block { get; set; }

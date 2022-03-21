@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace EFDM.Core.Audit {
@@ -41,13 +40,11 @@ namespace EFDM.Core.Audit {
 
             if (auditSettings != null) {
                 Enabled = auditSettings.Enabled;
-                foreach (var glIgProp in auditSettings.GlobalIgnoredProperties) {
-                    GlobalIgnoredProperties.Add(glIgProp);
-                }
-                foreach (var inclType in auditSettings.IncludedTypes) {
-                    IncludedTypes.Add(inclType);
-                }
                 ExcludedTypeStateActions = auditSettings.ExcludedTypeStateActions;
+                foreach (var glIgProp in auditSettings.GlobalIgnoredProperties)
+                    GlobalIgnoredProperties.Add(glIgProp);
+                foreach (var inclType in auditSettings.IncludedTypes)
+                    IncludedTypes.Add(inclType);                
             }
         }
 

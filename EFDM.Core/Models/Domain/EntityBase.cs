@@ -1,15 +1,11 @@
 ﻿using EFDM.Abstractions.Models.Domain;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Linq;
-using System.Text;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace EFDM.Core.Models.Domain {
 
-    public abstract class EntityBase<TKey> : IdKeyEntityBase<TKey>, IEntityBase<TKey>        
+    public abstract class EntityBase<TKey> : IdKeyEntityBase<TKey>, IEntityBase<TKey>
         where TKey : IComparable, IEquatable<TKey> {
 
         public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;
@@ -21,6 +17,6 @@ namespace EFDM.Core.Models.Domain {
 
         [NotMapped]
         [JsonIgnore]
-        public bool PreserveLastModifiedInfo { set; get; }        
+        public bool PreserveLastModifiedInfo { set; get; }
     }
 }

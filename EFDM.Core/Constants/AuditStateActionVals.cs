@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace EFDM.Core.Constants {
+﻿namespace EFDM.Core.Constants {
 
     public class AuditStateActionVals {
         public const int Insert = 1;

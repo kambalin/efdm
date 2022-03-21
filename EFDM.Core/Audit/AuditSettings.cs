@@ -1,11 +1,6 @@
 ﻿using EFDM.Abstractions.Audit;
-using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
 
 namespace EFDM.Core.Audit {
 

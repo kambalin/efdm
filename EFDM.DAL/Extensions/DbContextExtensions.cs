@@ -1,10 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EFDM.Core.Extensions {
 
@@ -12,7 +9,7 @@ namespace EFDM.Core.Extensions {
 
         public static IQueryable Set(this DbContext context, Type T) {
             // Get the generic type definition
-            MethodInfo method = new Func<DbSet<object>>(context.Set<object>).Method.GetGenericMethodDefinition();            
+            MethodInfo method = new Func<DbSet<object>>(context.Set<object>).Method.GetGenericMethodDefinition();
 
             // Build a method with the specific type argument you're interested in
             method = method.MakeGenericMethod(T);

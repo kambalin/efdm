@@ -1,20 +1,20 @@
 ﻿using EFDM.Core.DataQueries;
 using EFDM.Test.Core.Constants.ModelValues;
-using EFDM.Test.DAL.Providers;
 using EFDM.Test.Core.DataQueries.Models;
 using EFDM.Test.Core.Models.Domain;
 using EFDM.Test.Core.Services.Domain.Interfaces;
+using EFDM.Test.DAL.Providers;
 using EFDM.Test.IOC.Managers;
 using EFDM.Test.TestConsole.Utilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using Newtonsoft.Json;
 
 namespace EFDM.Test.TestConsole {
 
@@ -81,7 +81,7 @@ namespace EFDM.Test.TestConsole {
                 group.Title = $"Group_{Guid.NewGuid()}";
                 group.TypeId = group.TypeId == GroupTypeVals.Admins ? GroupTypeVals.Users : GroupTypeVals.Admins;
                 //groupSvc.Save(group);
-            }            
+            }
             groupSvc.SaveChanges();
 
             sw.Stop();
@@ -97,12 +97,12 @@ namespace EFDM.Test.TestConsole {
                 }
             };
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
-            var group = groupSvc.Get(groupQuery, true);            
+            var group = groupSvc.Get(groupQuery, true);
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             var user = userSvc.Get(new UserQuery {
                 Ids = new[] { UserVals.System.Id }
             });
-            
+
             if (!group.Users.Any(x => x.UserId == user.Id)) {
                 Console.WriteLine($"Adding user {user.Id} to group {group.Id}");
                 group.Users.Add(new GroupUser { GroupId = group.Id, UserId = user.Id });
@@ -123,17 +123,17 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"--------------------------");
         }
 
-        static void ChangeGroupTypeWithSvc(IServiceScope scope) {            
-            var groupQuery = new GroupQuery {                
+        static void ChangeGroupTypeWithSvc(IServiceScope scope) {
+            var groupQuery = new GroupQuery {
                 Includes = new[] { 
                     //$"{nameof(Group.CreatedBy)}", 
                     //$"{nameof(Group.ModifiedBy)}",
                     $"{nameof(Group.Type)}"
                 },
-                Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },                
+                Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
             };
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
-            var group = groupSvc.Get(groupQuery, true);            
+            var group = groupSvc.Get(groupQuery, true);
             Console.WriteLine($"Changing {group.Id}, {group.Title}, Created: '{group.CreatedBy?.Title}'");
             group.TypeId = group.TypeId == GroupTypeVals.Admins ? GroupTypeVals.Users : GroupTypeVals.Admins;
             groupSvc.SaveChanges();
@@ -144,12 +144,12 @@ namespace EFDM.Test.TestConsole {
             var originalTitle = "Администраторы";
             var groupQuery = new GroupQuery {
                 Title = originalTitle,
-                Includes = new[] { $"{nameof(Group.CreatedBy)}", 
+                Includes = new[] { $"{nameof(Group.CreatedBy)}",
                     $"{nameof(Group.ModifiedBy)}",
                     $"{nameof(Group.Users)}"
                 }
             };
-            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();            
+            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var groups = groupSvc.Fetch(groupQuery, true);
             foreach (var group in groups) {
                 Console.WriteLine($"Changing {group.Id}, {group.Title}, Created: '{group.CreatedBy.Title}'");
@@ -172,14 +172,14 @@ namespace EFDM.Test.TestConsole {
             };
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var groups = groupSvc.Fetch(groupQuery);
-            foreach(var group in groups)
+            foreach (var group in groups)
                 Console.WriteLine($"{group.Id}, {group.Title}, Created: '{group.CreatedBy.Title}'");
 
             Console.WriteLine($"--------------------------");
             groupQuery = new GroupQuery {
                 TypeIds = new int[] { GroupTypeVals.Users },
                 Includes = new[] { $"{nameof(Group.Users)}.{nameof(GroupUser.User)}" }
-            };            
+            };
             groups = groupSvc.Fetch(groupQuery);
             foreach (var group in groups) {
                 Console.WriteLine($"{group.Id}, {group.Title}");
@@ -202,7 +202,7 @@ namespace EFDM.Test.TestConsole {
                     TypeId = GroupTypeVals.Users
                 };
                 var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
-                groupSvc.Save(group);                
+                groupSvc.Save(group);
             }
             sw.Stop();
             Console.WriteLine("Elapsed={0}", sw.Elapsed);
@@ -220,7 +220,7 @@ namespace EFDM.Test.TestConsole {
 
         static void AddUserWithSvc(IServiceScope scope) {
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
-            var group = groupSvc.Get(new GroupQuery { 
+            var group = groupSvc.Get(new GroupQuery {
                 TypeIds = new int[] { GroupTypeVals.Users }
             });
             var user = new User {

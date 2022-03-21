@@ -3,7 +3,7 @@ using EFDM.Core.Models.Domain;
 using EFDM.Test.DAL.Providers;
 using System;
 
-namespace EFDM.Test.DAL.Repositories {   
+namespace EFDM.Test.DAL.Repositories {
 
     public class TestRepository<TEntity, TKey> : Repository<TEntity, TKey>
         where TEntity : IdKeyEntityBase<TKey>

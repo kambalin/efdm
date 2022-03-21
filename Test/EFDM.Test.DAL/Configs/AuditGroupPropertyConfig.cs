@@ -1,5 +1,4 @@
 ﻿using EFDM.Test.Core.Models.Audit;
-using EFDM.Test.Core.Models.Domain;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

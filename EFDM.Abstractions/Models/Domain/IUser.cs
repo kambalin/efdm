@@ -1,6 +1,6 @@
 ﻿namespace EFDM.Abstractions.Models.Domain {
 
-    public interface IUser : IIdKeyEntity<int>, ITitleEntity {        
+    public interface IUser : IIdKeyEntity<int>, ITitleEntity {
         public string Login { get; set; }
         public string Email { get; set; }
         public string Phone { get; set; }

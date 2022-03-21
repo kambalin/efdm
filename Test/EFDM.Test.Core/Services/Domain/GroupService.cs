@@ -10,10 +10,10 @@ using System.Linq;
 namespace EFDM.Test.Core.Services.Domain {
 
     public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService {
-        
+
         readonly IRepository<User, int> UserRepo;
 
-        public GroupService(            
+        public GroupService(
             IRepository<User, int> userRepo,
             IRepository<Group, int> repository,
             ILogger logger
