@@ -222,11 +222,12 @@ On database context creation configure audit for entities & properties
 ```c#
  var auditSettings = new AuditSettings() {
 	Enabled = true,
-	IncludedTypes = new HashSet<Type>() {
-		typeof(Group), typeof(GroupUser)
+	IncludedTypes = new ConcurrentDictionary<Type, byte>() {
+		[typeof(Group)] = 1,
+		[typeof(GroupUser)] = 1
 	},
-	ExcludedTypeStateActions = new Dictionary<Type, List<int>>() {
-		{  typeof(Group), new List<int>() { AuditStateActionVals.Insert } },
+	ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() {
+		[typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }                    
 	},
 	IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
 };

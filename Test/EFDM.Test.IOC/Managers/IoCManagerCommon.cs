@@ -1,5 +1,6 @@
 ﻿using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Core.Audit;
+using EFDM.Core.Constants;
 using EFDM.Core.DAL.Providers;
 using EFDM.Test.Core.Constants.System;
 using EFDM.Test.Core.Models.Domain;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace EFDM.Test.IOC.Managers {
@@ -24,13 +26,14 @@ namespace EFDM.Test.IOC.Managers {
 
             var auditSettings = new AuditSettings() {
                 Enabled = true,
-                IncludedTypes = new HashSet<Type>() {
-                    typeof(Group), typeof(GroupUser)
+                IncludedTypes = new ConcurrentDictionary<Type, byte>() {
+                    [typeof(Group)] = 1,
+                    [typeof(GroupUser)] = 1
                 },
-                ExcludedTypeStateActions = new Dictionary<Type, List<int>>() {
-                    //{  typeof(Group), new List<int>() { AuditStateActionVals.Insert } },
+                ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() {
+                    [typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }
                 },
-                IgnoredTypeProperties = new Dictionary<Type, HashSet<string>>()
+                IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
             };
             auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>() {
                 $"{nameof(Group.TextField1)}"

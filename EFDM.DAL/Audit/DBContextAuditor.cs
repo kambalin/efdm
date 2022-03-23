@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -20,12 +21,12 @@ namespace EFDM.Core.Audit {
         #region fields & properties
 
         public bool Enabled { get; set; }
-        public HashSet<string> GlobalIgnoredProperties { get; } = new HashSet<string>();
-        public HashSet<Type> IncludedTypes { get; } = new HashSet<Type>();
-        public Dictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new Dictionary<Type, HashSet<string>>();
+        public ConcurrentDictionary<string, byte> GlobalIgnoredProperties { get; } = new ConcurrentDictionary<string, byte>();
+        public ConcurrentDictionary<Type, byte> IncludedTypes { get; } = new ConcurrentDictionary<Type, byte>();        
+        public ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
 
-        protected Dictionary<Type, IMappingInfo> Mappings { get; } = new Dictionary<Type, IMappingInfo>();
-        protected Dictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new Dictionary<Type, List<int>>();
+        protected ConcurrentDictionary<Type, IMappingInfo> Mappings { get; } = new ConcurrentDictionary<Type, IMappingInfo>();
+        protected ConcurrentDictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new ConcurrentDictionary<Type, List<int>>();
         protected Func<IAuditEvent, IEventEntry, object, Task<bool>> EventCommonAction { get; set; }
         protected readonly IAuditableDBContext Context;
 
@@ -108,11 +109,11 @@ namespace EFDM.Core.Audit {
             else
                 memberExpression = (MemberExpression)propertySelector.Body;
             var memberName = memberExpression.Member.Name;
-            GlobalIgnoredProperties.Add(memberName);
+            GlobalIgnoredProperties.AddOrUpdate(memberName, 1, (key, oldValue) => 1);
         }
 
         public void IncludeAuditEntity(Type entityType) {
-            IncludedTypes.Add(entityType);
+            IncludedTypes.AddOrUpdate(entityType, 1, (key, oldValue) => 1);
         }
 
         public void Map<TSourceEntity, TAuditEventEntity, TAuditPropertyEntity>(
@@ -243,7 +244,7 @@ namespace EFDM.Core.Audit {
             if (ignoredProperties != null && ignoredProperties.Contains(propName))
                 return false;
             if (GlobalIgnoredProperties != null
-                && GlobalIgnoredProperties.Contains(propName)) {
+                && GlobalIgnoredProperties.ContainsKey(propName)) {
                 return false;
             }
             return true;
@@ -284,7 +285,7 @@ namespace EFDM.Core.Audit {
             var type = entry.Entity.GetType();
             if (type.FullName.StartsWith("Castle.Proxies."))
                 type = type.GetTypeInfo().BaseType;
-            if (IncludedTypes != null && !IncludedTypes.Contains(type))
+            if (IncludedTypes != null && !IncludedTypes.ContainsKey(type))
                 return false;
             if (ExcludedTypeStateActions.ContainsKey(type)) {
                 var excludedActions = ExcludedTypeStateActions[type];

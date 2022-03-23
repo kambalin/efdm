@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace EFDM.Test.TestConsole {
 
@@ -42,10 +43,25 @@ namespace EFDM.Test.TestConsole {
                     //ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
                     ChangeNGroupsWithSvc(scope);
-
                     //TestDeserialization(scope);
                 }
             }
+
+            var task1 = Task.Run(() => {
+                using (var serviceProvider = RegisterServices(config)) {
+                    using (var scope = serviceProvider.CreateScope()) {                       
+                        ChangeNGroupsWithSvc(scope);
+                    }
+                }
+            });
+            var task2 = Task.Run(() => {
+                using (var serviceProvider = RegisterServices(config)) {
+                    using (var scope = serviceProvider.CreateScope()) {
+                        ChangeNGroupsWithSvc(scope);
+                    }
+                }
+            });
+
             Console.WriteLine("press any key...");
             Console.ReadKey();
         }
