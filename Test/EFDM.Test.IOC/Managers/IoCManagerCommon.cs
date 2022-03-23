@@ -12,7 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 namespace EFDM.Test.IOC.Managers {
@@ -31,7 +30,7 @@ namespace EFDM.Test.IOC.Managers {
                 ExcludedTypeStateActions = new Dictionary<Type, List<int>>() {
                     //{  typeof(Group), new List<int>() { AuditStateActionVals.Insert } },
                 },
-                IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
+                IgnoredTypeProperties = new Dictionary<Type, HashSet<string>>()
             };
             auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>() {
                 $"{nameof(Group.TextField1)}"
