@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
@@ -11,7 +10,7 @@ namespace EFDM.Abstractions.Audit {
         bool Enabled { get; set; }
         HashSet<string> GlobalIgnoredProperties { get; }
         HashSet<Type> IncludedTypes { get; }
-        ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; }
+        Dictionary<Type, HashSet<string>> IgnoredTypeProperties { get; }
 
         int SaveChanges(Func<int> baseSaveChanges);
         Func<IAuditEvent, IEventEntry, object, Task<bool>> GetMapperEventAction(Type type);

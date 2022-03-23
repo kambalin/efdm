@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -23,7 +22,7 @@ namespace EFDM.Core.Audit {
         public bool Enabled { get; set; }
         public HashSet<string> GlobalIgnoredProperties { get; } = new HashSet<string>();
         public HashSet<Type> IncludedTypes { get; } = new HashSet<Type>();
-        public ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
+        public Dictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new Dictionary<Type, HashSet<string>>();
 
         protected Dictionary<Type, IMappingInfo> Mappings { get; } = new Dictionary<Type, IMappingInfo>();
         protected Dictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new Dictionary<Type, List<int>>();
