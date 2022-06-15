@@ -296,8 +296,11 @@ namespace EFDM.Core.DAL.Repositories {
         }
 
         internal IQueryable<TEntity> SortByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query) {
-            if (query.Sorts == null)
+            if (query.Sorts == null || query.Sorts.Count() == 0)
+            {
+                dbQuery = _orderBy(dbQuery, nameof(IdKeyEntityBase<TKey>.Id), true, false);
                 return dbQuery;
+            }
 
             var ordered = false;
             foreach (var sort in query.Sorts) {
