@@ -13,6 +13,7 @@ namespace EFDM.Abstractions.Services.Domain {
         where TKey : IComparable, IEquatable<TKey>
         where TQuery : class, IDataQuery<TModel, TKey> {
 
+        int ExecutorId { get; }
         IEnumerable<TModel> Fetch(TQuery query = null, bool tracking = false);
         IPagedList<TModel> FetchPaged(TQuery query = null);
         IEnumerable<TModel> FetchLite(TQuery query, Expression<Func<TModel, TModel>> select, bool tracking = false);

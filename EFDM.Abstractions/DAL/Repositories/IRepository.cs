@@ -13,6 +13,7 @@ namespace EFDM.Abstractions.DAL.Repositories {
         where TKey : IComparable, IEquatable<TKey> {
 
         bool AutoDetectChanges { get; set; }
+        int ExecutorId { get; }
         IEnumerable<TEntity> Fetch(IDataQuery<TEntity> query = null, bool tracking = false);
         IPagedList<TEntity> FetchPaged(IDataQuery<TEntity> query = null, bool tracking = false);
         IEnumerable<TEntity> FetchLite(IDataQuery<TEntity> query, Expression<Func<TEntity, TEntity>> select, bool tracking = false);

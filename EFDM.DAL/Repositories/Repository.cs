@@ -26,6 +26,10 @@ namespace EFDM.Core.DAL.Repositories {
         public virtual EFDMDatabaseContext Context { get; }
         public DbSet<TEntity> DbSet { get; protected set; }
         public bool AutoDetectChanges { get; set; } = true;
+        public virtual int ExecutorId { get {
+                return Context.ExecutorId;
+            } 
+        }
 
         #endregion fields & properties
 

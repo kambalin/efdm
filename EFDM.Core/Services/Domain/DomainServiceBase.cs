@@ -14,7 +14,8 @@ using System.Linq.Expressions;
 
 namespace EFDM.Core.Services.Domain {
 
-    public abstract class DomainServiceBase<TModel, TQuery, TKey, TRepository> : ServiceBase, IDomainService<TModel, TQuery, TKey>
+    public abstract class DomainServiceBase<TModel, TQuery, TKey, TRepository> : ServiceBase, 
+        IDomainService<TModel, TQuery, TKey>
         where TModel : class, IIdKeyEntity<TKey>, new()
         where TKey : IComparable, IEquatable<TKey>
         where TQuery : class, IDataQuery<TModel, TKey>
@@ -22,6 +23,10 @@ namespace EFDM.Core.Services.Domain {
 
         #region fields & properties
 
+        public virtual int ExecutorId { get {
+                return Repository.ExecutorId;
+            }
+        }
         protected readonly TRepository Repository;
         private Expression<Func<TModel, TModel>> _liteSelector = x => new TModel() { Id = x.Id };
         protected Expression<Func<TModel, TModel>> LiteSelector {
