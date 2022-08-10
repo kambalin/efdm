@@ -128,6 +128,8 @@ namespace EFDM.Core.DAL.Repositories {
                     foreach (var pi in entityProperties.ColProps)
                         dbQuery = dbQuery.Include(pi.Name);
                     attachedEntity = dbQuery.FirstOrDefault();
+                    if (attachedEntity == null)
+                        throw new Exception($"Entity is detached, cannot find entity with Id = '{entity.Id}'");
                 }
 
                 var entry = Context.Entry(attachedEntity);
@@ -157,6 +159,8 @@ namespace EFDM.Core.DAL.Repositories {
             foreach (var pi in entityProperties.ColProps)
                 dbQuery = dbQuery.Include(pi.Name);
             var entity = dbQuery.FirstOrDefault();
+            if (entity == null)
+                throw new Exception($"Cannot find entity with Id = '{model.Id}'");
             var entry = Context.Entry(entity);
 
             foreach (var up in updateProperties) {

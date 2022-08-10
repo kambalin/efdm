@@ -42,28 +42,58 @@ namespace EFDM.Test.TestConsole {
                     //ChangeEnabledDBContextAuditor(scope, false);
                     //ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
-                    ChangeNGroupsWithSvc(scope);
+                    //ChangeNGroupsWithSvc(scope);
                     //TestDeserialization(scope);
+                    //TestTaskAnswerService(scope);
+                    TestTaskAnswerCommentService(scope);
                 }
             }
 
-            var task1 = Task.Run(() => {
-                using (var serviceProvider = RegisterServices(config)) {
-                    using (var scope = serviceProvider.CreateScope()) {                       
-                        ChangeNGroupsWithSvc(scope);
-                    }
-                }
-            });
-            var task2 = Task.Run(() => {
-                using (var serviceProvider = RegisterServices(config)) {
-                    using (var scope = serviceProvider.CreateScope()) {
-                        ChangeNGroupsWithSvc(scope);
-                    }
-                }
-            });
+            //var task1 = Task.Run(() => {
+            //    using (var serviceProvider = RegisterServices(config)) {
+            //        using (var scope = serviceProvider.CreateScope()) {                       
+            //            ChangeNGroupsWithSvc(scope);
+            //        }
+            //    }
+            //});
+            //var task2 = Task.Run(() => {
+            //    using (var serviceProvider = RegisterServices(config)) {
+            //        using (var scope = serviceProvider.CreateScope()) {
+            //            ChangeNGroupsWithSvc(scope);
+            //        }
+            //    }
+            //});
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestTaskAnswerCommentService(IServiceScope scope) {
+            var entitySvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerCommentService>();
+            var taskAnswerSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
+            // one to one like this
+            {
+                var newAnswerComment = new TaskAnswerComment();
+                newAnswerComment.Id = 1; // existing parent entity with this key value
+                newAnswerComment.Comment = "xxx";
+                entitySvc.Add(newAnswerComment); // change to addded state
+                entitySvc.Save(newAnswerComment); // save to db
+            }
+            // or like this
+            {
+                var taskAnswer = taskAnswerSvc.GetById(1, true); // true - attached to context parent entity
+                var newAnswerComment = new TaskAnswerComment();
+                newAnswerComment.Comment = "xxx";
+                newAnswerComment.TaskAnswer = taskAnswer;
+                entitySvc.Save(newAnswerComment);
+            }
+        }
+
+        static void TestTaskAnswerService(IServiceScope scope) {
+            var entitySvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();            
+            var taskAnswer = new TaskAnswer();
+            taskAnswer.AnswerValue = 1;
+            entitySvc.Save(taskAnswer);
         }
 
         static void TestDeserialization(IServiceScope scope) {

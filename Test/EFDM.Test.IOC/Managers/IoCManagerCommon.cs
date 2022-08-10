@@ -52,6 +52,9 @@ namespace EFDM.Test.IOC.Managers {
             services.AddScoped<IGroupService, GroupService>();
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IGroupTypeService, GroupTypeService>();
+            services.AddScoped<ITaskAnswerService, TaskAnswerService>();
+            services.AddScoped<ITaskAnswerCommentService, TaskAnswerCommentService>();
+            
 
             #endregion domain services
         }

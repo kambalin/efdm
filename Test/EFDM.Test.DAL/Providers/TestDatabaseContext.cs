@@ -30,6 +30,8 @@ namespace EFDM.Test.DAL.Providers {
         public DbSet<GroupUser> GroupUsers { get; set; }
         public DbSet<AuditGroupEvent> AuditGroupEvents { get; set; }
         public DbSet<AuditGroupProperty> AuditGroupProperties { get; set; }
+        public DbSet<TaskAnswer> TaskAnswers { get; set; }
+        public DbSet<TaskAnswerComment> TaskAnswerComments { get; set; }
 
         #endregion dbsets
 

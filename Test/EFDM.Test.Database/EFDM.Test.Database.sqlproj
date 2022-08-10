@@ -69,6 +69,8 @@
     <None Include="Scripts\Data.GroupTypes.sql" />
     <Build Include="Tables\AuditGroupProperties.sql" />
     <Build Include="Tables\AuditGroupEvents.sql" />
+    <Build Include="Tables\TaskAnswers.sql" />
+    <Build Include="Tables\TaskAnswerComments.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />
