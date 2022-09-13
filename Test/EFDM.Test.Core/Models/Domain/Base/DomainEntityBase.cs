@@ -3,7 +3,7 @@ using System;
 
 namespace EFDM.Test.Core.Models.Domain.Base {
 
-    public abstract class EntityBase<TKey> : EFDM.Core.Models.Domain.EntityBase<TKey>,
+    public abstract class DomainEntityBase<TKey> : EFDM.Core.Models.Domain.EntityBase<TKey>,
         IAuditableUserEntity
         where TKey : IComparable, IEquatable<TKey> {
 

@@ -1,4 +1,5 @@
 ﻿using EFDM.Core.DataQueries;
+using EFDM.Core.Models.Domain;
 using EFDM.Test.Core.Constants.ModelValues;
 using EFDM.Test.Core.DataQueries.Models;
 using EFDM.Test.Core.Models.Domain;
@@ -16,6 +17,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace EFDM.Test.TestConsole {
 
@@ -45,7 +47,8 @@ namespace EFDM.Test.TestConsole {
                     //ChangeNGroupsWithSvc(scope);
                     //TestDeserialization(scope);
                     //TestTaskAnswerService(scope);
-                    TestTaskAnswerCommentService(scope);
+                    //TestTaskAnswerCommentService(scope);
+                    //TestModelXmlSerialization(scope);
                 }
             }
 
@@ -94,6 +97,31 @@ namespace EFDM.Test.TestConsole {
             var taskAnswer = new TaskAnswer();
             taskAnswer.AnswerValue = 1;
             entitySvc.Save(taskAnswer);
+        }
+
+        static void TestModelXmlSerialization(IServiceScope scope) {            
+            var xao = new XmlAttributeOverrides();
+            xao.Add(typeof(EntityBase<int>), "CreatedBy", new XmlAttributes {
+                XmlIgnore = true
+            });
+            xao.Add(typeof(EntityBase<int>), "ModifiedBy", new XmlAttributes {
+                XmlIgnore = true
+            });
+            // Use List instead ICollection
+            xao.Add(typeof(Group), "Users", new XmlAttributes {
+                XmlIgnore = true
+            });
+            // Use List instead ICollection
+            xao.Add(typeof(User), "Groups", new XmlAttributes {
+                XmlIgnore = true
+            });
+            // Use List instead ICollection
+            xao.Add(typeof(GroupType), "Groups", new XmlAttributes {
+                XmlIgnore = true
+            });
+
+            var xmlserializer = new XmlSerializer(typeof(List<Group>), xao);
+            Console.WriteLine($"It's ok");
         }
 
         static void TestDeserialization(IServiceScope scope) {
