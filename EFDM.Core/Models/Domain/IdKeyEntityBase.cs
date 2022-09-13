@@ -9,8 +9,12 @@ namespace EFDM.Core.Models.Domain {
         where TKey : IComparable, IEquatable<TKey> {
 
         public TKey Id { get; set; }
+
         #region shame
+
+        [JsonIgnore]
         object IEntity.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
+
         #endregion shame
 
         [NotMapped]
