@@ -12,6 +12,7 @@ namespace EFDM.Core.DataQueries {
         public IEnumerable<ISorting> Sorts { get; set; } = new List<Sort>();
         public IEnumerable<string> Includes { get; set; }
         public bool Tracking { get; set; } = false;
+        public bool SplitQuery { get; set; } = false;
         public int Take { get; set; }
         public int Skip { get; set; }
 

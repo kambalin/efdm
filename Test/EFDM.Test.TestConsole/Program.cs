@@ -49,6 +49,7 @@ namespace EFDM.Test.TestConsole {
                     //TestTaskAnswerService(scope);
                     //TestTaskAnswerCommentService(scope);
                     //TestModelXmlSerialization(scope);
+                    TestSplitQueryGroupSvc(scope);
                 }
             }
 
@@ -69,6 +70,27 @@ namespace EFDM.Test.TestConsole {
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestSplitQueryGroupSvc(IServiceScope scope) {
+            var groupQuery = new GroupQuery {
+                Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
+                Includes = new[] {
+                    $"{nameof(Group.CreatedBy)}",                    
+                    $"{nameof(Group.Users)}.{nameof(GroupUser.User)}"
+                },
+                IsDeleted = false,
+                SplitQuery = true
+            };
+            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+            var groups = groupSvc.Fetch(groupQuery);
+            
+            foreach(var group in groups) {
+                Console.WriteLine($"Group '{group.Title}', Users count '{group.Users?.Count}'");
+            }
+
+            groupSvc.SaveChanges();
+            Console.WriteLine($"--------------------------");
         }
 
         static void TestTaskAnswerCommentService(IServiceScope scope) {

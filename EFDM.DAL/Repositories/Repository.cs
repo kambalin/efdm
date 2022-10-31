@@ -273,10 +273,12 @@ namespace EFDM.Core.DAL.Repositories {
 
         protected IQueryable<TEntity> ApplyQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query) {
             if (query != null) {
+                if (query.SplitQuery)
+                    dbQuery = dbQuery.AsSplitQuery();
                 dbQuery = IncludeByQuery(dbQuery, query);
                 dbQuery = FilterByQuery(dbQuery, query);
                 dbQuery = SortByQuery(dbQuery, query);
-                dbQuery = PageByQuery(dbQuery, query);
+                dbQuery = PageByQuery(dbQuery, query);                
             }
             return dbQuery;
         }

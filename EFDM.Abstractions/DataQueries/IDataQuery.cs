@@ -22,5 +22,6 @@ namespace EFDM.Abstractions.DataQueries {
         IEnumerable<ISorting> Sorts { get; set; }
         IEnumerable<string> Includes { get; set; }
         bool Tracking { get; set; }
+        bool SplitQuery { get; set; }
     }
 }
