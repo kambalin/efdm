@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Serialization;
 
@@ -29,6 +30,7 @@ namespace EFDM.Test.TestConsole {
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{Environment.MachineName}.json", true, true)
                 .Build();
+            Console.OutputEncoding = Encoding.UTF8;
 
             using (var serviceProvider = RegisterServices(config)) {
                 using (var scope = serviceProvider.CreateScope()) {
