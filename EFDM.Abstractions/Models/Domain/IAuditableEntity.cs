@@ -1,6 +1,7 @@
 ﻿namespace EFDM.Abstractions.Models.Domain {
 
     public interface IAuditableEntity {
-        bool PreserveLastModifiedInfo { set; get; }
+        bool PreserveLastModified { set; get; }
+        bool PreserveLastModifiedBy { set; get; }
     }
 }

@@ -49,44 +49,50 @@ namespace EFDM.Core.DAL.Providers {
         public abstract void InitAuditMapping();
 
         protected virtual void PreSaveActions() {
-            var modified = DateTime.Now;
-            if (this.CommitTime.HasValue)
-                modified = this.CommitTime.Value;
-
             foreach (var entry in ChangeTracker.Entries<IAuditableEntity>()) {
                 if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {
                     var auditDateEntity = entry.Entity as IAuditableDateEntity;
                     var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
-                    if (!entry.Entity.PreserveLastModifiedInfo) {
-                        if (auditDateEntity != null)
-                            auditDateEntity.Modified = modified;
-                        if (auditPrincipalEntity != null)
-                            auditPrincipalEntity.ModifiedById = ExecutorId;
-                    }
-                    switch (entry.State) {
-                        case EntityState.Added:
-                            if (auditDateEntity != null)
-                                auditDateEntity.Created = modified;
-                            if (auditPrincipalEntity != null) {
-                                if (auditPrincipalEntity.CreatedById < 1) { // if the creator was not forcibly set (for example, when it has to be system user)
-                                    auditPrincipalEntity.CreatedById = this.ExecutorId;
-                                }
-                                else { // if the creator was forcibly set, then "hide" who modified
-                                    auditPrincipalEntity.ModifiedById = auditPrincipalEntity.CreatedById;
-                                }
-                            }
-                            break;
+                    PreSaveDateAuditValues(auditDateEntity);
+                    PreSavePrincipalAuditValues(auditPrincipalEntity);
+                    switch (entry.State) {                        
                         case EntityState.Modified:
                             if (auditDateEntity != null)
                                 entry.Property($"{nameof(auditDateEntity.Created)}").IsModified = false;
                             if (auditPrincipalEntity != null)
                                 entry.Property($"{nameof(auditPrincipalEntity.CreatedById)}").IsModified = false;
-                            break;
-                        case EntityState.Deleted:
-                            break;
+                            break;                        
                     }
                 }
             }
+        }
+
+        protected virtual void PreSavePrincipalAuditValues(IAuditablePrincipalEntity auditPrincipalEntity) {
+            if (auditPrincipalEntity == null)
+                return;
+            if (!auditPrincipalEntity.PreserveLastModifiedBy)
+                auditPrincipalEntity.ModifiedById = ExecutorId;
+            else {
+                // if PreserveLastModifiedBy and ModifiedBy not set
+                // then "hide" who actually modified to createdby
+                if (auditPrincipalEntity.ModifiedById < 1)
+                    auditPrincipalEntity.ModifiedById = auditPrincipalEntity.CreatedById;
+            }
+            // if the creator was not forcibly set (for example, when it has to be system user)
+            if (auditPrincipalEntity.CreatedById < 1) 
+                auditPrincipalEntity.CreatedById = ExecutorId;
+        }
+
+        protected virtual void PreSaveDateAuditValues(IAuditableDateEntity auditDateEntity) {
+            if (auditDateEntity == null)
+                return;
+            var modified = DateTime.Now;
+            if (CommitTime.HasValue)
+                modified = CommitTime.Value;
+            if (auditDateEntity.Created == DateTimeOffset.MinValue)
+                auditDateEntity.Created = modified;
+            if (!auditDateEntity.PreserveLastModified || auditDateEntity.Modified == DateTimeOffset.MinValue)
+                auditDateEntity.Modified = modified;
         }
 
         protected virtual void InitAuditor(IAuditSettings auditSettings = null) {
