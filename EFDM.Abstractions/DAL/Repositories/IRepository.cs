@@ -1,4 +1,5 @@
-﻿using EFDM.Abstractions.DataQueries;
+﻿using EFCore.BulkExtensions;
+using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
 using Microsoft.EntityFrameworkCore.Query;
@@ -44,6 +45,7 @@ namespace EFDM.Abstractions.DAL.Repositories {
         IQueryable<TEntity> Queryable();
         IQueryable<TEntity> QueryableSql(string sql, params object[] parameters);
         bool IsAttached(TKey id);
-        void ResetContextState();
+        void ClearChangeTracker();
+        void BulkInsert(IList<TEntity> entities, BulkConfig config);
     }
 }

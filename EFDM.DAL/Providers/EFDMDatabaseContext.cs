@@ -1,4 +1,5 @@
-﻿using EFDM.Abstractions.Audit;
+﻿using EFCore.BulkExtensions;
+using EFDM.Abstractions.Audit;
 using EFDM.Abstractions.DAL.Providers;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Core.Audit;
@@ -51,12 +52,12 @@ namespace EFDM.Core.DAL.Providers {
         protected virtual void PreSaveActions() {
             foreach (var entry in ChangeTracker.Entries<IAuditableEntity>()) {
                 if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {
-                    var auditDateEntity = entry.Entity as IAuditableDateEntity;
-                    var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
-                    PreSaveDateAuditValues(auditDateEntity);
-                    PreSavePrincipalAuditValues(auditPrincipalEntity);
+                    PreSaveDateAuditValues(entry.Entity);
+                    PreSavePrincipalAuditValues(entry.Entity);
                     switch (entry.State) {                        
                         case EntityState.Modified:
+                            var auditDateEntity = entry.Entity as IAuditableDateEntity;
+                            var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
                             if (auditDateEntity != null)
                                 entry.Property($"{nameof(auditDateEntity.Created)}").IsModified = false;
                             if (auditPrincipalEntity != null)
@@ -67,7 +68,8 @@ namespace EFDM.Core.DAL.Providers {
             }
         }
 
-        protected virtual void PreSavePrincipalAuditValues(IAuditablePrincipalEntity auditPrincipalEntity) {
+        protected virtual void PreSavePrincipalAuditValues<TEntity>(TEntity entity) {
+            var auditPrincipalEntity = entity as IAuditablePrincipalEntity;
             if (auditPrincipalEntity == null)
                 return;
             if (!auditPrincipalEntity.PreserveLastModifiedBy)
@@ -83,7 +85,8 @@ namespace EFDM.Core.DAL.Providers {
                 auditPrincipalEntity.CreatedById = ExecutorId;
         }
 
-        protected virtual void PreSaveDateAuditValues(IAuditableDateEntity auditDateEntity) {
+        protected virtual void PreSaveDateAuditValues<TEntity>(TEntity entity) {
+            var auditDateEntity = entity as IAuditableDateEntity;
             if (auditDateEntity == null)
                 return;
             var modified = DateTime.Now;
@@ -166,10 +169,18 @@ namespace EFDM.Core.DAL.Providers {
             return affectedRows;
         }
 
-        public void ResetContextState() {
-            ChangeTracker.Entries()
-                .Where(e => e.Entity != null).ToList()
-                .ForEach(e => e.State = EntityState.Detached);
+        public void BulkInsertWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config) 
+            where TEntity : class {
+
+            foreach (TEntity entity in entities) {
+                PreSaveDateAuditValues(entity);
+                PreSavePrincipalAuditValues(entity);
+            }
+            this.BulkInsert(entities, config);
+        }
+
+        public void ClearChangeTracker() {
+            ChangeTracker.Clear();
         }
 
         #region IDisposable

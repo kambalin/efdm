@@ -1,4 +1,5 @@
-﻿using EFDM.Abstractions.DAL.Repositories;
+﻿using EFCore.BulkExtensions;
+using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
@@ -194,7 +195,11 @@ namespace EFDM.Core.Services.Domain {
         }
 
         public virtual void ResetContextState() {
-            Repository.ResetContextState();
+            Repository.ClearChangeTracker();
+        }
+
+        public void BulkInsert(IList<TModel> entities, BulkConfig config) {
+            Repository.BulkInsert(entities, config);
         }
 
         #endregion IDomainService implementation

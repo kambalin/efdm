@@ -1,4 +1,5 @@
-﻿using EFDM.Core.DataQueries;
+﻿using EFCore.BulkExtensions;
+using EFDM.Core.DataQueries;
 using EFDM.Core.Models.Domain;
 using EFDM.Test.Core.Constants.ModelValues;
 using EFDM.Test.Core.DataQueries.Models;
@@ -54,7 +55,9 @@ namespace EFDM.Test.TestConsole {
                     //TestSplitQueryGroupSvc(scope);
                     //DeleteExecuteUsers(scope);
                     //GetUsersFromGroup(scope);
-                    UpdateExecuteUsers(scope);
+                    //UpdateExecuteUsers(scope);                    
+                    BulkInsertUsers(scope);
+                    //InsertUsers(scope);
                 }
             }
 
@@ -76,6 +79,45 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine("press any key...");
             Console.ReadKey();
         }
+
+        static void InsertUsers(IServiceScope scope) {
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var users = new List<User>();
+            for (var i = 0; i < 10; i++) {
+                var user = new User {
+                    Login = "VM22HV\\testuser" + Guid.NewGuid(),
+                    Title = "Test User " + Guid.NewGuid(),
+                    Groups = new List<GroupUser>()
+                };
+                user.Groups.Add(new GroupUser { User = user, GroupId = GroupVals.UserGroupId });
+                userSvc.Add(user);
+                users.Add(user);
+            }
+            userSvc.SaveChanges();
+            foreach (var user in users) {
+                Console.WriteLine($"User {user.Login} id is '{user.Id}'");
+            }
+        }
+
+        static void BulkInsertUsers(IServiceScope scope) {
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var users = new List<User>();
+            for (var i = 0; i < 10; i++) {
+                var user = new User {
+                    Login = "VM22HV\\testuser" + Guid.NewGuid(),
+                    Title = "Test User " + Guid.NewGuid(),
+                    Groups = new List<GroupUser>()
+                };
+                // doesnt work
+                user.Groups.Add(new GroupUser { User = user, GroupId = GroupVals.UserGroupId });
+                users.Add(user);
+            }
+            var bulkConfig = new BulkConfig { SetOutputIdentity = true };
+            userSvc.BulkInsert(users, bulkConfig);
+            foreach (var user in users) {
+                Console.WriteLine($"User {user.Login} id is '{user.Id}'");
+            }
+        }        
 
         static void UpdateExecuteUsers(IServiceScope scope) {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
@@ -117,7 +159,7 @@ namespace EFDM.Test.TestConsole {
         static void GetUsersFromGroup(IServiceScope scope) {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();           
             var userQuery = new UserQuery {
-                GroupId = GroupTypeVals.Users,
+                GroupId = GroupVals.UserGroupId,
             };
             var users = userSvc.Fetch(userQuery).ToList();
             Console.WriteLine($"Users count '{users?.Count}'");
