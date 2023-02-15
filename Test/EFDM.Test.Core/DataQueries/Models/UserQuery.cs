@@ -7,7 +7,9 @@ using System.Linq;
 namespace EFDM.Test.Core.DataQueries.Models {
 
     public class UserQuery : DictIntDeletableDataQuery<User> {
+
         public string[] Logins { get; set; }
+        public string[] Emails { get; set; }
         public string Text { get; set; }
         public int? GroupId { get; set; }
 
@@ -17,6 +19,11 @@ namespace EFDM.Test.Core.DataQueries.Models {
             if (Logins?.Any() == true) {
                 var lcLogins = Logins.Select(x => x.ToLower()).ToArray();
                 and.Add(x => lcLogins.Contains(x.Login.ToLower()));
+            }
+
+            if (Emails?.Any() == true) {
+                var lcEmails = Emails.Select(x => x.ToLower()).ToArray();
+                and.Add(x => lcEmails.Contains(x.Email.ToLower()));
             }
 
             if (!string.IsNullOrEmpty(Text))

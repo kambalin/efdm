@@ -1,6 +1,7 @@
 ﻿using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -21,6 +22,22 @@ namespace EFDM.Abstractions.DAL.Repositories {
         void Add(params TEntity[] entities);
         void Update(params TEntity[] entities);
         void Delete(params TEntity[] entities);
+        /// <summary>
+        ///     Deletes all database rows for the entity instances which match the query. 
+        ///     Executes immediately and does not interact with the EF change tracker (see efcore bulk operations).
+        /// </summary>
+        /// <param name="query">Query for entities.</param>
+        /// <returns>The total number of rows deleted in the database.</returns>
+        int ExecuteDelete(IDataQuery<TEntity> query);
+        /// <summary>
+        /// Updates all database rows for the entity instances which match the query from the database
+        /// Executes immediately and does not interact with the EF change tracker (see efcore bulk operations).
+        /// </summary>
+        /// <param name="query">Query for entities.</param>
+        /// <param name="setPropertyCalls">A collection of set property statements specifying properties to update.</param>
+        /// <returns>The total number of rows updated in the database.</returns>
+        int ExecuteUpdate(IDataQuery<TEntity> query,
+            Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls);
         TEntity Save(TEntity entity);
         TEntity Save(TEntity model, params Expression<Func<TEntity, object>>[] updateProperties);
         int SaveChanges();

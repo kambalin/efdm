@@ -51,7 +51,10 @@ namespace EFDM.Test.TestConsole {
                     //TestTaskAnswerService(scope);
                     //TestTaskAnswerCommentService(scope);
                     //TestModelXmlSerialization(scope);
-                    TestSplitQueryGroupSvc(scope);
+                    //TestSplitQueryGroupSvc(scope);
+                    //DeleteExecuteUsers(scope);
+                    //GetUsersFromGroup(scope);
+                    UpdateExecuteUsers(scope);
                 }
             }
 
@@ -72,6 +75,52 @@ namespace EFDM.Test.TestConsole {
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void UpdateExecuteUsers(IServiceScope scope) {
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
+            //var userQuery = new UserQuery {
+            //    Emails = new string[] { "testuser108@test.ru" },
+            //};
+            //var userQuery = new UserQuery {
+            //    Ids = new int[] { 108 },
+            //};
+            //var userQuery = new UserQuery {
+            //    Logins = new string[] { "VM22HV\\testuser107" },
+            //};
+            var userQuery = new UserQuery {
+                GroupId = GroupTypeVals.Users,
+            };
+            var updatedCount = userSvc.ExecuteUpdate(userQuery,
+                s => s.SetProperty(b => b.Email, b => "Execute@update.net"));
+            Console.WriteLine($"Updated count '{updatedCount}'");
+        }
+
+        static void DeleteExecuteUsers(IServiceScope scope) {
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
+            //var userQuery = new UserQuery {
+            //    Emails = new string[] { "testuser108@test.ru" },
+            //};
+            //var userQuery = new UserQuery {
+            //    Ids = new int[] { 108 },
+            //};
+            //var userQuery = new UserQuery {
+            //    Logins = new string[] { "VM22HV\\testuser107" },
+            //};
+            var userQuery = new UserQuery {
+                GroupId = GroupTypeVals.Users,
+            };
+            var deletedCount = userSvc.ExecuteDelete(userQuery);
+            Console.WriteLine($"Deleted count '{deletedCount}'");
+        }
+
+        static void GetUsersFromGroup(IServiceScope scope) {
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();           
+            var userQuery = new UserQuery {
+                GroupId = GroupTypeVals.Users,
+            };
+            var users = userSvc.Fetch(userQuery).ToList();
+            Console.WriteLine($"Users count '{users?.Count}'");
         }
 
         static void TestSplitQueryGroupSvc(IServiceScope scope) {

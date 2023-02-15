@@ -4,7 +4,6 @@
     [Title]        NVARCHAR (255)     NOT NULL,
     [Email]        NVARCHAR (255)     NULL,
     [IsDeleted]    BIT                NOT NULL DEFAULT 0,    
-    [Confirmless]  BIT                NOT NULL DEFAULT 0,
     [Phone]        NVARCHAR (255)     NULL,
     [JobTitle]     NVARCHAR (1024)    NULL,
     [Department]   NVARCHAR (1024)    NULL,

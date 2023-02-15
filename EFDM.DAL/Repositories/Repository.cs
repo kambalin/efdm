@@ -8,6 +8,7 @@ using EFDM.Core.Models.Responses;
 using LinqKit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -109,6 +110,17 @@ namespace EFDM.Core.DAL.Repositories {
             using (new ActionExecutor(Context, AutoDetectChanges)) {
                 DbSet.RemoveRange(entities);
             }
+        }
+        
+        public virtual int ExecuteDelete(IDataQuery<TEntity> query) {
+            var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);            
+            return dbQuery.ExecuteDelete();
+        }
+
+        public virtual int ExecuteUpdate(IDataQuery<TEntity> query,
+            Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls) {
+            var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
+            return dbQuery.ExecuteUpdate(setPropertyCalls);
         }
 
         public virtual void Update(params TEntity[] entities) {

@@ -2,6 +2,7 @@
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
 using EFDM.Abstractions.Models.Validation;
+using Microsoft.EntityFrameworkCore.Query;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -16,7 +17,21 @@ namespace EFDM.Abstractions.Services.Domain {
         int ExecutorId { get; }
         IEnumerable<TModel> Fetch(TQuery query = null, bool tracking = false);
         IPagedList<TModel> FetchPaged(TQuery query = null);
+        /// <summary>
+        /// Fetch entities from database with only required fields
+        /// </summary>
+        /// <param name="query">Filter query</param>
+        /// <param name="select">Fields selector</param>
+        /// <param name="tracking">Track entities by the change tracker that are returned or not</param>
+        /// <returns></returns>
         IEnumerable<TModel> FetchLite(TQuery query, Expression<Func<TModel, TModel>> select, bool tracking = false);
+        /// <summary>
+        /// Fetch entities from database with only required fields
+        /// Uses default domain service fields selector (defined in service)
+        /// </summary>
+        /// <param name="query">Filter query</param>
+        /// <param name="tracking">Track entities by the change tracker that are returned or not</param>
+        /// <returns>Result entities from db</returns>
         IEnumerable<TModel> FetchLite(TQuery query, bool tracking = false);
         int Count(TQuery query = null);
         void Add(params TModel[] models);
@@ -24,6 +39,9 @@ namespace EFDM.Abstractions.Services.Domain {
         void Delete(TKey id, bool forceDeleteEvenDeletable = false);
         void Delete(IEnumerable<TModel> entities, bool forceDeleteEvenDeletable = false);
         void Delete(TModel entity, bool forceDeleteEvenDeletable = false);
+        int ExecuteDelete(TQuery query);
+        int ExecuteUpdate(IDataQuery<TModel> query,
+            Expression<Func<SetPropertyCalls<TModel>, SetPropertyCalls<TModel>>> setPropertyCalls);
         TModel Get(TQuery query, bool tracking = false);
         TModel GetById(TKey key, bool tracking = false, IEnumerable<string> includes = null);
         List<TModel> GetByIds(IEnumerable<TKey> keys, bool tracking = false, IEnumerable<string> includes = null);

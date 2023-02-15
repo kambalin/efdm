@@ -6,6 +6,7 @@ using EFDM.Abstractions.Models.Validation;
 using EFDM.Abstractions.Services.Domain;
 using EFDM.Core.Models.Validation;
 using EFDM.Core.Services.Base;
+using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -66,7 +67,7 @@ namespace EFDM.Core.Services.Domain {
             var result = Repository.FetchLite(query, select, tracking);
             return result;
         }
-
+        
         public virtual IEnumerable<TModel> FetchLite(TQuery query, bool tracking = false) {
             return FetchLite(query, LiteSelector, tracking);
         }
@@ -107,6 +108,16 @@ namespace EFDM.Core.Services.Domain {
                 deletable.IsDeleted = true;
             }
             SaveChanges();
+        }
+
+        public virtual int ExecuteDelete(TQuery query) {
+            return Repository.ExecuteDelete(query);
+        }
+
+        public virtual int ExecuteUpdate(IDataQuery<TModel> query,
+            Expression<Func<SetPropertyCalls<TModel>, SetPropertyCalls<TModel>>> setPropertyCalls) {
+            
+            return Repository.ExecuteUpdate(query, setPropertyCalls);
         }
 
         public virtual TModel Get(TQuery query, bool tracking = false) {
