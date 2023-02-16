@@ -107,12 +107,11 @@ namespace EFDM.Test.TestConsole {
                     Login = "VM22HV\\testuser" + Guid.NewGuid(),
                     Title = "Test User " + Guid.NewGuid(),
                     Groups = new List<GroupUser>()
-                };
-                // doesnt work
+                };                
                 user.Groups.Add(new GroupUser { User = user, GroupId = GroupVals.UserGroupId });
                 users.Add(user);
             }
-            var bulkConfig = new BulkConfig { SetOutputIdentity = true };
+            var bulkConfig = new BulkConfig { SetOutputIdentity = true, IncludeGraph = true };
             userSvc.BulkInsert(users, bulkConfig);
             foreach (var user in users) {
                 Console.WriteLine($"User {user.Login} id is '{user.Id}'");
