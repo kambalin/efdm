@@ -29,6 +29,10 @@ namespace EFDM.Core.Services.Domain {
                 return Repository.ExecutorId;
             }
         }
+        public bool AutoDetectChangesEnabled {
+            get { return Repository.AutoDetectChangesEnabled; }
+            set { Repository.AutoDetectChangesEnabled = value; }
+        }
         protected readonly TRepository Repository;
         private Expression<Func<TModel, TModel>> _liteSelector = x => new TModel() { Id = x.Id };
         protected Expression<Func<TModel, TModel>> LiteSelector {

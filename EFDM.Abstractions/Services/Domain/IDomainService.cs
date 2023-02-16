@@ -16,6 +16,10 @@ namespace EFDM.Abstractions.Services.Domain {
         where TQuery : class, IDataQuery<TModel, TKey> {
 
         int ExecutorId { get; }
+        /// <summary>
+        /// Globally affected to DbContext
+        /// </summary>
+        public bool AutoDetectChangesEnabled { get; set; }
         IEnumerable<TModel> Fetch(TQuery query = null, bool tracking = false);
         IPagedList<TModel> FetchPaged(TQuery query = null);
         /// <summary>

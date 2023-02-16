@@ -30,7 +30,11 @@ namespace EFDM.Core.DAL.Repositories {
         public bool AutoDetectChanges { get; set; } = true;
         public virtual int ExecutorId { get {
                 return Context.ExecutorId;
-            } 
+            }
+        }
+        public bool AutoDetectChangesEnabled { 
+            get { return Context.ChangeTracker.AutoDetectChangesEnabled; }
+            set { Context.ChangeTracker.AutoDetectChangesEnabled = value; }
         }
 
         #endregion fields & properties
