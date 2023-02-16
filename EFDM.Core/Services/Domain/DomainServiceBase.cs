@@ -202,6 +202,10 @@ namespace EFDM.Core.Services.Domain {
             Repository.BulkInsert(entities, config);
         }
 
+        public void BulkInsertOrUpdate(IList<TModel> entities, BulkConfig config) {
+            Repository.BulkInsertOrUpdate(entities, config);
+        }
+
         #endregion IDomainService implementation
     }
 }

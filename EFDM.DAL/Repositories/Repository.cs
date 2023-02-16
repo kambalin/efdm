@@ -231,6 +231,10 @@ namespace EFDM.Core.DAL.Repositories {
             Context.BulkInsertWithPreSave(entities, config);
         }
 
+        public void BulkInsertOrUpdate(IList<TEntity> entities, BulkConfig config) {
+            Context.BulkInsertOrUpdateWithPreSave(entities, config);
+        }
+
         #endregion IRepository implementation
 
         private void SetValueNotCollectionNavProp(PropertyInfo property, TEntity entity, TEntity model) {

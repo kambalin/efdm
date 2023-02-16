@@ -58,5 +58,6 @@ namespace EFDM.Abstractions.Services.Domain {
         bool IsCreator(TModel model, int userId);
         void ResetContextState();
         void BulkInsert(IList<TModel> entities, BulkConfig config);
+        void BulkInsertOrUpdate(IList<TModel> entities, BulkConfig config);
     }
 }

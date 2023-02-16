@@ -179,6 +179,16 @@ namespace EFDM.Core.DAL.Providers {
             this.BulkInsert(entities, config);
         }
 
+        public void BulkInsertOrUpdateWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config)
+            where TEntity : class {
+
+            foreach (TEntity entity in entities) {
+                PreSaveDateAuditValues(entity);
+                PreSavePrincipalAuditValues(entity);
+            }
+            this.BulkInsertOrUpdate(entities, config);
+        }
+
         public void ClearChangeTracker() {
             ChangeTracker.Clear();
         }

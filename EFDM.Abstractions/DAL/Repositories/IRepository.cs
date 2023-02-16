@@ -47,5 +47,6 @@ namespace EFDM.Abstractions.DAL.Repositories {
         bool IsAttached(TKey id);
         void ClearChangeTracker();
         void BulkInsert(IList<TEntity> entities, BulkConfig config);
+        void BulkInsertOrUpdate(IList<TEntity> entities, BulkConfig config);
     }
 }
