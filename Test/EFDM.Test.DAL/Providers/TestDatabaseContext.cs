@@ -32,6 +32,8 @@ namespace EFDM.Test.DAL.Providers {
         public DbSet<AuditGroupProperty> AuditGroupProperties { get; set; }
         public DbSet<TaskAnswer> TaskAnswers { get; set; }
         public DbSet<TaskAnswerComment> TaskAnswerComments { get; set; }
+        public DbSet<AuditTaskAnswerEvent> AuditTaskAnswerEvents { get; set; }
+        public DbSet<AuditTaskAnswerProperty> AuditTaskAnswerProperties { get; set; }
 
         #endregion dbsets
 
@@ -78,6 +80,11 @@ namespace EFDM.Test.DAL.Providers {
                 }
             );
             Auditor.Map<Group, AuditGroupEvent, AuditGroupProperty>(
+                (auditEvent, entry, eventEntity) => {
+                    eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
+                }
+            );
+            Auditor.Map<TaskAnswer, AuditTaskAnswerEvent, AuditTaskAnswerProperty>(
                 (auditEvent, entry, eventEntity) => {
                     eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
                 }

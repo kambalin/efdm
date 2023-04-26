@@ -71,6 +71,8 @@
     <Build Include="Tables\AuditGroupEvents.sql" />
     <Build Include="Tables\TaskAnswers.sql" />
     <Build Include="Tables\TaskAnswerComments.sql" />
+    <Build Include="Tables\AuditTaskAnswerEvents.sql" />
+    <Build Include="Tables\AuditTaskAnswerProperties.sql" />
   </ItemGroup>
   <ItemGroup>
     <PostDeploy Include="Scripts\Script.PostDeployment.sql" />

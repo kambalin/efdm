@@ -10,5 +10,6 @@ namespace EFDM.Abstractions.Audit {
         ConcurrentDictionary<Type, byte> IncludedTypes { get; set; }
         ConcurrentDictionary<Type, List<int>> ExcludedTypeStateActions { get; set; }
         ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; set; }
+        ConcurrentDictionary<Type, HashSet<string>> OnlyIncludedTypeProperties { get; set; }
     }
 }

@@ -1,6 +1,4 @@
 ﻿using EFDM.Core.Models.Domain;
-using EFDM.Test.Core.Models.Domain.Base;
-using System.Collections.Generic;
 
 namespace EFDM.Test.Core.Models.Domain {
 
@@ -8,5 +6,7 @@ namespace EFDM.Test.Core.Models.Domain {
 
         public decimal AnswerValue { get; set; }
         public virtual TaskAnswerComment AnswerComment { get; set; }
+        public string TextField1 { get; set; }
+        public string TextField2 { get; set; }
     }
 }

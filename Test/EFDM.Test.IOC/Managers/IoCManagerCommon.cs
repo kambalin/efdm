@@ -28,15 +28,20 @@ namespace EFDM.Test.IOC.Managers {
                 Enabled = true,
                 IncludedTypes = new ConcurrentDictionary<Type, byte>() {
                     [typeof(Group)] = 1,
-                    [typeof(GroupUser)] = 1
+                    [typeof(GroupUser)] = 1,
+                    [typeof(TaskAnswer)] = 1
                 },
                 ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() {
                     [typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }
                 },
-                IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
+                IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(),
+                OnlyIncludedTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
             };
             auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>() {
                 $"{nameof(Group.TextField1)}"
+            });
+            auditSettings.OnlyIncludedTypeProperties.TryAdd(typeof(TaskAnswer), new HashSet<string>() {
+                $"{nameof(TaskAnswer.TextField1)}"
             });
 
             services.AddScoped(provider => new TestDatabaseContext(

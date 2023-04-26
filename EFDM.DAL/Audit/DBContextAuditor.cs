@@ -24,6 +24,7 @@ namespace EFDM.Core.Audit {
         public ConcurrentDictionary<string, byte> GlobalIgnoredProperties { get; } = new ConcurrentDictionary<string, byte>();
         public ConcurrentDictionary<Type, byte> IncludedTypes { get; } = new ConcurrentDictionary<Type, byte>();        
         public ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
+        public ConcurrentDictionary<Type, HashSet<string>> OnlyIncludedTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
 
         protected ConcurrentDictionary<Type, IMappingInfo> Mappings { get; } = new ConcurrentDictionary<Type, IMappingInfo>();
         protected ConcurrentDictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new ConcurrentDictionary<Type, List<int>>();
@@ -47,6 +48,8 @@ namespace EFDM.Core.Audit {
                     IncludedTypes = auditSettings.IncludedTypes;
                 if (auditSettings.IgnoredTypeProperties != null)
                     IgnoredTypeProperties = auditSettings.IgnoredTypeProperties;
+                if (auditSettings.OnlyIncludedTypeProperties != null)
+                    OnlyIncludedTypeProperties = auditSettings.OnlyIncludedTypeProperties;
             }
         }
 
@@ -247,6 +250,9 @@ namespace EFDM.Core.Audit {
                 && GlobalIgnoredProperties.ContainsKey(propName)) {
                 return false;
             }
+            var onlyIncludedProperties = EnsurePropertiesOnlyIncludedAttrCache(entityType);
+            if (onlyIncludedProperties != null && !onlyIncludedProperties.Contains(propName))
+                return false;
             return true;
         }
 
@@ -254,6 +260,12 @@ namespace EFDM.Core.Audit {
             if (!IgnoredTypeProperties.ContainsKey(type))
                 IgnoredTypeProperties[type] = null;
             return IgnoredTypeProperties[type];
+        }
+
+        protected HashSet<string> EnsurePropertiesOnlyIncludedAttrCache(Type type) {
+            if (!OnlyIncludedTypeProperties.ContainsKey(type))
+                OnlyIncludedTypeProperties[type] = null;
+            return OnlyIncludedTypeProperties[type];
         }
 
         protected EntityDBData GetEntityName(EntityEntry entry) {

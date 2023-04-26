@@ -56,8 +56,10 @@ namespace EFDM.Test.TestConsole {
                     //DeleteExecuteUsers(scope);
                     //GetUsersFromGroup(scope);
                     //UpdateExecuteUsers(scope);                    
-                    BulkInsertUsers(scope);
+                    //BulkInsertUsers(scope);
                     //InsertUsers(scope);
+                    //AddTaskAnswers(scope);
+                    TestAuditTaskAnswers(scope);
                 }
             }
 
@@ -78,6 +80,42 @@ namespace EFDM.Test.TestConsole {
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestAuditTaskAnswers(IServiceScope scope) {
+            var take = 1;
+            var taQuery = new TaskAnswerQuery {                
+                Take = take,
+                Sorts = new[] { new Sort { Field = nameof(TaskAnswer.Id), Desc = true } },
+            };
+            var taSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
+            var taskAnswers = taSvc.Fetch(taQuery, true);
+
+            Random rnd = new Random();            
+            foreach (var ta in taskAnswers) {
+                ta.AnswerValue = rnd.Next(0, 100);
+                ta.TextField1 = $"textfield1 {DateTime.Now}";
+                ta.TextField2 = $"textfield2 {DateTime.Now}";
+                //groupSvc.Save(group);
+            }
+            taSvc.SaveChanges();
+        }
+
+        static void AddTaskAnswers(IServiceScope scope) {
+            var times = 2;
+            var sw = new Stopwatch();
+            sw.Start();
+            var taSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
+            for (var i = 1; i <= times; i++) {
+                var ta = new TaskAnswer {
+                    AnswerValue = i,
+                    TextField1 = $"{i}TeField1",
+                    TextField2 = $"{i}TeField2",
+                };
+                taSvc.Save(ta);
+            }            
+            sw.Stop();
+            Console.WriteLine("Elapsed={0}", sw.Elapsed);
         }
 
         static void InsertUsers(IServiceScope scope) {
