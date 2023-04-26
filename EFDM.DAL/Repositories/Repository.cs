@@ -28,11 +28,12 @@ namespace EFDM.Core.DAL.Repositories {
         public virtual EFDMDatabaseContext Context { get; }
         public DbSet<TEntity> DbSet { get; protected set; }
         public bool AutoDetectChanges { get; set; } = true;
-        public virtual int ExecutorId { get {
+        public virtual int ExecutorId {
+            get {
                 return Context.ExecutorId;
             }
         }
-        public bool AutoDetectChangesEnabled { 
+        public bool AutoDetectChangesEnabled {
             get { return Context.ChangeTracker.AutoDetectChangesEnabled; }
             set { Context.ChangeTracker.AutoDetectChangesEnabled = value; }
         }
@@ -116,9 +117,9 @@ namespace EFDM.Core.DAL.Repositories {
                 DbSet.RemoveRange(entities);
             }
         }
-        
+
         public virtual int ExecuteDelete(IDataQuery<TEntity> query) {
-            var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);            
+            var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
             return dbQuery.ExecuteDelete();
         }
 
@@ -303,7 +304,7 @@ namespace EFDM.Core.DAL.Repositories {
                 dbQuery = IncludeByQuery(dbQuery, query);
                 dbQuery = FilterByQuery(dbQuery, query);
                 dbQuery = SortByQuery(dbQuery, query);
-                dbQuery = PageByQuery(dbQuery, query);                
+                dbQuery = PageByQuery(dbQuery, query);
             }
             return dbQuery;
         }
@@ -331,8 +332,7 @@ namespace EFDM.Core.DAL.Repositories {
         }
 
         internal IQueryable<TEntity> SortByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query) {
-            if (query.Sorts == null || query.Sorts.Count() == 0)
-            {
+            if (query.Sorts == null || query.Sorts.Count() == 0) {
                 dbQuery = _orderBy(dbQuery, nameof(IdKeyEntityBase<TKey>.Id), true, false);
                 return dbQuery;
             }

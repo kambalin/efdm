@@ -4,8 +4,6 @@ using EFDM.Test.Core.DataQueries.Models;
 using EFDM.Test.Core.Models.Domain;
 using EFDM.Test.Core.Services.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Linq;
 
 namespace EFDM.Test.Core.Services.Domain {
 
@@ -22,7 +20,7 @@ namespace EFDM.Test.Core.Services.Domain {
             IRepository<TaskAnswer, int> repository,
             ILogger logger
         ) : base(repository, logger) {
-            
+
         }
 
         #endregion constructors

@@ -18,7 +18,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace EFDM.Test.TestConsole {
@@ -84,14 +83,14 @@ namespace EFDM.Test.TestConsole {
 
         static void TestAuditTaskAnswers(IServiceScope scope) {
             var take = 1;
-            var taQuery = new TaskAnswerQuery {                
+            var taQuery = new TaskAnswerQuery {
                 Take = take,
                 Sorts = new[] { new Sort { Field = nameof(TaskAnswer.Id), Desc = true } },
             };
             var taSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
             var taskAnswers = taSvc.Fetch(taQuery, true);
 
-            Random rnd = new Random();            
+            Random rnd = new Random();
             foreach (var ta in taskAnswers) {
                 ta.AnswerValue = rnd.Next(0, 100);
                 ta.TextField1 = $"textfield1 {DateTime.Now}";
@@ -113,7 +112,7 @@ namespace EFDM.Test.TestConsole {
                     TextField2 = $"{i}TeField2",
                 };
                 taSvc.Save(ta);
-            }            
+            }
             sw.Stop();
             Console.WriteLine("Elapsed={0}", sw.Elapsed);
         }
@@ -145,7 +144,7 @@ namespace EFDM.Test.TestConsole {
                     Login = "VM22HV\\testuser" + Guid.NewGuid(),
                     Title = "Test User " + Guid.NewGuid(),
                     Groups = new List<GroupUser>()
-                };                
+                };
                 user.Groups.Add(new GroupUser { User = user, GroupId = GroupVals.UserGroupId });
                 users.Add(user);
             }
@@ -154,7 +153,7 @@ namespace EFDM.Test.TestConsole {
             foreach (var user in users) {
                 Console.WriteLine($"User {user.Login} id is '{user.Id}'");
             }
-        }        
+        }
 
         static void UpdateExecuteUsers(IServiceScope scope) {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
@@ -194,7 +193,7 @@ namespace EFDM.Test.TestConsole {
         }
 
         static void GetUsersFromGroup(IServiceScope scope) {
-            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();           
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             var userQuery = new UserQuery {
                 GroupId = GroupVals.UserGroupId,
             };
@@ -206,7 +205,7 @@ namespace EFDM.Test.TestConsole {
             var groupQuery = new GroupQuery {
                 Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
                 Includes = new[] {
-                    $"{nameof(Group.CreatedBy)}",                    
+                    $"{nameof(Group.CreatedBy)}",
                     $"{nameof(Group.Users)}.{nameof(GroupUser.User)}"
                 },
                 IsDeleted = false,
@@ -214,8 +213,8 @@ namespace EFDM.Test.TestConsole {
             };
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var groups = groupSvc.Fetch(groupQuery);
-            
-            foreach(var group in groups) {
+
+            foreach (var group in groups) {
                 Console.WriteLine($"Group '{group.Title}', Users count '{group.Users?.Count}'");
             }
 
@@ -245,13 +244,13 @@ namespace EFDM.Test.TestConsole {
         }
 
         static void TestTaskAnswerService(IServiceScope scope) {
-            var entitySvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();            
+            var entitySvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
             var taskAnswer = new TaskAnswer();
             taskAnswer.AnswerValue = 1;
             entitySvc.Save(taskAnswer);
         }
 
-        static void TestModelXmlSerialization(IServiceScope scope) {            
+        static void TestModelXmlSerialization(IServiceScope scope) {
             var xao = new XmlAttributeOverrides();
             xao.Add(typeof(EntityBase<int>), "CreatedBy", new XmlAttributes {
                 XmlIgnore = true

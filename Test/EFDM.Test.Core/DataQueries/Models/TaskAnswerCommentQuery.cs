@@ -1,8 +1,6 @@
 ﻿using EFDM.Abstractions.DataQueries;
 using EFDM.Core.DataQueries;
 using EFDM.Test.Core.Models.Domain;
-using System;
-using System.Linq;
 
 namespace EFDM.Test.Core.DataQueries.Models {
 

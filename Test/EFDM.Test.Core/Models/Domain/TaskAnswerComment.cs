@@ -1,6 +1,4 @@
 ﻿using EFDM.Core.Models.Domain;
-using EFDM.Test.Core.Models.Domain.Base;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace EFDM.Test.Core.Models.Domain {

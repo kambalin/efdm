@@ -22,7 +22,7 @@ namespace EFDM.Core.Audit {
 
         public bool Enabled { get; set; }
         public ConcurrentDictionary<string, byte> GlobalIgnoredProperties { get; } = new ConcurrentDictionary<string, byte>();
-        public ConcurrentDictionary<Type, byte> IncludedTypes { get; } = new ConcurrentDictionary<Type, byte>();        
+        public ConcurrentDictionary<Type, byte> IncludedTypes { get; } = new ConcurrentDictionary<Type, byte>();
         public ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
         public ConcurrentDictionary<Type, HashSet<string>> OnlyIncludedTypeProperties { get; } = new ConcurrentDictionary<Type, HashSet<string>>();
 

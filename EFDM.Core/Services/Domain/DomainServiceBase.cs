@@ -16,7 +16,7 @@ using System.Linq.Expressions;
 
 namespace EFDM.Core.Services.Domain {
 
-    public abstract class DomainServiceBase<TModel, TQuery, TKey, TRepository> : ServiceBase, 
+    public abstract class DomainServiceBase<TModel, TQuery, TKey, TRepository> : ServiceBase,
         IDomainService<TModel, TQuery, TKey>
         where TModel : class, IIdKeyEntity<TKey>, new()
         where TKey : IComparable, IEquatable<TKey>
@@ -25,7 +25,8 @@ namespace EFDM.Core.Services.Domain {
 
         #region fields & properties
 
-        public virtual int ExecutorId { get {
+        public virtual int ExecutorId {
+            get {
                 return Repository.ExecutorId;
             }
         }
@@ -72,7 +73,7 @@ namespace EFDM.Core.Services.Domain {
             var result = Repository.FetchLite(query, select, tracking);
             return result;
         }
-        
+
         public virtual IEnumerable<TModel> FetchLite(TQuery query, bool tracking = false) {
             return FetchLite(query, LiteSelector, tracking);
         }
@@ -121,7 +122,7 @@ namespace EFDM.Core.Services.Domain {
 
         public virtual int ExecuteUpdate(IDataQuery<TModel> query,
             Expression<Func<SetPropertyCalls<TModel>, SetPropertyCalls<TModel>>> setPropertyCalls) {
-            
+
             return Repository.ExecuteUpdate(query, setPropertyCalls);
         }
 

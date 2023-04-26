@@ -54,7 +54,7 @@ namespace EFDM.Core.DAL.Providers {
                 if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {
                     PreSaveDateAuditValues(entry.Entity);
                     PreSavePrincipalAuditValues(entry.Entity);
-                    switch (entry.State) {                        
+                    switch (entry.State) {
                         case EntityState.Modified:
                             var auditDateEntity = entry.Entity as IAuditableDateEntity;
                             var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
@@ -62,7 +62,7 @@ namespace EFDM.Core.DAL.Providers {
                                 entry.Property($"{nameof(auditDateEntity.Created)}").IsModified = false;
                             if (auditPrincipalEntity != null)
                                 entry.Property($"{nameof(auditPrincipalEntity.CreatedById)}").IsModified = false;
-                            break;                        
+                            break;
                     }
                 }
             }
@@ -81,7 +81,7 @@ namespace EFDM.Core.DAL.Providers {
                     auditPrincipalEntity.ModifiedById = auditPrincipalEntity.CreatedById;
             }
             // if the creator was not forcibly set (for example, when it has to be system user)
-            if (auditPrincipalEntity.CreatedById < 1) 
+            if (auditPrincipalEntity.CreatedById < 1)
                 auditPrincipalEntity.CreatedById = ExecutorId;
         }
 
@@ -169,7 +169,7 @@ namespace EFDM.Core.DAL.Providers {
             return affectedRows;
         }
 
-        public void BulkInsertWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config) 
+        public void BulkInsertWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config)
             where TEntity : class {
 
             foreach (TEntity entity in entities) {
