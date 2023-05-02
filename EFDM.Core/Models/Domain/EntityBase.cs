@@ -17,9 +17,17 @@ namespace EFDM.Core.Models.Domain {
 
         [NotMapped]
         [JsonIgnore]
-        public bool PreserveLastModified { set; get; }
+        public bool PreserveLastModified { get; set; }
         [NotMapped]
         [JsonIgnore]
-        public bool PreserveLastModifiedBy { set; get; }
+        public bool PreserveLastModifiedBy { get; set; }
+        [NotMapped]
+        [JsonIgnore]
+        public bool PreserveLastModifiedFields {
+            set {
+                PreserveLastModified = value;
+                PreserveLastModifiedBy = value;
+            } 
+        }
     }
 }
