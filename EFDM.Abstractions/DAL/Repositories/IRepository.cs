@@ -11,7 +11,7 @@ using System.Linq.Expressions;
 namespace EFDM.Abstractions.DAL.Repositories {
 
     public interface IRepository<TEntity, TKey>
-        where TEntity : IIdKeyEntity<TKey>
+        where TEntity : IIdKeyEntity<TKey>, new()
         where TKey : IComparable, IEquatable<TKey> {
 
         bool AutoDetectChanges { get; set; }
@@ -52,5 +52,11 @@ namespace EFDM.Abstractions.DAL.Repositories {
         void ClearChangeTracker();
         void BulkInsert(IList<TEntity> entities, BulkConfig config);
         void BulkInsertOrUpdate(IList<TEntity> entities, BulkConfig config);
+        /// <summary>
+        /// Fetch entity id column values from table
+        /// </summary>
+        /// <param name="query">Query for filtering</param>
+        /// <returns>List of Id values</returns>
+        IEnumerable<TKey> FetchIds(IDataQuery<TEntity> query);
     }
 }

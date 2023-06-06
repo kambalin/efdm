@@ -6,7 +6,7 @@ using System;
 namespace EFDM.Test.DAL.Repositories {
 
     public class TestRepository<TEntity, TKey> : Repository<TEntity, TKey>
-        where TEntity : IdKeyEntityBase<TKey>
+        where TEntity : IdKeyEntityBase<TKey>, new()
         where TKey : IComparable, IEquatable<TKey> {
 
         #region fields & properties

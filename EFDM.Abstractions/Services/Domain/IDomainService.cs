@@ -63,5 +63,11 @@ namespace EFDM.Abstractions.Services.Domain {
         void ResetContextState();
         void BulkInsert(IList<TModel> entities, BulkConfig config);
         void BulkInsertOrUpdate(IList<TModel> entities, BulkConfig config);
+        /// <summary>
+        /// Fetch entity id column values from table
+        /// </summary>
+        /// <param name="query">Query for filtering</param>
+        /// <returns>List of Id values</returns>
+        IEnumerable<TKey> FetchIds(IDataQuery<TModel> query);
     }
 }

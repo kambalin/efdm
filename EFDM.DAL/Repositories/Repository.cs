@@ -20,7 +20,7 @@ using System.Reflection;
 namespace EFDM.Core.DAL.Repositories {
 
     public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
-        where TEntity : IdKeyEntityBase<TKey>
+        where TEntity : IdKeyEntityBase<TKey>, new()
         where TKey : IComparable, IEquatable<TKey> {
 
         #region fields & properties
@@ -93,6 +93,14 @@ namespace EFDM.Core.DAL.Repositories {
             if (tracking)
                 DbSet.AttachRange(entities);
             return entities;
+        }
+
+        public IEnumerable<TKey> FetchIds(IDataQuery<TEntity> query) {
+            var dbQuery = DbSet.AsNoTracking().AsQueryable();
+            Expression<Func<TEntity, TEntity>> selector = x => new TEntity { Id = x.Id };
+            dbQuery = ApplyQuery(dbQuery, query);
+            var ids = dbQuery.Select(selector).ToList().Select(x => x.Id);
+            return ids;
         }
 
         public virtual int Count(IDataQuery<TEntity> query = null) {

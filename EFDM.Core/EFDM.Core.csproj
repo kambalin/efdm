@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net7.0</TargetFramework>
     <Version>$(VersionPrefix)</Version>
-	<VersionPrefix>1.7.5</VersionPrefix>
+	<VersionPrefix>1.7.6</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>

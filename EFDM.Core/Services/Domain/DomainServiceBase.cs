@@ -211,6 +211,10 @@ namespace EFDM.Core.Services.Domain {
             Repository.BulkInsertOrUpdate(entities, config);
         }
 
+        public IEnumerable<TKey> FetchIds(IDataQuery<TModel> query) {
+            return Repository.FetchIds(query);
+        }
+
         #endregion IDomainService implementation
     }
 }

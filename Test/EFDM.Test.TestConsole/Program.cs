@@ -58,7 +58,8 @@ namespace EFDM.Test.TestConsole {
                     //BulkInsertUsers(scope);
                     //InsertUsers(scope);
                     //AddTaskAnswers(scope);
-                    TestAuditTaskAnswers(scope);
+                    //TestAuditTaskAnswers(scope);
+                    GetUserIds(scope);
                 }
             }
 
@@ -79,6 +80,13 @@ namespace EFDM.Test.TestConsole {
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void GetUserIds(IServiceScope scope) {
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
+            var userQuery = new UserQuery();
+            var userIds = userSvc.FetchIds(userQuery).ToList();
+            Console.WriteLine($"Users count '{userIds?.Count}'");
         }
 
         static void TestAuditTaskAnswers(IServiceScope scope) {
