@@ -18,10 +18,7 @@ namespace EFDM.Core.DAL.Providers
 
         public abstract int ExecutorId { get; protected set; }
         public DateTime? CommitTime { get; set; }
-        public IDBContextAuditor Auditor
-        {
-            get { return _auditor; }
-        }
+        public IDBContextAuditor Auditor { get { return _auditor; } }
         public DbContext DbContext { get { return this; } }
 
         protected readonly string ConnectionString;

@@ -28,8 +28,8 @@ namespace EFDM.Abstractions.DAL.Repositories
         void Update(params TEntity[] entities);
         void Delete(params TEntity[] entities);
         /// <summary>
-        ///     Deletes all database rows for the entity instances which match the query. 
-        ///     Executes immediately and does not interact with the EF change tracker (see efcore bulk operations).
+        /// Deletes all database rows for the entity instances which match the query. 
+        /// Executes immediately and does not interact with the EF change tracker (see efcore bulk operations).
         /// </summary>
         /// <param name="query">Query for entities.</param>
         /// <returns>The total number of rows deleted in the database.</returns>
@@ -43,7 +43,18 @@ namespace EFDM.Abstractions.DAL.Repositories
         /// <returns>The total number of rows updated in the database.</returns>
         int ExecuteUpdate(IDataQuery<TEntity> query,
             Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls);
+        /// <summary>
+        /// Save entity, even new, detached or not trackable
+        /// </summary>
+        /// <param name="entity">Entity to save</param>
+        /// <returns></returns>
         TEntity Save(TEntity entity);
+        /// <summary>
+        /// Save entity with only specified properties
+        /// </summary>
+        /// <param name="model">Entity to save</param>
+        /// <param name="updateProperties">Properties that must be updated</param>
+        /// <returns></returns>
         TEntity Save(TEntity model, params Expression<Func<TEntity, object>>[] updateProperties);
         int SaveChanges();
         IQueryable<TEntity> Queryable();

@@ -28,13 +28,7 @@ namespace EFDM.Core.DAL.Repositories
         public virtual EFDMDatabaseContext Context { get; }
         public DbSet<TEntity> DbSet { get; protected set; }
         public bool AutoDetectChanges { get; set; } = true;
-        public virtual int ExecutorId
-        {
-            get
-            {
-                return Context.ExecutorId;
-            }
-        }
+        public virtual int ExecutorId { get { return Context.ExecutorId; } }
         public bool AutoDetectChangesEnabled
         {
             get { return Context.ChangeTracker.AutoDetectChangesEnabled; }
@@ -292,18 +286,14 @@ namespace EFDM.Core.DAL.Repositories
             // get value, if object follow name convention like StatusId for Status, where StatusId is Foreign Key
             var piId = type.GetProperty($"{property.Name}Id");
 
-            if (id != null && piId != null)
-            { // if property is a class for FK
+            if (id != null && piId != null) // if property is a class for FK
                 piId.SetValue(entity, id);
-            }
             else
             {
                 if (property.PropertyType == type && id?.Equals(type.GetProperty("Id").GetValue(model)) == true)
                     property.SetValue(entity, model);
                 else
-                {
                     property.SetValue(entity, value);
-                }
             }
         }
 
@@ -330,7 +320,6 @@ namespace EFDM.Core.DAL.Repositories
             foreach (var oldItem in dbItemsMap.Values)
                 accessor.Remove(entity, oldItem);
         }
-
         /// <summary>
         /// Return navigation properties
         /// </summary>
@@ -346,17 +335,17 @@ namespace EFDM.Core.DAL.Repositories
             return (navigationProps, collectionProps, notCollectionProps);
         }
 
-        protected IQueryable<TEntity> ApplyQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
+        protected virtual IQueryable<TEntity> ApplyQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
         {
-            if (query != null)
-            {
-                if (query.SplitQuery)
-                    dbQuery = dbQuery.AsSplitQuery();
-                dbQuery = IncludeByQuery(dbQuery, query);
-                dbQuery = FilterByQuery(dbQuery, query);
-                dbQuery = SortByQuery(dbQuery, query);
-                dbQuery = PageByQuery(dbQuery, query);
-            }
+            if (query == null)
+                return dbQuery;
+
+            if (query.SplitQuery)
+                dbQuery = dbQuery.AsSplitQuery();
+            dbQuery = IncludeByQuery(dbQuery, query);
+            dbQuery = FilterByQuery(dbQuery, query);
+            dbQuery = SortByQuery(dbQuery, query);
+            dbQuery = PageByQuery(dbQuery, query);
             return dbQuery;
         }
 
@@ -366,18 +355,18 @@ namespace EFDM.Core.DAL.Repositories
                 .Select(x => x.PropertyInfo.GetValue(entity));
         }
 
-        internal IQueryable<TEntity> FilterByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
+        protected virtual IQueryable<TEntity> FilterByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
         {
             var expr = query.ToFilter().ToExpression();
             return expr != null ? dbQuery.AsExpandable().Where(expr) : dbQuery;
         }
 
-        internal IQueryable<TEntity> IncludeByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
+        protected virtual IQueryable<TEntity> IncludeByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
         {
             return query.Includes?.Aggregate(dbQuery, (current, include) => current.Include(include)) ?? dbQuery;
         }
 
-        internal IQueryable<TEntity> PageByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
+        protected virtual IQueryable<TEntity> PageByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
         {
             if (query.Skip > 0)
                 dbQuery = dbQuery.Skip(query.Skip);
@@ -386,7 +375,7 @@ namespace EFDM.Core.DAL.Repositories
             return dbQuery;
         }
 
-        internal IQueryable<TEntity> SortByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
+        protected virtual IQueryable<TEntity> SortByQuery(IQueryable<TEntity> dbQuery, IDataQuery<TEntity> query)
         {
             if (query.Sorts == null || query.Sorts.Count() == 0)
             {

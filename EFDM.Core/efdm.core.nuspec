@@ -2,16 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>0.7.8</version>
+		<version>0.7.9</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-      * Breaking change - DictDeletableDataQueryBase.Title property from Contains to Equals.
-      * Rename IDomainService.ResetContextState to ClearChangeTracker.
-      * Added DictDeletableDataQueryBase TitleContans and TitleSeparateContains with contains selector.
+      Repository - changed ApplyQuery, FilterByQuery, IncludeByQuery, SortByQuery methods access modifier to protected virtual
     </releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>
