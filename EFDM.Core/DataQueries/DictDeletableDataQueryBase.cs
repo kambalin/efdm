@@ -9,14 +9,22 @@ namespace EFDM.Core.DataQueries {
         where TKey : IComparable, IEquatable<TKey> {
 
         public string Title { get; set; }
+        public string TitleContains { get; set; }
+        public string TitleSeparateContains { get; set; }
 
         public override IQueryFilter<TModel> ToFilter() {
             var and = new QueryFilter<TModel>();
 
-            if (!string.IsNullOrEmpty(Title)) {
-                foreach (var word in GetWords(Title)) {
+            if (!string.IsNullOrEmpty(Title))
+                and.Add(x => x.Title.Equals(Title));
+
+            if (!string.IsNullOrEmpty(TitleContains))
+                and.Add(x => x.Title.Contains(TitleContains));
+
+            if (!string.IsNullOrEmpty(TitleSeparateContains))
+            {
+                foreach (var word in GetWords(TitleSeparateContains))
                     and.Add(x => x.Title.Contains(word));
-                }
             }
 
             return base.ToFilter().Add(and);

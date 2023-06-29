@@ -199,7 +199,7 @@ namespace EFDM.Core.Services.Domain {
             return false;
         }
 
-        public virtual void ResetContextState() {
+        public virtual void ClearChangeTracker() {
             Repository.ClearChangeTracker();
         }
 
