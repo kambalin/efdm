@@ -19,7 +19,8 @@ You can find working example in `EFDM.Test.*` projects in `Test` folder
 Inherit own entities from EFDM.Core.Models.Domain
 
 ```c#
-public class Group : DictIntDeletableEntity {
+public class Group : DictIntDeletableEntity
+{
 	public int TypeId { get; set; }
 	public virtual GroupType Type { get; set; }
 	public virtual ICollection<GroupUser> Users { get; set; }
@@ -28,7 +29,8 @@ public class Group : DictIntDeletableEntity {
 
 ### Query entities
 ```c#
-public class GroupQuery : DictIntDeletableDataQuery<Group> {
+public class GroupQuery : DictIntDeletableDataQuery<Group>
+{
 	public int[] UserIds { get; set; }
 	public int[] TypeIds { get; set; }
 
@@ -50,20 +52,21 @@ public class GroupQuery : DictIntDeletableDataQuery<Group> {
 Create domain service class for entity
 
 ```c#
-public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService {
-        
+public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService
+{        
 	readonly IRepository<User, int> UserRepo;
 
 	public GroupService(            
 		IRepository<User, int> userRepo,
 		IRepository<Group, int> repository,
 		ILogger logger
-	) : base(repository, logger) {
-
+	) : base(repository, logger) 
+	{
 		UserRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
 	}
 
-	public void AddUser(int groupId, int userId) {
+	public void AddUser(int groupId, int userId)
+	{
 		Group group = GetById(groupId);
 
 		User user = UserRepo.Fetch(new UserQuery {
@@ -80,7 +83,8 @@ public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepositor
 		UserRepo.Save(user);
 	}
 
-	public void RemoveUser(int groupId, int userId) {
+	public void RemoveUser(int groupId, int userId)
+	{
 		Group group = GetById(groupId);
 
 		User user = UserRepo.Fetch(new UserQuery {
@@ -103,8 +107,8 @@ public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepositor
 Create own database context class inherited from `EFDM.Core.DAL.Providers.EFDMDatabaseContext`
 
 ```c#
-public class TestDatabaseContext : EFDMDatabaseContext {
-
+public class TestDatabaseContext : EFDMDatabaseContext
+{
 	#region fields & props
 
 	public override int ExecutorId { get; protected set; } = UserVals.System.Id;
@@ -123,22 +127,26 @@ public class TestDatabaseContext : EFDMDatabaseContext {
 
 	public TestDatabaseContext(DbContextOptions<TestDatabaseContext> options,
 		ILoggerFactory factory = null, IAuditSettings auditSettings = null)
-		: base(options, factory, auditSettings) {
+		: base(options, factory, auditSettings)
+	{
 	}
 
 	public TestDatabaseContext(string connectionString, IAuditSettings auditSettings = null)
-		: base(connectionString, auditSettings) {
+		: base(connectionString, auditSettings) 
+	{
 	}
 
 	#endregion constructors
 
 	#region context config
 
-	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {		
+	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
+	{		
 		base.OnConfiguring(optionsBuilder);		
 	}
 
-	protected override void OnModelCreating(ModelBuilder builder) {
+	protected override void OnModelCreating(ModelBuilder builder) 
+	{
 		base.OnModelCreating(builder);
 		builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 	}
@@ -147,7 +155,8 @@ public class TestDatabaseContext : EFDMDatabaseContext {
 
 	#region audit config
 
-	public override void InitAuditMapping() {		
+	public override void InitAuditMapping() 
+	{		
 	}
 
 	#endregion audit config
@@ -158,13 +167,16 @@ public class TestDatabaseContext : EFDMDatabaseContext {
 Configure audit entities creation in own database context by overriding InitAuditMapping method
 
 ```c#
-public override void InitAuditMapping() {
+public override void InitAuditMapping()
+{
 	Auditor.Map<Group, AuditGroupEvent, AuditGroupProperty>(
-		(auditEvent, entry, eventEntity) => {
+		(auditEvent, entry, eventEntity) => 
+		{
 			eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
 		}
 	);
-	Auditor.SetEventCommonAction<IAuditEventBase<long>>((auditEvent, entry, eventEntity) => {
+	Auditor.SetEventCommonAction<IAuditEventBase<long>>((auditEvent, entry, eventEntity) =>
+	{
 		eventEntity.ActionId = entry.Action;
 		eventEntity.CreatedById = ExecutorId;
 		eventEntity.ObjectType = entry.EntityType.Name;
@@ -173,20 +185,24 @@ public override void InitAuditMapping() {
 		Add(eventEntity);
 		BaseSaveChanges();
 
-		Func<IAuditPropertyBase<long, long>> createPropertyEntity = () => {
+		Func<IAuditPropertyBase<long, long>> createPropertyEntity = () =>
+		{
 			var res = (Activator.CreateInstance(Auditor.GetPropertyType(entry.EntityType))) as IAuditPropertyBase<long, long>;
 			res.AuditId = eventEntity.Id;
 			return res;
 		};
-		Action<IAuditPropertyBase<long, long>> savePropertyEntity = (pe) => {
+		Action<IAuditPropertyBase<long, long>> savePropertyEntity = (pe) =>
+		{
 			if (string.IsNullOrEmpty(pe.Name))
 				return;
 			Add(pe);
 			BaseSaveChanges();
 		};
-		switch (entry.Action) {
+		switch (entry.Action)
+		{
 			case AuditStateActionVals.Insert:
-				foreach (var columnVal in entry.ColumnValues) {
+				foreach (var columnVal in entry.ColumnValues)
+				{
 					var propertyEntity = createPropertyEntity();
 					propertyEntity.Name = columnVal.Key;
 					propertyEntity.NewValue = Convert.ToString(columnVal.Value);
@@ -194,7 +210,8 @@ public override void InitAuditMapping() {
 				}
 				break;
 			case AuditStateActionVals.Delete:
-				foreach (var columnVal in entry.ColumnValues) {
+				foreach (var columnVal in entry.ColumnValues)
+				{
 					var propertyEntity = createPropertyEntity();
 					propertyEntity.Name = columnVal.Key;
 					propertyEntity.OldValue = Convert.ToString(columnVal.Value);
@@ -202,7 +219,8 @@ public override void InitAuditMapping() {
 				}
 				break;
 			case AuditStateActionVals.Update:
-				foreach (var change in entry.Changes) {
+				foreach (var change in entry.Changes)
+				{
 					var propertyEntity = createPropertyEntity();
 					propertyEntity.Name = change.ColumnName;
 					propertyEntity.NewValue = Convert.ToString(change.NewValue);
@@ -220,19 +238,28 @@ public override void InitAuditMapping() {
 On database context creation configure audit for entities & properties
 
 ```c#
- var auditSettings = new AuditSettings() {
+ var auditSettings = new AuditSettings() 
+ {
 	Enabled = true,
-	IncludedTypes = new ConcurrentDictionary<Type, byte>() {
+	IncludedTypes = new ConcurrentDictionary<Type, byte>() 
+	{
 		[typeof(Group)] = 1,
-		[typeof(GroupUser)] = 1
+		[typeof(GroupUser)] = 1,
+		[typeof(TaskAnswer)] = 1
 	},
-	ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() {
+	ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() 
+	{
 		[typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }                    
 	},
-	IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
+	IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(),
+	OnlyIncludedTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
 };
-auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>() {
+auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>()
+{
 	$"{nameof(Group.TextField1)}"
+});
+auditSettings.OnlyIncludedTypeProperties.TryAdd(typeof(TaskAnswer), new HashSet<string>() {
+	$"{nameof(TaskAnswer.TextField1)}"
 });
 
 services.AddScoped(provider => new TestDatabaseContext(

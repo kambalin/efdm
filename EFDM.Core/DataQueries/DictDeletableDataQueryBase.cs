@@ -2,17 +2,18 @@
 using EFDM.Abstractions.Models.Domain;
 using System;
 
-namespace EFDM.Core.DataQueries {
-
+namespace EFDM.Core.DataQueries
+{
     public class DictDeletableDataQueryBase<TModel, TKey> : DeletableEntityDataQueryBase<TModel, TKey>
         where TModel : class, IDictDeletableEntityBase<TKey>
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         public string Title { get; set; }
         public string TitleContains { get; set; }
         public string TitleSeparateContains { get; set; }
 
-        public override IQueryFilter<TModel> ToFilter() {
+        public override IQueryFilter<TModel> ToFilter()
+        {
             var and = new QueryFilter<TModel>();
 
             if (!string.IsNullOrEmpty(Title))

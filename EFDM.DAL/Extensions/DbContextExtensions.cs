@@ -3,32 +3,32 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace EFDM.Core.Extensions {
-
-    public static class DbContextExtensions {
-
-        public static IQueryable Set(this DbContext context, Type T) {
+namespace EFDM.Core.Extensions
+{
+    public static class DbContextExtensions
+    {
+        public static IQueryable Set(this DbContext context, Type T)
+        {
             // Get the generic type definition
             MethodInfo method = new Func<DbSet<object>>(context.Set<object>).Method.GetGenericMethodDefinition();
-
             // Build a method with the specific type argument you're interested in
             method = method.MakeGenericMethod(T);
-
             return method.Invoke(context, null) as IQueryable;
         }
 
-        public static IQueryable<T> Set<T>(this DbContext context) {
+        public static IQueryable<T> Set<T>(this DbContext context)
+        {
             // Get the generic type definition 
             MethodInfo method = new Func<DbSet<object>>(context.Set<object>).Method.GetGenericMethodDefinition();
-
             // Build a method with the specific type argument you're interested in 
             method = method.MakeGenericMethod(typeof(T));
-
             return method.Invoke(context, null) as IQueryable<T>;
         }
 
-        public static ModelBuilder ApplyConfiguration<T>(this ModelBuilder modelBuilder, Type configurationType, Type entityType) {
-            if (typeof(T).IsAssignableFrom(entityType)) {
+        public static ModelBuilder ApplyConfiguration<T>(this ModelBuilder modelBuilder, Type configurationType, Type entityType)
+        {
+            if (typeof(T).IsAssignableFrom(entityType))
+            {
                 // Build IEntityTypeConfiguration type with generic type parameter
                 var configurationGenericType = configurationType.MakeGenericType(entityType);
                 // Create an instance of the IEntityTypeConfiguration implementation
@@ -44,7 +44,6 @@ namespace EFDM.Core.Extensions {
                 // Invoke ApplyConfiguration, passing our IEntityTypeConfiguration instance
                 target.Invoke(modelBuilder, new[] { configuration });
             }
-
             return modelBuilder;
         }
     }

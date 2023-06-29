@@ -1,13 +1,9 @@
-﻿using EFDM.Abstractions.DataQueries;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
+﻿using System;
 
-namespace EFDM.Core.DataQueries {
-
-    public class DatePeriodQueryParams {
-
+namespace EFDM.Core.DataQueries
+{
+    public class DatePeriodQueryParams
+    {
         #region fields & properties
 
         public DateTime? LessOrEquals { get; set; }

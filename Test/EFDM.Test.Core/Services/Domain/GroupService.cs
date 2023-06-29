@@ -7,25 +7,28 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
 
-namespace EFDM.Test.Core.Services.Domain {
-
-    public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService {
-
+namespace EFDM.Test.Core.Services.Domain
+{
+    public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService
+    {
         readonly IRepository<User, int> UserRepo;
 
         public GroupService(
             IRepository<User, int> userRepo,
             IRepository<Group, int> repository,
             ILogger logger
-        ) : base(repository, logger) {
+        ) : base(repository, logger)
+        {
 
             UserRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
         }
 
-        public void AddUser(int groupId, int userId) {
+        public void AddUser(int groupId, int userId)
+        {
             Group group = GetById(groupId);
 
-            User user = UserRepo.Fetch(new UserQuery {
+            User user = UserRepo.Fetch(new UserQuery
+            {
                 Ids = new[] { userId },
                 IsDeleted = false,
                 Includes = new[] { nameof(User.Groups) },
@@ -39,10 +42,12 @@ namespace EFDM.Test.Core.Services.Domain {
             UserRepo.Save(user);
         }
 
-        public void RemoveUser(int groupId, int userId) {
+        public void RemoveUser(int groupId, int userId)
+        {
             Group group = GetById(groupId);
 
-            User user = UserRepo.Fetch(new UserQuery {
+            User user = UserRepo.Fetch(new UserQuery
+            {
                 Ids = new[] { userId },
                 Includes = new[] { nameof(User.Groups) },
                 Take = 1

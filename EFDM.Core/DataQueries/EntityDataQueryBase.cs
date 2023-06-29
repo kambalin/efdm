@@ -3,18 +3,19 @@ using EFDM.Abstractions.Models.Domain;
 using System;
 using System.Linq;
 
-namespace EFDM.Core.DataQueries {
-
+namespace EFDM.Core.DataQueries
+{
     public class EntityDataQueryBase<TModel, TKey> : IdKeyDataQueryBase<TModel, TKey>
         where TModel : class, IEntityBase<TKey>
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         public int[] CreatedByIds { get; set; }
         public int[] ModifiedByIds { get; set; }
         public DatePeriodQueryParams CreatedQueryParams { get; set; } = new DatePeriodQueryParams();
         public DatePeriodQueryParams ModifiedQueryParams { get; set; } = new DatePeriodQueryParams();
 
-        public override IQueryFilter<TModel> ToFilter() {
+        public override IQueryFilter<TModel> ToFilter()
+        {
             var and = new QueryFilter<TModel>();
 
             if (CreatedByIds?.Any() == true)

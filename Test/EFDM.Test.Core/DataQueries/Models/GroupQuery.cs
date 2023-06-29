@@ -4,13 +4,15 @@ using EFDM.Test.Core.Models.Domain;
 using System;
 using System.Linq;
 
-namespace EFDM.Test.Core.DataQueries.Models {
-
-    public class GroupQuery : DictIntDeletableDataQuery<Group> {
+namespace EFDM.Test.Core.DataQueries.Models
+{
+    public class GroupQuery : DictIntDeletableDataQuery<Group>
+    {
         public int[] UserIds { get; set; }
         public int[] TypeIds { get; set; }
 
-        public override IQueryFilter<Group> ToFilter() {
+        public override IQueryFilter<Group> ToFilter()
+        {
             var and = new QueryFilter<Group>();
 
             if (UserIds?.Any() == true)

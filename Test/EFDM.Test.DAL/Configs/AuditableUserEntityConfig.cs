@@ -2,12 +2,13 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EFDM.Test.DAL.Configs {
-
+namespace EFDM.Test.DAL.Configs
+{
     public class AuditableUserEntityConfig<T> : IEntityTypeConfiguration<T>
-        where T : class, IAuditableUserEntity {
-
-        public void Configure(EntityTypeBuilder<T> builder) {
+        where T : class, IAuditableUserEntity
+    {
+        public void Configure(EntityTypeBuilder<T> builder)
+        {
             builder.HasOne(x => x.CreatedBy)
                 .WithMany()
                 .HasForeignKey(x => x.CreatedById);

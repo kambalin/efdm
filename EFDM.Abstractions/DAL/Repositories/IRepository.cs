@@ -8,12 +8,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 
-namespace EFDM.Abstractions.DAL.Repositories {
-
+namespace EFDM.Abstractions.DAL.Repositories
+{
     public interface IRepository<TEntity, TKey>
         where TEntity : IIdKeyEntity<TKey>, new()
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         bool AutoDetectChanges { get; set; }
         /// <summary>
         /// Globally affected to DbContext

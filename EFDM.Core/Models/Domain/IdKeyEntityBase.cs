@@ -4,11 +4,11 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 using System.Xml.Serialization;
 
-namespace EFDM.Core.Models.Domain {
-
+namespace EFDM.Core.Models.Domain
+{
     public abstract class IdKeyEntityBase<TKey> : IIdKeyEntity<TKey>
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         public TKey Id { get; set; }
 
         #region shame
@@ -21,7 +21,8 @@ namespace EFDM.Core.Models.Domain {
 
         [NotMapped]
         [JsonIgnore]
-        public bool IsNew {
+        public bool IsNew
+        {
             get { return Id.Equals(default); }
         }
     }

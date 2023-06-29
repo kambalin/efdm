@@ -3,9 +3,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace EFDM.Core.Audit {
-
-    public class AuditSettings : IAuditSettings {
+namespace EFDM.Core.Audit
+{
+    public class AuditSettings : IAuditSettings
+    {
         public bool Enabled { get; set; }
         public ConcurrentDictionary<string, byte> GlobalIgnoredProperties { get; set; } = new ConcurrentDictionary<string, byte>();
         public ConcurrentDictionary<Type, byte> IncludedTypes { get; set; } = new ConcurrentDictionary<Type, byte>();

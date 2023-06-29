@@ -4,15 +4,14 @@ using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
 
-namespace EFDM.Abstractions.Audit {
-
-    public interface IDBContextAuditor {
-
+namespace EFDM.Abstractions.Audit
+{
+    public interface IDBContextAuditor
+    {
         bool Enabled { get; set; }
         ConcurrentDictionary<string, byte> GlobalIgnoredProperties { get; }
         ConcurrentDictionary<Type, byte> IncludedTypes { get; }
         ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; }
-
         int SaveChanges(Func<int> baseSaveChanges);
         Func<IAuditEvent, IEventEntry, object, Task<bool>> GetMapperEventAction(Type type);
         Type GetEventType(Type type);

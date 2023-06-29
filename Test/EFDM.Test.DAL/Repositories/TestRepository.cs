@@ -3,12 +3,12 @@ using EFDM.Core.Models.Domain;
 using EFDM.Test.DAL.Providers;
 using System;
 
-namespace EFDM.Test.DAL.Repositories {
-
+namespace EFDM.Test.DAL.Repositories
+{
     public class TestRepository<TEntity, TKey> : Repository<TEntity, TKey>
         where TEntity : IdKeyEntityBase<TKey>, new()
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         #region fields & properties
 
         public override TestDatabaseContext Context { get; }
@@ -17,7 +17,8 @@ namespace EFDM.Test.DAL.Repositories {
 
         #region constructors
 
-        public TestRepository(TestDatabaseContext dbContext) : base(dbContext) {
+        public TestRepository(TestDatabaseContext dbContext) : base(dbContext)
+        {
             Context = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
             InitDbSet();
         }

@@ -1,6 +1,7 @@
-﻿namespace EFDM.Abstractions.Models.Domain {
-
-    public interface IDeletableEntity {
+﻿namespace EFDM.Abstractions.Models.Domain
+{
+    public interface IDeletableEntity
+    {
         bool IsDeleted { get; set; }
     }
 }

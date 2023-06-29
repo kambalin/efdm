@@ -2,9 +2,10 @@
 using EFDM.Test.Core.DataQueries.Models;
 using EFDM.Test.Core.Models.Domain;
 
-namespace EFDM.Test.Core.Services.Domain.Interfaces {
-
+namespace EFDM.Test.Core.Services.Domain.Interfaces
+{
     public interface ITaskAnswerCommentService : IDomainService<TaskAnswerComment,
-        TaskAnswerCommentQuery, int> {
+        TaskAnswerCommentQuery, int>
+    {
     }
 }

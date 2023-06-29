@@ -10,15 +10,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace EFDM.Core.DAL.Providers {
-
-    public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext {
-
+namespace EFDM.Core.DAL.Providers
+{
+    public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
+    {
         #region fields & properties
 
         public abstract int ExecutorId { get; protected set; }
         public DateTime? CommitTime { get; set; }
-        public IDBContextAuditor Auditor {
+        public IDBContextAuditor Auditor
+        {
             get { return _auditor; }
         }
         public DbContext DbContext { get { return this; } }
@@ -32,13 +33,14 @@ namespace EFDM.Core.DAL.Providers {
         #region constructors
 
         public EFDMDatabaseContext(DbContextOptions options, ILoggerFactory loggerFactory = null,
-            IAuditSettings auditSettings = null) : base(options) {
-
+            IAuditSettings auditSettings = null) : base(options)
+        {
             _loggerFactory = loggerFactory;
             InitAuditor(auditSettings);
         }
 
-        public EFDMDatabaseContext(string connectionString, IAuditSettings auditSettings = null) {
+        public EFDMDatabaseContext(string connectionString, IAuditSettings auditSettings = null)
+        {
             ConnectionString = connectionString;
             InitAuditor(auditSettings);
         }
@@ -49,12 +51,16 @@ namespace EFDM.Core.DAL.Providers {
 
         public abstract void InitAuditMapping();
 
-        protected virtual void PreSaveActions() {
-            foreach (var entry in ChangeTracker.Entries<IAuditableEntity>()) {
-                if (entry.State == EntityState.Added || entry.State == EntityState.Modified) {
+        protected virtual void PreSaveActions()
+        {
+            foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
+            {
+                if (entry.State == EntityState.Added || entry.State == EntityState.Modified)
+                {
                     PreSaveDateAuditValues(entry.Entity);
                     PreSavePrincipalAuditValues(entry.Entity);
-                    switch (entry.State) {
+                    switch (entry.State)
+                    {
                         case EntityState.Modified:
                             var auditDateEntity = entry.Entity as IAuditableDateEntity;
                             var auditPrincipalEntity = entry.Entity as IAuditablePrincipalEntity;
@@ -68,13 +74,15 @@ namespace EFDM.Core.DAL.Providers {
             }
         }
 
-        protected virtual void PreSavePrincipalAuditValues<TEntity>(TEntity entity) {
+        protected virtual void PreSavePrincipalAuditValues<TEntity>(TEntity entity)
+        {
             var auditPrincipalEntity = entity as IAuditablePrincipalEntity;
             if (auditPrincipalEntity == null)
                 return;
             if (!auditPrincipalEntity.PreserveLastModifiedBy)
                 auditPrincipalEntity.ModifiedById = ExecutorId;
-            else {
+            else
+            {
                 // if PreserveLastModifiedBy and ModifiedBy not set
                 // then "hide" who actually modified to createdby
                 if (auditPrincipalEntity.ModifiedById < 1)
@@ -85,7 +93,8 @@ namespace EFDM.Core.DAL.Providers {
                 auditPrincipalEntity.CreatedById = ExecutorId;
         }
 
-        protected virtual void PreSaveDateAuditValues<TEntity>(TEntity entity) {
+        protected virtual void PreSaveDateAuditValues<TEntity>(TEntity entity)
+        {
             var auditDateEntity = entity as IAuditableDateEntity;
             if (auditDateEntity == null)
                 return;
@@ -98,13 +107,15 @@ namespace EFDM.Core.DAL.Providers {
                 auditDateEntity.Modified = modified;
         }
 
-        protected virtual void InitAuditor(IAuditSettings auditSettings = null) {
+        protected virtual void InitAuditor(IAuditSettings auditSettings = null)
+        {
             _auditor = new DBContextAuditor(this, auditSettings);
             SetDefaultGlobalIgnoredProperties();
             InitAuditMapping();
         }
 
-        protected virtual void SetDefaultGlobalIgnoredProperties() {
+        protected virtual void SetDefaultGlobalIgnoredProperties()
+        {
             Auditor.ExcludeProperty<IAuditableDateEntity>(x => x.Created);
             Auditor.ExcludeProperty<IAuditablePrincipalEntity>(x => x.CreatedBy);
             Auditor.ExcludeProperty<IAuditablePrincipalEntity>(x => x.CreatedById);
@@ -117,50 +128,61 @@ namespace EFDM.Core.DAL.Providers {
 
         #region context config
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
             if (_loggerFactory != null)
                 optionsBuilder.UseLoggerFactory(_loggerFactory);
         }
 
-        protected override void OnModelCreating(ModelBuilder builder) {
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
         }
 
         #endregion context config
 
-        public void SetExecutor(int id) {
+        public void SetExecutor(int id)
+        {
             ExecutorId = id;
         }
 
-        public override int SaveChanges() {
+        public override int SaveChanges()
+        {
             PreSaveActions();
             return Auditor.SaveChanges(() => base.SaveChanges());
         }
 
-        protected int BaseSaveChanges() {
+        protected int BaseSaveChanges()
+        {
             return base.SaveChanges();
         }
 
-        public int SaveChanges<TEntity>(bool keepExcludedOriginals = false) where TEntity : class {
+        public int SaveChanges<TEntity>(bool keepExcludedOriginals = false) where TEntity : class
+        {
             List<IGrouping<EntityState, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry>> original = null;
 
-            if (keepExcludedOriginals) {
+            if (keepExcludedOriginals)
+            {
                 original = ChangeTracker.Entries()
                         .Where(x => !typeof(TEntity).IsAssignableFrom(x.Entity.GetType()) && x.State != EntityState.Unchanged)
                         .GroupBy(x => x.State)
                         .ToList();
             }
 
-            foreach (var entry in ChangeTracker.Entries().Where(x => !typeof(TEntity).IsAssignableFrom(x.Entity.GetType()))) {
+            foreach (var entry in ChangeTracker.Entries().Where(x => !typeof(TEntity).IsAssignableFrom(x.Entity.GetType())))
+            {
                 entry.State = EntityState.Unchanged;
             }
 
             var affectedRows = SaveChanges();
 
-            if (keepExcludedOriginals) {
-                foreach (var state in original) {
-                    foreach (var entry in state) {
+            if (keepExcludedOriginals)
+            {
+                foreach (var state in original)
+                {
+                    foreach (var entry in state)
+                    {
                         entry.State = state.Key;
                     }
                 }
@@ -170,9 +192,10 @@ namespace EFDM.Core.DAL.Providers {
         }
 
         public void BulkInsertWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config)
-            where TEntity : class {
-
-            foreach (TEntity entity in entities) {
+            where TEntity : class
+        {
+            foreach (TEntity entity in entities)
+            {
                 PreSaveDateAuditValues(entity);
                 PreSavePrincipalAuditValues(entity);
             }
@@ -180,22 +203,25 @@ namespace EFDM.Core.DAL.Providers {
         }
 
         public void BulkInsertOrUpdateWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config)
-            where TEntity : class {
-
-            foreach (TEntity entity in entities) {
+            where TEntity : class
+        {
+            foreach (TEntity entity in entities)
+            {
                 PreSaveDateAuditValues(entity);
                 PreSavePrincipalAuditValues(entity);
             }
             this.BulkInsertOrUpdate(entities, config);
         }
 
-        public void ClearChangeTracker() {
+        public void ClearChangeTracker()
+        {
             ChangeTracker.Clear();
         }
 
         #region IDisposable
 
-        public override void Dispose() {
+        public override void Dispose()
+        {
             base.Dispose();
         }
 

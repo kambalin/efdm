@@ -3,11 +3,11 @@ using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text.Json.Serialization;
 
-namespace EFDM.Core.Models.Domain {
-
+namespace EFDM.Core.Models.Domain
+{
     public abstract class EntityBase<TKey> : IdKeyEntityBase<TKey>, IEntityBase<TKey>
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;
         public DateTimeOffset Modified { get; set; } = DateTimeOffset.Now;
         public int CreatedById { get; set; }
@@ -23,11 +23,13 @@ namespace EFDM.Core.Models.Domain {
         public bool PreserveLastModifiedBy { get; set; }
         [NotMapped]
         [JsonIgnore]
-        public bool PreserveLastModifiedFields {
-            set {
+        public bool PreserveLastModifiedFields
+        {
+            set
+            {
                 PreserveLastModified = value;
                 PreserveLastModifiedBy = value;
-            } 
+            }
         }
     }
 }

@@ -3,16 +3,17 @@ using EFDM.Abstractions.Models.Domain;
 using System;
 using System.Linq;
 
-namespace EFDM.Core.DataQueries {
-
+namespace EFDM.Core.DataQueries
+{
     public abstract class IdKeyDataQueryBase<TModel, TKey> : DataQueryBase<TModel>, IDataQuery<TModel, TKey>
         where TModel : class, IIdKeyEntity<TKey>
-        where TKey : IComparable, IEquatable<TKey> {
-
+        where TKey : IComparable, IEquatable<TKey>
+    {
         public TKey[] Ids { get; set; }
         public TKey[] NotIds { get; set; }
 
-        public override IQueryFilter<TModel> ToFilter() {
+        public override IQueryFilter<TModel> ToFilter()
+        {
             var and = new QueryFilter<TModel>();
 
             if (Ids?.Any() == true)

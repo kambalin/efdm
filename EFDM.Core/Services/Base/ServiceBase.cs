@@ -1,15 +1,16 @@
 ﻿using Microsoft.Extensions.Logging;
 using System;
 
-namespace EFDM.Core.Services.Base {
-
-    public abstract class ServiceBase {
-
+namespace EFDM.Core.Services.Base
+{
+    public abstract class ServiceBase
+    {
         protected readonly ILogger Logger;
 
         #region constructors
 
-        public ServiceBase(ILogger logger) {
+        public ServiceBase(ILogger logger)
+        {
             this.Logger = logger;
         }
 
@@ -17,19 +18,22 @@ namespace EFDM.Core.Services.Base {
 
         #region log
 
-        protected void WriteLog(string message) {
+        protected void WriteLog(string message)
+        {
             if (Logger == null)
                 return;
             Logger.LogInformation(message);
         }
 
-        protected void WriteError(Exception exception, string message = null) {
+        protected void WriteError(Exception exception, string message = null)
+        {
             if (Logger == null)
                 return;
             Logger.LogError(exception, message);
         }
 
-        protected void WriteError(string message) {
+        protected void WriteError(string message)
+        {
             if (Logger == null)
                 return;
             Logger.LogError(message);

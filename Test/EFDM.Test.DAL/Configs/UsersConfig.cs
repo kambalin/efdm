@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EFDM.Test.DAL.Configs {
-
-    public class UsersConfig : IEntityTypeConfiguration<User> {
-
-        public void Configure(EntityTypeBuilder<User> builder) {
+namespace EFDM.Test.DAL.Configs
+{
+    public class UsersConfig : IEntityTypeConfiguration<User>
+    {
+        public void Configure(EntityTypeBuilder<User> builder)
+        {
             builder.ToTable("Users");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).ValueGeneratedOnAdd();

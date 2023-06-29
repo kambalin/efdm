@@ -12,15 +12,13 @@ using Microsoft.Extensions.Logging;
 using System;
 using System.Reflection;
 
-namespace EFDM.Test.DAL.Providers {
-
-    public class TestDatabaseContext : EFDMDatabaseContext {
-
-        #region fields & props
+namespace EFDM.Test.DAL.Providers
+{
+    public class TestDatabaseContext : EFDMDatabaseContext
+    {
+        #region fields & properties
 
         public override int ExecutorId { get; protected set; } = UserVals.System.Id;
-
-        #endregion fields & props
 
         #region dbsets
 
@@ -37,34 +35,40 @@ namespace EFDM.Test.DAL.Providers {
 
         #endregion dbsets
 
+        #endregion fields & properties
+
         #region constructors
 
         public TestDatabaseContext(DbContextOptions<TestDatabaseContext> options,
             ILoggerFactory factory = null, IAuditSettings auditSettings = null)
-            : base(options, factory, auditSettings) {
+            : base(options, factory, auditSettings)
+        {
         }
 
         public TestDatabaseContext(string connectionString, IAuditSettings auditSettings = null)
-            : base(connectionString, auditSettings) {
+            : base(connectionString, auditSettings)
+        {
         }
 
         #endregion constructors
 
         #region context config
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) {
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
             //optionsBuilder.EnableSensitiveDataLogging(true);
             base.OnConfiguring(optionsBuilder);
-
             //if (!string.IsNullOrEmpty(ConnectionString))
             //    optionsBuilder.UseSqlServer(ConnectionString);
         }
 
-        protected override void OnModelCreating(ModelBuilder builder) {
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
             base.OnModelCreating(builder);
             builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
 
-            foreach (var entityType in builder.Model.GetEntityTypes()) {
+            foreach (var entityType in builder.Model.GetEntityTypes())
+            {
                 builder.ApplyConfiguration<IAuditableUserEntity>(typeof(AuditableUserEntityConfig<>), entityType.ClrType);
             }
         }
@@ -73,23 +77,28 @@ namespace EFDM.Test.DAL.Providers {
 
         #region audit config
 
-        public override void InitAuditMapping() {
+        public override void InitAuditMapping()
+        {
             Auditor.Map<GroupUser, AuditGroupEvent, AuditGroupProperty>(
-                (auditEvent, entry, eventEntity) => {
+                (auditEvent, entry, eventEntity) =>
+                {
                     eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue($"{nameof(GroupUser.GroupId)}").ToString();
                 }
             );
             Auditor.Map<Group, AuditGroupEvent, AuditGroupProperty>(
-                (auditEvent, entry, eventEntity) => {
+                (auditEvent, entry, eventEntity) =>
+                {
                     eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
                 }
             );
             Auditor.Map<TaskAnswer, AuditTaskAnswerEvent, AuditTaskAnswerProperty>(
-                (auditEvent, entry, eventEntity) => {
+                (auditEvent, entry, eventEntity) =>
+                {
                     eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
                 }
             );
-            Auditor.SetEventCommonAction<IAuditEventBase<long>>((auditEvent, entry, eventEntity) => {
+            Auditor.SetEventCommonAction<IAuditEventBase<long>>((auditEvent, entry, eventEntity) =>
+            {
                 eventEntity.ActionId = entry.Action;
                 eventEntity.CreatedById = ExecutorId;
                 eventEntity.ObjectType = entry.EntityType.Name;
@@ -98,20 +107,24 @@ namespace EFDM.Test.DAL.Providers {
                 Add(eventEntity);
                 BaseSaveChanges();
 
-                Func<IAuditPropertyBase<long, long>> createPropertyEntity = () => {
+                Func<IAuditPropertyBase<long, long>> createPropertyEntity = () =>
+                {
                     var res = (Activator.CreateInstance(Auditor.GetPropertyType(entry.EntityType))) as IAuditPropertyBase<long, long>;
                     res.AuditId = eventEntity.Id;
                     return res;
                 };
-                Action<IAuditPropertyBase<long, long>> savePropertyEntity = (pe) => {
+                Action<IAuditPropertyBase<long, long>> savePropertyEntity = (pe) =>
+                {
                     if (string.IsNullOrEmpty(pe.Name))
                         return;
                     Add(pe);
                     BaseSaveChanges();
                 };
-                switch (entry.Action) {
+                switch (entry.Action)
+                {
                     case AuditStateActionVals.Insert:
-                        foreach (var columnVal in entry.ColumnValues) {
+                        foreach (var columnVal in entry.ColumnValues)
+                        {
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = columnVal.Key;
                             propertyEntity.NewValue = Convert.ToString(columnVal.Value);
@@ -119,7 +132,8 @@ namespace EFDM.Test.DAL.Providers {
                         }
                         break;
                     case AuditStateActionVals.Delete:
-                        foreach (var columnVal in entry.ColumnValues) {
+                        foreach (var columnVal in entry.ColumnValues)
+                        {
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = columnVal.Key;
                             propertyEntity.OldValue = Convert.ToString(columnVal.Value);
@@ -127,7 +141,8 @@ namespace EFDM.Test.DAL.Providers {
                         }
                         break;
                     case AuditStateActionVals.Update:
-                        foreach (var change in entry.Changes) {
+                        foreach (var change in entry.Changes)
+                        {
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = change.ColumnName;
                             propertyEntity.NewValue = Convert.ToString(change.NewValue);

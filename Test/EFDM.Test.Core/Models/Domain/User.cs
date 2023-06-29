@@ -2,9 +2,10 @@
 using EFDM.Test.Core.Models.Domain.Base;
 using System.Collections.Generic;
 
-namespace EFDM.Test.Core.Models.Domain {
-
-    public class User : DictIntDeletableEntity, IUser {
+namespace EFDM.Test.Core.Models.Domain
+{
+    public class User : DictIntDeletableEntity, IUser
+    {
         public string Login { get; set; }
         public string Email { get; set; }
         public override string Title { get; set; }

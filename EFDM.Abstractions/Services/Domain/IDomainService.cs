@@ -8,13 +8,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace EFDM.Abstractions.Services.Domain {
-
+namespace EFDM.Abstractions.Services.Domain
+{
     public interface IDomainService<TModel, TQuery, TKey>
         where TModel : class, IIdKeyEntity<TKey>
         where TKey : IComparable, IEquatable<TKey>
-        where TQuery : class, IDataQuery<TModel, TKey> {
-
+        where TQuery : class, IDataQuery<TModel, TKey>
+    {
         int ExecutorId { get; }
         /// <summary>
         /// Globally affected to DbContext

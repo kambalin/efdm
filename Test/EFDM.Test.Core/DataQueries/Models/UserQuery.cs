@@ -4,24 +4,27 @@ using EFDM.Test.Core.Models.Domain;
 using System;
 using System.Linq;
 
-namespace EFDM.Test.Core.DataQueries.Models {
-
-    public class UserQuery : DictIntDeletableDataQuery<User> {
-
+namespace EFDM.Test.Core.DataQueries.Models
+{
+    public class UserQuery : DictIntDeletableDataQuery<User>
+    {
         public string[] Logins { get; set; }
         public string[] Emails { get; set; }
         public string Text { get; set; }
         public int? GroupId { get; set; }
 
-        public override IQueryFilter<User> ToFilter() {
+        public override IQueryFilter<User> ToFilter()
+        {
             var and = new QueryFilter<User>();
 
-            if (Logins?.Any() == true) {
+            if (Logins?.Any() == true)
+            {
                 var lcLogins = Logins.Select(x => x.ToLower()).ToArray();
                 and.Add(x => lcLogins.Contains(x.Login.ToLower()));
             }
 
-            if (Emails?.Any() == true) {
+            if (Emails?.Any() == true)
+            {
                 var lcEmails = Emails.Select(x => x.ToLower()).ToArray();
                 and.Add(x => lcEmails.Contains(x.Email.ToLower()));
             }

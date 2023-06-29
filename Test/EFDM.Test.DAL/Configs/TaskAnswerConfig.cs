@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EFDM.Test.DAL.Configs {
-
-    public class TaskAnswerConfig : IEntityTypeConfiguration<TaskAnswer> {
-
-        public void Configure(EntityTypeBuilder<TaskAnswer> builder) {
+namespace EFDM.Test.DAL.Configs
+{
+    public class TaskAnswerConfig : IEntityTypeConfiguration<TaskAnswer>
+    {
+        public void Configure(EntityTypeBuilder<TaskAnswer> builder)
+        {
             builder.ToTable("TaskAnswers");
             builder.HasKey(x => x.Id);
             builder.Property(x => x.Id).ValueGeneratedOnAdd();

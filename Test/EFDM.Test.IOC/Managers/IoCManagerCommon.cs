@@ -16,31 +16,36 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 
-namespace EFDM.Test.IOC.Managers {
-
-    public class IoCManagerCommon {
-
-        public static void RegisterServices(IServiceCollection services, IConfiguration configuration) {
-
+namespace EFDM.Test.IOC.Managers
+{
+    public class IoCManagerCommon
+    {
+        public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
+        {
             #region db & repos
 
-            var auditSettings = new AuditSettings() {
+            var auditSettings = new AuditSettings()
+            {
                 Enabled = true,
-                IncludedTypes = new ConcurrentDictionary<Type, byte>() {
+                IncludedTypes = new ConcurrentDictionary<Type, byte>()
+                {
                     [typeof(Group)] = 1,
                     [typeof(GroupUser)] = 1,
                     [typeof(TaskAnswer)] = 1
                 },
-                ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() {
+                ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>()
+                {
                     [typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }
                 },
                 IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(),
                 OnlyIncludedTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
             };
-            auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>() {
+            auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>()
+            {
                 $"{nameof(Group.TextField1)}"
             });
-            auditSettings.OnlyIncludedTypeProperties.TryAdd(typeof(TaskAnswer), new HashSet<string>() {
+            auditSettings.OnlyIncludedTypeProperties.TryAdd(typeof(TaskAnswer), new HashSet<string>()
+            {
                 $"{nameof(TaskAnswer.TextField1)}"
             });
 
@@ -66,7 +71,8 @@ namespace EFDM.Test.IOC.Managers {
 
         #region utils
 
-        private static DbContextOptions<TestDatabaseContext> GetDbOptions(IServiceProvider provider, IConfiguration configuration) {
+        private static DbContextOptions<TestDatabaseContext> GetDbOptions(IServiceProvider provider, IConfiguration configuration)
+        {
             return new DbContextOptionsBuilder<TestDatabaseContext>()
                 .UseSqlServer(configuration.GetSection(SettingsValuesNames.ConnectionString)?.Get<string>())
                 //.EnableSensitiveDataLogging()

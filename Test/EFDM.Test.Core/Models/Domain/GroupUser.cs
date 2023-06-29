@@ -1,6 +1,7 @@
-﻿namespace EFDM.Test.Core.Models.Domain {
-
-    public class GroupUser {
+﻿namespace EFDM.Test.Core.Models.Domain
+{
+    public class GroupUser
+    {
         public int GroupId { get; set; }
         public Group Group { get; set; }
         public int UserId { get; set; }

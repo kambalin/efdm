@@ -2,11 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-namespace EFDM.Test.DAL.Configs {
-
-    public class GroupUserConfig : IEntityTypeConfiguration<GroupUser> {
-
-        public void Configure(EntityTypeBuilder<GroupUser> builder) {
+namespace EFDM.Test.DAL.Configs
+{
+    public class GroupUserConfig : IEntityTypeConfiguration<GroupUser>
+    {
+        public void Configure(EntityTypeBuilder<GroupUser> builder)
+        {
             builder.ToTable("GroupUsers");
             builder.HasKey(pc => new { pc.GroupId, pc.UserId });
             builder.HasOne(x => x.User)

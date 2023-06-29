@@ -1,11 +1,13 @@
 ﻿using System;
 
-namespace EFDM.Core.Extensions {
-
-    public static class PropAccessorExtensions {
-
-        public static Object GetPropValue(this Object obj, String name) {
-            foreach (var part in name.Split('.')) {
+namespace EFDM.Core.Extensions
+{
+    public static class PropAccessorExtensions
+    {
+        public static Object GetPropValue(this Object obj, String name)
+        {
+            foreach (var part in name.Split('.'))
+            {
                 if (obj == null)
                     return null;
 
@@ -19,7 +21,8 @@ namespace EFDM.Core.Extensions {
             return obj;
         }
 
-        public static T GetPropValue<T>(this Object obj, String name) {
+        public static T GetPropValue<T>(this Object obj, String name)
+        {
             var retval = GetPropValue(obj, name);
             if (retval == null)
                 return default(T);

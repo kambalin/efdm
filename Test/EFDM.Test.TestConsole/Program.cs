@@ -20,11 +20,12 @@ using System.Linq;
 using System.Text;
 using System.Xml.Serialization;
 
-namespace EFDM.Test.TestConsole {
-
-    class Program {
-
-        static void Main(string[] args) {
+namespace EFDM.Test.TestConsole
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
             IConfigurationRoot config = new ConfigurationBuilder()
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -32,8 +33,10 @@ namespace EFDM.Test.TestConsole {
                 .Build();
             Console.OutputEncoding = Encoding.UTF8;
 
-            using (var serviceProvider = RegisterServices(config)) {
-                using (var scope = serviceProvider.CreateScope()) {
+            using (var serviceProvider = RegisterServices(config))
+            {
+                using (var scope = serviceProvider.CreateScope())
+                {
                     //AddGroupWithSvc(scope);
                     //AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
@@ -82,16 +85,19 @@ namespace EFDM.Test.TestConsole {
             Console.ReadKey();
         }
 
-        static void GetUserIds(IServiceScope scope) {
+        static void GetUserIds(IServiceScope scope)
+        {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             var userQuery = new UserQuery();
             var userIds = userSvc.FetchIds(userQuery).ToList();
             Console.WriteLine($"Users count '{userIds?.Count}'");
         }
 
-        static void TestAuditTaskAnswers(IServiceScope scope) {
+        static void TestAuditTaskAnswers(IServiceScope scope)
+        {
             var take = 1;
-            var taQuery = new TaskAnswerQuery {
+            var taQuery = new TaskAnswerQuery
+            {
                 Take = take,
                 Sorts = new[] { new Sort { Field = nameof(TaskAnswer.Id), Desc = true } },
             };
@@ -99,7 +105,8 @@ namespace EFDM.Test.TestConsole {
             var taskAnswers = taSvc.Fetch(taQuery, true);
 
             Random rnd = new Random();
-            foreach (var ta in taskAnswers) {
+            foreach (var ta in taskAnswers)
+            {
                 ta.AnswerValue = rnd.Next(0, 100);
                 ta.TextField1 = $"textfield1 {DateTime.Now}";
                 ta.TextField2 = $"textfield2 {DateTime.Now}";
@@ -108,13 +115,16 @@ namespace EFDM.Test.TestConsole {
             taSvc.SaveChanges();
         }
 
-        static void AddTaskAnswers(IServiceScope scope) {
+        static void AddTaskAnswers(IServiceScope scope)
+        {
             var times = 2;
             var sw = new Stopwatch();
             sw.Start();
             var taSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
-            for (var i = 1; i <= times; i++) {
-                var ta = new TaskAnswer {
+            for (var i = 1; i <= times; i++)
+            {
+                var ta = new TaskAnswer
+                {
                     AnswerValue = i,
                     TextField1 = $"{i}TeField1",
                     TextField2 = $"{i}TeField2",
@@ -125,11 +135,14 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine("Elapsed={0}", sw.Elapsed);
         }
 
-        static void InsertUsers(IServiceScope scope) {
+        static void InsertUsers(IServiceScope scope)
+        {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             var users = new List<User>();
-            for (var i = 0; i < 10; i++) {
-                var user = new User {
+            for (var i = 0; i < 10; i++)
+            {
+                var user = new User
+                {
                     Login = "VM22HV\\testuser" + Guid.NewGuid(),
                     Title = "Test User " + Guid.NewGuid(),
                     Groups = new List<GroupUser>()
@@ -139,16 +152,20 @@ namespace EFDM.Test.TestConsole {
                 users.Add(user);
             }
             userSvc.SaveChanges();
-            foreach (var user in users) {
+            foreach (var user in users)
+            {
                 Console.WriteLine($"User {user.Login} id is '{user.Id}'");
             }
         }
 
-        static void BulkInsertUsers(IServiceScope scope) {
+        static void BulkInsertUsers(IServiceScope scope)
+        {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             var users = new List<User>();
-            for (var i = 0; i < 10; i++) {
-                var user = new User {
+            for (var i = 0; i < 10; i++)
+            {
+                var user = new User
+                {
                     Login = "VM22HV\\testuser" + Guid.NewGuid(),
                     Title = "Test User " + Guid.NewGuid(),
                     Groups = new List<GroupUser>()
@@ -158,12 +175,14 @@ namespace EFDM.Test.TestConsole {
             }
             var bulkConfig = new BulkConfig { SetOutputIdentity = true, IncludeGraph = true };
             userSvc.BulkInsert(users, bulkConfig);
-            foreach (var user in users) {
+            foreach (var user in users)
+            {
                 Console.WriteLine($"User {user.Login} id is '{user.Id}'");
             }
         }
 
-        static void UpdateExecuteUsers(IServiceScope scope) {
+        static void UpdateExecuteUsers(IServiceScope scope)
+        {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             //var userQuery = new UserQuery {
             //    Emails = new string[] { "testuser108@test.ru" },
@@ -174,7 +193,8 @@ namespace EFDM.Test.TestConsole {
             //var userQuery = new UserQuery {
             //    Logins = new string[] { "VM22HV\\testuser107" },
             //};
-            var userQuery = new UserQuery {
+            var userQuery = new UserQuery
+            {
                 GroupId = GroupTypeVals.Users,
             };
             var updatedCount = userSvc.ExecuteUpdate(userQuery,
@@ -182,7 +202,8 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"Updated count '{updatedCount}'");
         }
 
-        static void DeleteExecuteUsers(IServiceScope scope) {
+        static void DeleteExecuteUsers(IServiceScope scope)
+        {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             //var userQuery = new UserQuery {
             //    Emails = new string[] { "testuser108@test.ru" },
@@ -193,24 +214,29 @@ namespace EFDM.Test.TestConsole {
             //var userQuery = new UserQuery {
             //    Logins = new string[] { "VM22HV\\testuser107" },
             //};
-            var userQuery = new UserQuery {
+            var userQuery = new UserQuery
+            {
                 GroupId = GroupTypeVals.Users,
             };
             var deletedCount = userSvc.ExecuteDelete(userQuery);
             Console.WriteLine($"Deleted count '{deletedCount}'");
         }
 
-        static void GetUsersFromGroup(IServiceScope scope) {
+        static void GetUsersFromGroup(IServiceScope scope)
+        {
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
-            var userQuery = new UserQuery {
+            var userQuery = new UserQuery
+            {
                 GroupId = GroupVals.UserGroupId,
             };
             var users = userSvc.Fetch(userQuery).ToList();
             Console.WriteLine($"Users count '{users?.Count}'");
         }
 
-        static void TestSplitQueryGroupSvc(IServiceScope scope) {
-            var groupQuery = new GroupQuery {
+        static void TestSplitQueryGroupSvc(IServiceScope scope)
+        {
+            var groupQuery = new GroupQuery
+            {
                 Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
                 Includes = new[] {
                     $"{nameof(Group.CreatedBy)}",
@@ -222,7 +248,8 @@ namespace EFDM.Test.TestConsole {
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var groups = groupSvc.Fetch(groupQuery);
 
-            foreach (var group in groups) {
+            foreach (var group in groups)
+            {
                 Console.WriteLine($"Group '{group.Title}', Users count '{group.Users?.Count}'");
             }
 
@@ -230,7 +257,8 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"--------------------------");
         }
 
-        static void TestTaskAnswerCommentService(IServiceScope scope) {
+        static void TestTaskAnswerCommentService(IServiceScope scope)
+        {
             var entitySvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerCommentService>();
             var taskAnswerSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
             // one to one like this
@@ -251,31 +279,38 @@ namespace EFDM.Test.TestConsole {
             }
         }
 
-        static void TestTaskAnswerService(IServiceScope scope) {
+        static void TestTaskAnswerService(IServiceScope scope)
+        {
             var entitySvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
             var taskAnswer = new TaskAnswer();
             taskAnswer.AnswerValue = 1;
             entitySvc.Save(taskAnswer);
         }
 
-        static void TestModelXmlSerialization(IServiceScope scope) {
+        static void TestModelXmlSerialization(IServiceScope scope)
+        {
             var xao = new XmlAttributeOverrides();
-            xao.Add(typeof(EntityBase<int>), "CreatedBy", new XmlAttributes {
+            xao.Add(typeof(EntityBase<int>), "CreatedBy", new XmlAttributes
+            {
                 XmlIgnore = true
             });
-            xao.Add(typeof(EntityBase<int>), "ModifiedBy", new XmlAttributes {
-                XmlIgnore = true
-            });
-            // Use List instead ICollection
-            xao.Add(typeof(Group), "Users", new XmlAttributes {
-                XmlIgnore = true
-            });
-            // Use List instead ICollection
-            xao.Add(typeof(User), "Groups", new XmlAttributes {
+            xao.Add(typeof(EntityBase<int>), "ModifiedBy", new XmlAttributes
+            {
                 XmlIgnore = true
             });
             // Use List instead ICollection
-            xao.Add(typeof(GroupType), "Groups", new XmlAttributes {
+            xao.Add(typeof(Group), "Users", new XmlAttributes
+            {
+                XmlIgnore = true
+            });
+            // Use List instead ICollection
+            xao.Add(typeof(User), "Groups", new XmlAttributes
+            {
+                XmlIgnore = true
+            });
+            // Use List instead ICollection
+            xao.Add(typeof(GroupType), "Groups", new XmlAttributes
+            {
                 XmlIgnore = true
             });
 
@@ -283,24 +318,28 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"It's ok");
         }
 
-        static void TestDeserialization(IServiceScope scope) {
+        static void TestDeserialization(IServiceScope scope)
+        {
             var queryStr = "{\"Take\":20,\"Skip\":0,\"Sorts\":[{\"Field\":\"Id\",\"Desc\":true}]}";
             var typedQuery = JsonConvert.DeserializeObject<UserQuery>(queryStr ?? string.Empty);
             Console.WriteLine($"typedQuery: {typedQuery.Skip}");
         }
 
-        static void ChangeEnabledDBContextAuditor(IServiceScope scope, bool enabled) {
+        static void ChangeEnabledDBContextAuditor(IServiceScope scope, bool enabled)
+        {
             var dbContext = scope.ServiceProvider.GetRequiredService<TestDatabaseContext>();
             dbContext.Auditor.Enabled = enabled;
             Console.WriteLine($"DBContextAuditor enabled: {enabled}");
         }
 
-        static void ChangeNGroupsWithSvc(IServiceScope scope) {
+        static void ChangeNGroupsWithSvc(IServiceScope scope)
+        {
             var take = 3;
             var sw = new Stopwatch();
             sw.Start();
 
-            var groupQuery = new GroupQuery {
+            var groupQuery = new GroupQuery
+            {
                 Includes = new[] {
                     $"{nameof(Group.Type)}"
                 },
@@ -310,7 +349,8 @@ namespace EFDM.Test.TestConsole {
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var groups = groupSvc.Fetch(groupQuery, true);
 
-            foreach (var group in groups) {
+            foreach (var group in groups)
+            {
                 group.Title = $"Group_{Guid.NewGuid()}";
                 group.TypeId = group.TypeId == GroupTypeVals.Admins ? GroupTypeVals.Users : GroupTypeVals.Admins;
                 group.TextField1 = $"textfield1 {DateTime.Now}";
@@ -323,8 +363,10 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine("Elapsed={0}", sw.Elapsed);
         }
 
-        static void ChangeGroupUsersWithSvc(IServiceScope scope) {
-            var groupQuery = new GroupQuery {
+        static void ChangeGroupUsersWithSvc(IServiceScope scope)
+        {
+            var groupQuery = new GroupQuery
+            {
                 Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
                 Includes = new[] { $"{nameof(Group.CreatedBy)}",
                     $"{nameof(Group.ModifiedBy)}",
@@ -334,11 +376,13 @@ namespace EFDM.Test.TestConsole {
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var group = groupSvc.Get(groupQuery, true);
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
-            var user = userSvc.Get(new UserQuery {
+            var user = userSvc.Get(new UserQuery
+            {
                 Ids = new[] { UserVals.System.Id }
             });
 
-            if (!group.Users.Any(x => x.UserId == user.Id)) {
+            if (!group.Users.Any(x => x.UserId == user.Id))
+            {
                 Console.WriteLine($"Adding user {user.Id} to group {group.Id}");
                 group.Users.Add(new GroupUser { GroupId = group.Id, UserId = user.Id });
             }
@@ -347,7 +391,8 @@ namespace EFDM.Test.TestConsole {
             groupSvc.SaveChanges();
             Console.WriteLine($"--------------------------");
 
-            if (group.Users.Any(x => x.UserId == user.Id)) {
+            if (group.Users.Any(x => x.UserId == user.Id))
+            {
                 Console.WriteLine($"Removing user {user.Id} from group {group.Id}");
                 group.Users = group.Users.Where(x => x.UserId != user.Id).ToList();
             }
@@ -358,8 +403,10 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"--------------------------");
         }
 
-        static void ChangeGroupTypeWithSvc(IServiceScope scope) {
-            var groupQuery = new GroupQuery {
+        static void ChangeGroupTypeWithSvc(IServiceScope scope)
+        {
+            var groupQuery = new GroupQuery
+            {
                 Includes = new[] { 
                     //$"{nameof(Group.CreatedBy)}", 
                     //$"{nameof(Group.ModifiedBy)}",
@@ -375,9 +422,11 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"--------------------------");
         }
 
-        static void ChangeGroupsWithSvc(IServiceScope scope) {
+        static void ChangeGroupsWithSvc(IServiceScope scope)
+        {
             var originalTitle = "Администраторы";
-            var groupQuery = new GroupQuery {
+            var groupQuery = new GroupQuery
+            {
                 Title = originalTitle,
                 Includes = new[] { $"{nameof(Group.CreatedBy)}",
                     $"{nameof(Group.ModifiedBy)}",
@@ -386,13 +435,15 @@ namespace EFDM.Test.TestConsole {
             };
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var groups = groupSvc.Fetch(groupQuery, true);
-            foreach (var group in groups) {
+            foreach (var group in groups)
+            {
                 Console.WriteLine($"Changing {group.Id}, {group.Title}, Created: '{group.CreatedBy.Title}'");
                 group.Title = $"{originalTitle} {Guid.NewGuid()}";
             }
             groupSvc.SaveChanges();
             Console.WriteLine($"--------------------------");
-            foreach (var group in groups) {
+            foreach (var group in groups)
+            {
                 Console.WriteLine($"Changing {group.Id}, {group.Title}, Created: '{group.CreatedBy.Title}'");
                 group.Title = $"{originalTitle}";
             }
@@ -400,8 +451,10 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine($"--------------------------");
         }
 
-        static void GetGroupsWithSvc(IServiceScope scope) {
-            var groupQuery = new GroupQuery {
+        static void GetGroupsWithSvc(IServiceScope scope)
+        {
+            var groupQuery = new GroupQuery
+            {
                 Title = "Администраторы",
                 Includes = new[] { $"{nameof(Group.CreatedBy)}", $"{nameof(Group.ModifiedBy)}" }
             };
@@ -411,15 +464,19 @@ namespace EFDM.Test.TestConsole {
                 Console.WriteLine($"{group.Id}, {group.Title}, Created: '{group.CreatedBy.Title}'");
 
             Console.WriteLine($"--------------------------");
-            groupQuery = new GroupQuery {
+            groupQuery = new GroupQuery
+            {
                 TypeIds = new int[] { GroupTypeVals.Users },
                 Includes = new[] { $"{nameof(Group.Users)}.{nameof(GroupUser.User)}" }
             };
             groups = groupSvc.Fetch(groupQuery);
-            foreach (var group in groups) {
+            foreach (var group in groups)
+            {
                 Console.WriteLine($"{group.Id}, {group.Title}");
-                if (group.Users?.Count > 0) {
-                    foreach (var gu in group.Users) {
+                if (group.Users?.Count > 0)
+                {
+                    foreach (var gu in group.Users)
+                    {
                         Console.WriteLine($"\t{gu.UserId}, {gu.User.Title}");
                     }
                 }
@@ -427,12 +484,15 @@ namespace EFDM.Test.TestConsole {
             }
         }
 
-        static void AddNTimesGroupsWithSvc(IServiceScope scope) {
+        static void AddNTimesGroupsWithSvc(IServiceScope scope)
+        {
             var times = 2;
             var sw = new Stopwatch();
             sw.Start();
-            for (var i = 0; i <= times; i++) {
-                var group = new Group {
+            for (var i = 0; i <= times; i++)
+            {
+                var group = new Group
+                {
                     Title = $"Group_{i}_{Guid.NewGuid()}",
                     TypeId = GroupTypeVals.Users
                 };
@@ -443,8 +503,10 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine("Elapsed={0}", sw.Elapsed);
         }
 
-        static void AddGroupWithSvc(IServiceScope scope) {
-            var group = new Group {
+        static void AddGroupWithSvc(IServiceScope scope)
+        {
+            var group = new Group
+            {
                 Title = $"Group {Guid.NewGuid()}",
                 TypeId = GroupTypeVals.Users
             };
@@ -453,12 +515,15 @@ namespace EFDM.Test.TestConsole {
             Console.WriteLine(group.Id);
         }
 
-        static void AddUserWithSvc(IServiceScope scope) {
+        static void AddUserWithSvc(IServiceScope scope)
+        {
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
-            var group = groupSvc.Get(new GroupQuery {
+            var group = groupSvc.Get(new GroupQuery
+            {
                 TypeIds = new int[] { GroupTypeVals.Users }
             });
-            var user = new User {
+            var user = new User
+            {
                 Login = "efdm\\user" + Guid.NewGuid(),
                 Title = "Title " + Guid.NewGuid(),
                 Groups = new List<GroupUser>()
@@ -471,9 +536,11 @@ namespace EFDM.Test.TestConsole {
 
         #region di settings
 
-        private static ServiceProvider RegisterServices(IConfigurationRoot config) {
+        private static ServiceProvider RegisterServices(IConfigurationRoot config)
+        {
             var services = new ServiceCollection();
-            services.AddLogging((ILoggingBuilder builder) => {
+            services.AddLogging((ILoggingBuilder builder) =>
+            {
                 builder.AddDebug();
             });
             services.AddSingleton<ILogger, ConsoleLogger>();

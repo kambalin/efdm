@@ -2,13 +2,13 @@
 using System.Collections.Generic;
 using System.Linq.Expressions;
 
-namespace EFDM.Abstractions.DataQueries {
-
-    public interface IQueryFilter<T> {
+namespace EFDM.Abstractions.DataQueries
+{
+    public interface IQueryFilter<T>
+    {
         bool IsOr { get; }
         List<Expression<Func<T, bool>>> Expressions { get; }
         List<IQueryFilter<T>> Childs { get; }
-
         IQueryFilter<T> Add(Expression<Func<T, bool>> fn);
         IQueryFilter<T> Add(IQueryFilter<T> child);
         IQueryFilter<T> And(Action<IQueryFilter<T>> fn);

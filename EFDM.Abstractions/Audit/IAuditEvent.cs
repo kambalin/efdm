@@ -1,8 +1,9 @@
 ﻿using System.Collections.Generic;
 
-namespace EFDM.Abstractions.Audit {
-
-    public interface IAuditEvent {
+namespace EFDM.Abstractions.Audit
+{
+    public interface IAuditEvent
+    {
         string ContextId { get; set; }
         List<IEventEntry> Entries { get; set; }
         int Result { get; set; }

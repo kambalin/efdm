@@ -3,13 +3,15 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace EFDM.Core.Models.Validation {
-
-    public class ValidationResult<T> : ValidationResult {
+namespace EFDM.Core.Models.Validation
+{
+    public class ValidationResult<T> : ValidationResult
+    {
         public T Model { get; set; }
     }
 
-    public class ValidationResult : IValidationResult {
+    public class ValidationResult : IValidationResult
+    {
 
         #region fields & properties
 
@@ -19,25 +21,32 @@ namespace EFDM.Core.Models.Validation {
 
         #endregion fields & properties
 
-        public void Add(params IValidationError[] errors) {
+        public void Add(params IValidationError[] errors)
+        {
             _errors.AddRange(errors);
         }
 
-        public void Add(string message) {
-            Add(new ValidationError() {
+        public void Add(string message)
+        {
+            Add(new ValidationError()
+            {
                 Message = message
             });
         }
 
-        public void Add(string field, string message) {
-            Add(new ValidationError() {
+        public void Add(string field, string message)
+        {
+            Add(new ValidationError()
+            {
                 Field = field,
                 Message = message
             });
         }
 
-        public void Add(string block, int index, string field, string message) {
-            Add(new ValidationError() {
+        public void Add(string block, int index, string field, string message)
+        {
+            Add(new ValidationError()
+            {
                 Block = block,
                 Index = index,
                 Field = field,
@@ -45,23 +54,21 @@ namespace EFDM.Core.Models.Validation {
             });
         }
 
-        public void Add(IValidationResult validation) {
+        public void Add(IValidationResult validation)
+        {
             _errors.AddRange(validation.Errors);
         }
 
-        public override string ToString() {
-            if (IsValid) {
+        public override string ToString()
+        {
+            if (IsValid)
                 return "No errors";
-            }
-
             var sb = new StringBuilder();
-
             sb.AppendLine("Errors:");
-
-            foreach (var error in Errors) {
+            foreach (var error in Errors)
+            {
                 sb.Append("- ").AppendLine(error.ToString());
             }
-
             return sb.ToString();
         }
     }

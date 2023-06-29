@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace EFDM.Abstractions.Audit {
-
-    public interface IEventEntry {
+namespace EFDM.Abstractions.Audit
+{
+    public interface IEventEntry
+    {
         string Schema { get; set; }
         string Table { get; set; }
         string Name { get; set; }

@@ -2,11 +2,11 @@
 using EFDM.Core.Models.Domain;
 using System;
 
-namespace EFDM.Core.Models.Audit {
-
+namespace EFDM.Core.Models.Audit
+{
     public abstract class AuditEventBase<TKey> : IdKeyEntityBase<TKey>, IAuditEventBase<TKey>
-       where TKey : IComparable, IEquatable<TKey> {
-
+       where TKey : IComparable, IEquatable<TKey>
+    {
         public DateTimeOffset Created { get; set; }
         public int CreatedById { get; set; }
         public string ObjectType { get; set; }

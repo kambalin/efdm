@@ -3,9 +3,10 @@ using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace EFDM.Core.Audit {
-
-    public class EventEntry : IEventEntry {
+namespace EFDM.Core.Audit
+{
+    public class EventEntry : IEventEntry
+    {
         public string Schema { get; set; }
         public string Table { get; set; }
         public string Name { get; set; }
@@ -18,7 +19,8 @@ namespace EFDM.Core.Audit {
         public Type EntityType { get; set; }
         [JsonIgnore]
         internal Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry Entry { get; set; }
-        public Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry GetEntry() {
+        public Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry GetEntry()
+        {
             return Entry;
         }
     }
