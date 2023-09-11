@@ -62,7 +62,8 @@ namespace EFDM.Test.TestConsole
                     //InsertUsers(scope);
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
-                    GetUserIds(scope);
+                    //GetUserIds(scope);
+                    TestTaskAnswersValidFromQuery(scope);
                 }
             }
 
@@ -83,6 +84,30 @@ namespace EFDM.Test.TestConsole
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestTaskAnswersValidFromQuery(IServiceScope scope)
+        {
+            var take = 10;
+            var taQuery = new TaskAnswerQuery
+            {
+                //ValidFromQueryParams = new DatePeriodQueryParams
+                //{
+                //    MoreOrEquals = new DateTime(2023, 09, 10, 20, 0, 0),
+                //    LessOrEquals = new DateTime(2023, 09, 11, 4, 0, 0),
+                //    OrIsNull = false
+                //},
+                ValidFromOffsetQueryParams = new DateOffsetPeriodQueryParams
+                {
+                    MoreOrEquals = new DateTimeOffset(2023, 09, 10, 22, 0, 0, new TimeSpan(3, 0, 0)),
+                    LessOrEquals = new DateTimeOffset(2023, 09, 11, 1, 0, 0, new TimeSpan(3, 0, 0)),
+                    OrIsNull = false
+                },
+                Take = take,
+                Sorts = new[] { new Sort { Field = nameof(TaskAnswer.Id), Desc = true } },
+            };
+            var taSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
+            var taskAnswers = taSvc.Fetch(taQuery, true);
         }
 
         static void GetUserIds(IServiceScope scope)

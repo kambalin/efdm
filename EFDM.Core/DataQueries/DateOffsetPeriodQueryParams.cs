@@ -2,12 +2,12 @@
 
 namespace EFDM.Core.DataQueries
 {
-    public class DatePeriodQueryParams
+    public class DateOffsetPeriodQueryParams
     {
         #region fields & properties
 
-        public DateTime? LessOrEquals { get; set; }
-        public DateTime? MoreOrEquals { get; set; }
+        public DateTimeOffset? LessOrEquals { get; set; }
+        public DateTimeOffset? MoreOrEquals { get; set; }
         public bool? OrIsNull { get; set; }
 
         #endregion fields & properties

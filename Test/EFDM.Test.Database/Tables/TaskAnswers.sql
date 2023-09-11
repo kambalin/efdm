@@ -4,4 +4,5 @@
 	[AnswerValue] DECIMAL(18, 2) NULL,
 	[TextField1] NVARCHAR (150) NULL,
     [TextField2] NVARCHAR (150) NULL,
+	[ValidFrom] DATETIMEOFFSET (0) NULL,
 )
