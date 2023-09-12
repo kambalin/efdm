@@ -2,22 +2,22 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>0.7.11</version>
+		<version>0.7.12</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-      Added OrIsNull to DatePeriodQueryParams and complete analogue of this class is DateOffsetPeriodQueryParams with DateTimeOffset properties.
+      Changed EntityDataQueryBase -> CreatedQueryParams and ModifiedQueryParams from DatePeriodQueryParams to DateOffsetPeriodQueryParams and new predicate buidling
     </releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>
 		<dependencies>
 			<group targetFramework="net7.0">
-				<dependency id="Microsoft.EntityFrameworkCore" version="7.0.5" />
+				<dependency id="Microsoft.EntityFrameworkCore" version="7.0.10" />
 				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="7.1.4" />
-				<dependency id="EFCore.BulkExtensions.SqlServer" version="7.0.4" />
+				<dependency id="EFCore.BulkExtensions.SqlServer" version="7.1.6" />
 			</group>
 		</dependencies>
 	</metadata>

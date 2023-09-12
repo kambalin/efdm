@@ -68,12 +68,6 @@ namespace EFDM.Test.Core.DataQueries.Models
                 }
             }
 
-            //if (ValidFromQueryParams.LessOrEquals.HasValue)
-            //    and.Add(x => x.ValidFrom <= ValidFromQueryParams.LessOrEquals.Value || x.ValidFrom.Equals(null));
-
-            //if (ValidFromQueryParams.MoreOrEquals.HasValue)
-            //    and.Add(x => x.ValidFrom >= ValidFromQueryParams.MoreOrEquals.Value || x.ValidFrom.Equals(null));
-
             return base.ToFilter().Add(and);
         }
     }

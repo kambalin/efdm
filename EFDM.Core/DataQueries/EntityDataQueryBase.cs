@@ -1,5 +1,6 @@
 ﻿using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
+using LinqKit;
 using System;
 using System.Linq;
 
@@ -11,8 +12,8 @@ namespace EFDM.Core.DataQueries
     {
         public int[] CreatedByIds { get; set; }
         public int[] ModifiedByIds { get; set; }
-        public DatePeriodQueryParams CreatedQueryParams { get; set; } = new DatePeriodQueryParams();
-        public DatePeriodQueryParams ModifiedQueryParams { get; set; } = new DatePeriodQueryParams();
+        public DateOffsetPeriodQueryParams CreatedQueryParams { get; set; }
+        public DateOffsetPeriodQueryParams ModifiedQueryParams { get; set; }
 
         public override IQueryFilter<TModel> ToFilter()
         {
@@ -24,17 +25,60 @@ namespace EFDM.Core.DataQueries
             if (ModifiedByIds?.Any() == true)
                 and.Add(x => ModifiedByIds.Contains(x.ModifiedById));
 
-            if (CreatedQueryParams.LessOrEquals.HasValue)
-                and.Add(x => x.Created <= CreatedQueryParams.LessOrEquals.Value);
 
-            if (CreatedQueryParams.MoreOrEquals.HasValue)
-                and.Add(x => x.Created >= CreatedQueryParams.MoreOrEquals.Value);
+            if (CreatedQueryParams != null)
+            {
+                var createdQueryParamsCondition = false;
+                var predicate = PredicateBuilder.True<TModel>();
 
-            if (ModifiedQueryParams.LessOrEquals.HasValue)
-                and.Add(x => x.Modified <= ModifiedQueryParams.LessOrEquals.Value);
+                if (CreatedQueryParams.LessOrEquals.HasValue)
+                {
+                    predicate = predicate.And(x => x.Created <= CreatedQueryParams.LessOrEquals.Value);
+                    createdQueryParamsCondition = true;
+                }
+                if (CreatedQueryParams.MoreOrEquals.HasValue)
+                {
+                    predicate = predicate.And(x => x.Created >= CreatedQueryParams.MoreOrEquals.Value);
+                    createdQueryParamsCondition = true;
+                }
+                if (CreatedQueryParams.OrIsNull.HasValue && CreatedQueryParams.OrIsNull.Value == true)
+                {
+                    predicate = predicate.Or(x => x.Created.Equals(null));
+                    createdQueryParamsCondition = true;
+                }
 
-            if (ModifiedQueryParams.MoreOrEquals.HasValue)
-                and.Add(x => x.Modified >= ModifiedQueryParams.MoreOrEquals.Value);
+                if (createdQueryParamsCondition)
+                {
+                    and.Add(x => predicate.Invoke(x));
+                }
+            }
+
+            if (ModifiedQueryParams != null)
+            {
+                var modifiedQueryParamsCondition = false;
+                var predicate = PredicateBuilder.True<TModel>();
+
+                if (ModifiedQueryParams.LessOrEquals.HasValue)
+                {
+                    predicate = predicate.And(x => x.Modified <= ModifiedQueryParams.LessOrEquals.Value);
+                    modifiedQueryParamsCondition = true;
+                }
+                if (ModifiedQueryParams.MoreOrEquals.HasValue)
+                {
+                    predicate = predicate.And(x => x.Modified >= ModifiedQueryParams.MoreOrEquals.Value);
+                    modifiedQueryParamsCondition = true;
+                }
+                if (ModifiedQueryParams.OrIsNull.HasValue && ModifiedQueryParams.OrIsNull.Value == true)
+                {
+                    predicate = predicate.Or(x => x.Modified.Equals(null));
+                    modifiedQueryParamsCondition = true;
+                }
+
+                if (modifiedQueryParamsCondition)
+                {
+                    and.Add(x => predicate.Invoke(x));
+                }
+            }
 
             return base.ToFilter().Add(and);
         }
