@@ -9,6 +9,7 @@
     [TypeId]       INT                NULL,
     [TextField1] NVARCHAR (150) NULL,
     [TextField2] NVARCHAR (150) NULL,
+    [SubTypeId] TINYINT NOT NULL DEFAULT 255,	
     CONSTRAINT [PK_Groups] PRIMARY KEY CLUSTERED ([Id] DESC),
     CONSTRAINT [FK_Groups_GroupTypes] FOREIGN KEY ([TypeId]) REFERENCES [dbo].[GroupTypes] ([Id]),
     CONSTRAINT [FK_Groups_CreatedById_Users_Id] FOREIGN KEY ([CreatedById]) REFERENCES [dbo].[Users] ([Id]),    

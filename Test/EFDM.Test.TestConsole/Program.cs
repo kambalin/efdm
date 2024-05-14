@@ -63,7 +63,8 @@ namespace EFDM.Test.TestConsole
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);
-                    TestTaskAnswersValidFromQuery(scope);
+                    //TestTaskAnswersValidFromQuery(scope);
+                    TestPrincipalSorts(scope);
                 }
             }
 
@@ -84,6 +85,30 @@ namespace EFDM.Test.TestConsole
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestPrincipalSorts(IServiceScope scope)
+        {
+            var take = 10;
+            var gQuery = new GroupQuery
+            {
+                Includes = new[]
+                {
+                    nameof(Group.CreatedBy),
+                    nameof(Group.ModifiedBy)
+                },
+                Take = take,
+                Sorts = new[] { new Sort { Field = "CreatedBy.Title", Desc = true } },
+                //Sorts = new[] { new Sort { Field = "Id", Desc = true } },
+                //Sorts = new[] { new Sort { Field = $"{nameof(Group.CreatedBy)}.{nameof(Group.CreatedBy.Title)}", Desc = false } },
+                //Sorts = new[] { new Sort { Field = $"{nameof(Group.Title)}", Desc = false } },
+            };
+            var taSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+            var groups = taSvc.Fetch(gQuery);
+            foreach (var group in groups)
+            {
+                Console.WriteLine($"Group id {group.Id}, createdby '{group.CreatedBy?.Title}'");
+            }
         }
 
         static void TestTaskAnswersValidFromQuery(IServiceScope scope)
@@ -533,7 +558,9 @@ namespace EFDM.Test.TestConsole
             var group = new Group
             {
                 Title = $"Group {Guid.NewGuid()}",
-                TypeId = GroupTypeVals.Users
+                TypeId = GroupTypeVals.Users,
+                SubTypeId = 0,
+                TextField1 = "TextField1"
             };
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             groupSvc.Save(group);

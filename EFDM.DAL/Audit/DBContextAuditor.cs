@@ -209,7 +209,8 @@ namespace EFDM.Core.Audit
                 PropertyEntry propEntry = entry.Property(prop.Name);
                 if (IncludeProperty(entry, prop.Name))
                 {
-                    object value = entry.State != EntityState.Deleted ? propEntry.CurrentValue : propEntry.OriginalValue;
+                    object value = entry.State != EntityState.Deleted ? 
+                        propEntry.CurrentValue : propEntry.OriginalValue;
                     result.Add(GetColumnName(prop), value);
                 }
             }
@@ -221,7 +222,8 @@ namespace EFDM.Core.Audit
             var result = new List<IEventEntryChange>();
             var props = entry.Metadata.GetProperties();
             var entityType = entry.Entity.GetType();
-            var navigations = Context.DbContext.Model.FindEntityType(entityType).GetNavigations().ToList();
+            var navigations = Context.DbContext.Model.FindEntityType(entityType)
+                .GetNavigations().ToList();
             foreach (var prop in props)
             {
                 PropertyEntry propEntry = entry.Property(prop.Name);
@@ -237,7 +239,6 @@ namespace EFDM.Core.Audit
         protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry,
             List<INavigation> navigations, IProperty prop)
         {
-
             var eec = new EventEntryChange()
             {
                 ColumnName = GetColumnName(prop),
@@ -256,13 +257,15 @@ namespace EFDM.Core.Audit
             var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
             if (eec.OriginalValue != null)
             {
-                var newRelated = dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue)).FirstOrDefault();
+                var newRelated = dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
+                    .FirstOrDefault();
                 if (newRelated != null)
                     eec.NewValue = GetLookupValue(newRelated);
             }
             if (eec.OriginalValue != null)
             {
-                var oldRelated = dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue)).FirstOrDefault();
+                var oldRelated = dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
+                    .FirstOrDefault();
                 if (oldRelated != null)
                     eec.OriginalValue = GetLookupValue(oldRelated);
             }
@@ -271,6 +274,7 @@ namespace EFDM.Core.Audit
 
         protected string GetLookupValue(object entity)
         {
+            // TODO: <int>
             return $"{(entity as IIdKeyEntity<int>)?.Id}: {(entity as ITitleEntity)?.Title}";
         }
 

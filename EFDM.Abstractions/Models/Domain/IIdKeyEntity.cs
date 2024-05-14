@@ -2,8 +2,9 @@
 
 namespace EFDM.Abstractions.Models.Domain
 {
-    public interface IIdKeyEntity<TKey> : IEntity where TKey : IComparable, IEquatable<TKey>
+    public interface IIdKeyEntity<TKey> where TKey : IComparable, IEquatable<TKey>
     {
-        new TKey Id { get; set; }
+        TKey Id { get; set; }
+        bool IsNew { get; }
     }
 }

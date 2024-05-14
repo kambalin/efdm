@@ -395,7 +395,8 @@ namespace EFDM.Core.DAL.Repositories
         static IOrderedQueryable<T> _orderBy<T>(IQueryable<T> source, string name, bool descending, bool then)
         {
             var param = Expression.Parameter(typeof(T), string.Empty);
-            var property = name.Split('.').Aggregate<string, Expression>(param, (r, x) => Expression.PropertyOrField(r, x));
+            var property = name.Split('.')
+                .Aggregate<string, Expression>(param, (r, x) => Expression.PropertyOrField(r, x));
             var sort = Expression.Lambda(property, param);
             var call = Expression.Call(
                 typeof(Queryable),

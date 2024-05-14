@@ -10,7 +10,7 @@ namespace EFDM.Core.DataQueries
         where TModel : class
     {
         public IEnumerable<ISorting> Sorts { get; set; } = new List<Sort>();
-        public IEnumerable<string> Includes { get; set; }        
+        public IEnumerable<string> Includes { get; set; }
         public bool SplitQuery { get; set; } = false;
         public int Take { get; set; }
         public int Skip { get; set; }

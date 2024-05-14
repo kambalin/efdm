@@ -10,5 +10,6 @@ namespace EFDM.Test.Core.Models.Domain
         public virtual ICollection<GroupUser> Users { get; set; }
         public string TextField1 { get; set; }
         public string TextField2 { get; set; }
+        public byte SubTypeId { get; set; }
     }
 }

@@ -7,7 +7,7 @@ namespace EFDM.Test.Core.Models.Domain.Base
         IAuditableUserEntity
         where TKey : IComparable, IEquatable<TKey>
     {
-        public new User CreatedBy { get; set; }
-        public new User ModifiedBy { get; set; }
+        public User CreatedBy { get; set; }
+        public User ModifiedBy { get; set; }
     }
 }

@@ -12,8 +12,8 @@ namespace EFDM.Core.Models.Domain
         public DateTimeOffset Modified { get; set; } = DateTimeOffset.Now;
         public int CreatedById { get; set; }
         public int ModifiedById { get; set; }
-        public IUser CreatedBy { get; set; }
-        public IUser ModifiedBy { get; set; }
+        IUser IAuditablePrincipalEntity.CreatedBy { get; set; }
+        IUser IAuditablePrincipalEntity.ModifiedBy { get; set; }
 
         [NotMapped]
         [JsonIgnore]
