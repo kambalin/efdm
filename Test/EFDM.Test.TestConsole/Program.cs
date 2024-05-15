@@ -41,7 +41,7 @@ namespace EFDM.Test.TestConsole
                     //AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
-                    //ChangeGroupTypeWithSvc(scope);
+                    ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
                     //AddNTimesGroupsWithSvc(scope);
                     //ChangeNGroupsWithSvc(scope);
@@ -64,7 +64,7 @@ namespace EFDM.Test.TestConsole
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);
                     //TestTaskAnswersValidFromQuery(scope);
-                    TestPrincipalSorts(scope);
+                    //TestPrincipalSorts(scope);
                 }
             }
 
