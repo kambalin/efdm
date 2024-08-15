@@ -41,15 +41,12 @@ namespace EFDM.Test.TestConsole
                     //AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
-                    ChangeGroupTypeWithSvc(scope);
+                    //ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
                     //AddNTimesGroupsWithSvc(scope);
-                    //ChangeNGroupsWithSvc(scope);
-
                     //ChangeEnabledDBContextAuditor(scope, false);
                     //ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
-                    //ChangeNGroupsWithSvc(scope);
                     //TestDeserialization(scope);
                     //TestTaskAnswerService(scope);
                     //TestTaskAnswerCommentService(scope);
@@ -65,6 +62,7 @@ namespace EFDM.Test.TestConsole
                     //GetUserIds(scope);
                     //TestTaskAnswersValidFromQuery(scope);
                     //TestPrincipalSorts(scope);
+                    //TestTaskAnswersValidFromTillOrderQuery(scope);
                 }
             }
 
@@ -85,6 +83,25 @@ namespace EFDM.Test.TestConsole
 
             Console.WriteLine("press any key...");
             Console.ReadKey();
+        }
+
+        static void TestTaskAnswersValidFromTillOrderQuery(IServiceScope scope)
+        {
+            var take = 100;
+            var taQuery = new TaskAnswerQuery
+            {
+                Take = take,
+                Sorts = new[] {
+                    new Sort { Field = nameof(TaskAnswer.ValidTill), Desc = false },
+                    new Sort { Field = nameof(TaskAnswer.ValidFrom), Desc = false },                    
+                }
+            };
+            var taSvc = scope.ServiceProvider.GetRequiredService<ITaskAnswerService>();
+            var taskAnswers = taSvc.Fetch(taQuery, false);
+            foreach (var ta in taskAnswers)
+            {
+                Console.WriteLine($"From {ta.ValidFrom}, Till '{ta.ValidTill}'");
+            }
         }
 
         static void TestPrincipalSorts(IServiceScope scope)

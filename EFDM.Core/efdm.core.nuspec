@@ -2,28 +2,28 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>0.7.15</version>
+		<version>0.8.0</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-      Revert back IEntity inheritance in IIdKeyEntity (audit purposes)
+      Upgrade to net8
     </releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>
 		<dependencies>
-			<group targetFramework="net7.0">
-				<dependency id="Microsoft.EntityFrameworkCore" version="7.0.10" />
-				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="7.1.4" />
-				<dependency id="EFCore.BulkExtensions.SqlServer" version="7.1.6" />
+			<group targetFramework="net8.0">
+				<dependency id="Microsoft.EntityFrameworkCore" version="8.0.8" />
+				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="8.1.5" />
+				<dependency id="EFCore.BulkExtensions.SqlServer" version="8.1.0" />
 			</group>
 		</dependencies>
 	</metadata>
 	<files>
-		<file src=".\bin\Release\net7.0\EFDM.Core.dll" target="lib\net7.0\EFDM.Core.dll" />
-		<file src="..\EFDM.Abstractions\bin\Release\net7.0\EFDM.Abstractions.dll" target="lib\net7.0\EFDM.Abstractions.dll" />
-		<file src="..\EFDM.DAL\bin\Release\net7.0\EFDM.DAL.dll" target="lib\net7.0\EFDM.DAL.dll" />
+		<file src=".\bin\Release\net8.0\EFDM.Core.dll" target="lib\net8.0\EFDM.Core.dll" />
+		<file src="..\EFDM.Abstractions\bin\Release\net8.0\EFDM.Abstractions.dll" target="lib\net8.0\EFDM.Abstractions.dll" />
+		<file src="..\EFDM.DAL\bin\Release\net8.0\EFDM.DAL.dll" target="lib\net8.0\EFDM.DAL.dll" />
 	</files>
 </package>

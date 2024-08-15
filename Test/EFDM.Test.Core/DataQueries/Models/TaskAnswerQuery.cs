@@ -7,39 +7,12 @@ namespace EFDM.Test.Core.DataQueries.Models
 {
     public class TaskAnswerQuery : IdKeyDataQueryBase<TaskAnswer, int>
     {
-        public DatePeriodQueryParams? ValidFromQueryParams { get; set; }
         public DateOffsetPeriodQueryParams? ValidFromOffsetQueryParams { get; set; }
+        public DateOffsetPeriodQueryParams? ValidTillOffsetQueryParams { get; set; }
 
         public override IQueryFilter<TaskAnswer> ToFilter()
         {
             var and = new QueryFilter<TaskAnswer>();
-
-            if (ValidFromQueryParams != null)
-            {
-                var validFromQueryParamsCondition = false;
-                var predicate = PredicateBuilder.True<TaskAnswer>();
-
-                if (ValidFromQueryParams.LessOrEquals.HasValue)
-                {
-                    predicate = predicate.And(x => x.ValidFrom <= ValidFromQueryParams.LessOrEquals.Value);
-                    validFromQueryParamsCondition = true;
-                }
-                if (ValidFromQueryParams.MoreOrEquals.HasValue)
-                {
-                    predicate = predicate.And(x => x.ValidFrom >= ValidFromQueryParams.MoreOrEquals.Value);
-                    validFromQueryParamsCondition = true;
-                }
-                if (ValidFromQueryParams.OrIsNull.HasValue && ValidFromQueryParams.OrIsNull.Value == true)
-                {
-                    predicate = predicate.Or(x => x.ValidFrom.Equals(null));
-                    validFromQueryParamsCondition = true;
-                }
-
-                if (validFromQueryParamsCondition)
-                {
-                    and.Add(x => predicate.Invoke(x));
-                }
-            }
 
             if (ValidFromOffsetQueryParams != null)
             {
@@ -63,9 +36,32 @@ namespace EFDM.Test.Core.DataQueries.Models
                 }
 
                 if (validFromOffsetQueryParamsCondition)
-                {
                     and.Add(x => predicate.Invoke(x));
+            }
+
+            if (ValidTillOffsetQueryParams != null)
+            {
+                var validTillOffsetQueryParamsCondition = false;
+                var predicate = PredicateBuilder.True<TaskAnswer>();
+
+                if (ValidTillOffsetQueryParams.LessOrEquals.HasValue)
+                {
+                    predicate = predicate.And(x => x.ValidTill <= ValidTillOffsetQueryParams.LessOrEquals.Value);
+                    validTillOffsetQueryParamsCondition = true;
                 }
+                if (ValidTillOffsetQueryParams.MoreOrEquals.HasValue)
+                {
+                    predicate = predicate.And(x => x.ValidTill >= ValidTillOffsetQueryParams.MoreOrEquals.Value);
+                    validTillOffsetQueryParamsCondition = true;
+                }
+                if (ValidTillOffsetQueryParams.OrIsNull.HasValue && ValidTillOffsetQueryParams.OrIsNull.Value == true)
+                {
+                    predicate = predicate.Or(x => x.ValidTill.Equals(null));
+                    validTillOffsetQueryParamsCondition = true;
+                }
+
+                if (validTillOffsetQueryParamsCondition)
+                    and.Add(x => predicate.Invoke(x));
             }
 
             return base.ToFilter().Add(and);
