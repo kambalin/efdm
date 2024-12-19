@@ -209,7 +209,7 @@ namespace EFDM.Core.Audit
                 PropertyEntry propEntry = entry.Property(prop.Name);
                 if (IncludeProperty(entry, prop.Name))
                 {
-                    object value = entry.State != EntityState.Deleted ? 
+                    object value = entry.State != EntityState.Deleted ?
                         propEntry.CurrentValue : propEntry.OriginalValue;
                     result.Add(GetColumnName(prop), value);
                 }

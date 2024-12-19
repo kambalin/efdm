@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using EFDM.Abstractions.DAL.Repositories;
+﻿using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Responses;
 using EFDM.Core.DAL.Providers;
@@ -263,16 +262,6 @@ namespace EFDM.Core.DAL.Repositories
         public virtual bool IsAttached(TKey id)
         {
             return DbSet.Local.Any(e => e.Id.Equals(id));
-        }
-
-        public void BulkInsert(IList<TEntity> entities, BulkConfig config)
-        {
-            Context.BulkInsertWithPreSave(entities, config);
-        }
-
-        public void BulkInsertOrUpdate(IList<TEntity> entities, BulkConfig config)
-        {
-            Context.BulkInsertOrUpdateWithPreSave(entities, config);
         }
 
         #endregion IRepository implementation

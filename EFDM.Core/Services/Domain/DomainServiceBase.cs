@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using EFDM.Abstractions.DAL.Repositories;
+﻿using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
@@ -236,16 +235,6 @@ namespace EFDM.Core.Services.Domain
         public virtual void ClearChangeTracker()
         {
             Repository.ClearChangeTracker();
-        }
-
-        public void BulkInsert(IList<TModel> entities, BulkConfig config)
-        {
-            Repository.BulkInsert(entities, config);
-        }
-
-        public void BulkInsertOrUpdate(IList<TModel> entities, BulkConfig config)
-        {
-            Repository.BulkInsertOrUpdate(entities, config);
         }
 
         public IEnumerable<TKey> FetchIds(IDataQuery<TModel> query)

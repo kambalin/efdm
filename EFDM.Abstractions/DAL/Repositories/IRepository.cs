@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using EFDM.Abstractions.DataQueries;
+﻿using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
 using Microsoft.EntityFrameworkCore.Query;
@@ -61,8 +60,6 @@ namespace EFDM.Abstractions.DAL.Repositories
         IQueryable<TEntity> QueryableSql(string sql, params object[] parameters);
         bool IsAttached(TKey id);
         void ClearChangeTracker();
-        void BulkInsert(IList<TEntity> entities, BulkConfig config);
-        void BulkInsertOrUpdate(IList<TEntity> entities, BulkConfig config);
         /// <summary>
         /// Fetch entity id column values from table
         /// </summary>

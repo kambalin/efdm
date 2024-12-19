@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "EFDM.Sample.TestConsole": {
+      "commandName": "Project",
+      "sqlDebugging": false
+    }
+  }
+}

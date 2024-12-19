@@ -2,22 +2,21 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>0.8.0</version>
+		<version>0.8.1</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-      Upgrade to net8
+      Removed support for 3rd party bulk operations. Moved EFDM.Test -> to EFDM.Sample namespace. Added separately examples for postgres and msssql.
     </releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>
 		<dependencies>
 			<group targetFramework="net8.0">
-				<dependency id="Microsoft.EntityFrameworkCore" version="8.0.8" />
-				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="8.1.5" />
-				<dependency id="EFCore.BulkExtensions.SqlServer" version="8.1.0" />
+				<dependency id="Microsoft.EntityFrameworkCore" version="8.0.11" />
+				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="8.1.7" />
 			</group>
 		</dependencies>
 	</metadata>

@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using EFDM.Abstractions.Audit;
+﻿using EFDM.Abstractions.Audit;
 using EFDM.Abstractions.DAL.Providers;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Core.Audit;
@@ -17,6 +16,7 @@ namespace EFDM.Core.DAL.Providers
         #region fields & properties
 
         public abstract int ExecutorId { get; protected set; }
+        public Action<ModelConfigurationBuilder> ConventionsAction { get; protected set; }
         public DateTime? CommitTime { get; set; }
         public IDBContextAuditor Auditor { get { return _auditor; } }
         public DbContext DbContext { get { return this; } }
@@ -30,16 +30,19 @@ namespace EFDM.Core.DAL.Providers
         #region constructors
 
         public EFDMDatabaseContext(DbContextOptions options, ILoggerFactory loggerFactory = null,
-            IAuditSettings auditSettings = null) : base(options)
+            IAuditSettings auditSettings = null, Action<ModelConfigurationBuilder> conventionsAction = null) : base(options)
         {
             _loggerFactory = loggerFactory;
             InitAuditor(auditSettings);
+            ConventionsAction = conventionsAction;
         }
 
-        public EFDMDatabaseContext(string connectionString, IAuditSettings auditSettings = null)
+        public EFDMDatabaseContext(string connectionString, IAuditSettings auditSettings = null,
+            Action<ModelConfigurationBuilder> conventionsAction = null)
         {
             ConnectionString = connectionString;
             InitAuditor(auditSettings);
+            ConventionsAction = conventionsAction;
         }
 
         #endregion constructors
@@ -95,7 +98,7 @@ namespace EFDM.Core.DAL.Providers
             var auditDateEntity = entity as IAuditableDateEntity;
             if (auditDateEntity == null)
                 return;
-            var modified = DateTime.Now;
+            var modified = DateTimeOffset.Now;
             if (CommitTime.HasValue)
                 modified = CommitTime.Value;
             if (auditDateEntity.Created == DateTimeOffset.MinValue)
@@ -186,28 +189,6 @@ namespace EFDM.Core.DAL.Providers
             }
 
             return affectedRows;
-        }
-
-        public void BulkInsertWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config)
-            where TEntity : class
-        {
-            foreach (TEntity entity in entities)
-            {
-                PreSaveDateAuditValues(entity);
-                PreSavePrincipalAuditValues(entity);
-            }
-            this.BulkInsert(entities, config);
-        }
-
-        public void BulkInsertOrUpdateWithPreSave<TEntity>(IList<TEntity> entities, BulkConfig config)
-            where TEntity : class
-        {
-            foreach (TEntity entity in entities)
-            {
-                PreSaveDateAuditValues(entity);
-                PreSavePrincipalAuditValues(entity);
-            }
-            this.BulkInsertOrUpdate(entities, config);
         }
 
         public void ClearChangeTracker()

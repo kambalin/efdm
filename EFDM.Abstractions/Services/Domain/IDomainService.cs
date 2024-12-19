@@ -1,5 +1,4 @@
-﻿using EFCore.BulkExtensions;
-using EFDM.Abstractions.DataQueries;
+﻿using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
 using EFDM.Abstractions.Models.Validation;
@@ -61,8 +60,6 @@ namespace EFDM.Abstractions.Services.Domain
         IValidationResult DeleteValidation(TModel model);
         bool IsCreator(TModel model, int userId);
         void ClearChangeTracker();
-        void BulkInsert(IList<TModel> entities, BulkConfig config);
-        void BulkInsertOrUpdate(IList<TModel> entities, BulkConfig config);
         /// <summary>
         /// Fetch entity id column values from table
         /// </summary>

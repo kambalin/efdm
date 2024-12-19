@@ -1,0 +1,14 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>    
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\EFDM.Abstractions\EFDM.Abstractions.csproj" />
+    <ProjectReference Include="..\..\EFDM.Core\EFDM.Core.csproj" />
+    <ProjectReference Include="..\..\EFDM.DAL\EFDM.DAL.csproj" />
+    <ProjectReference Include="..\EFDM.Sample.Core\EFDM.Sample.Core.csproj" />
+  </ItemGroup>
+
+</Project>
