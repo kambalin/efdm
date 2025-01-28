@@ -49,20 +49,28 @@ namespace EFDM.Sample.IOC.Managers
             {
                 $"{nameof(TaskAnswer.TextField1)}"
             });
-            // mssql
-            //services.AddScoped(provider => new TestDatabaseContext(
-            //    GetMssqlDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings
-            //));
-            // postgres
+            #region mssql registration
+            
             services.AddScoped(provider => new TestDatabaseContext(
-                GetPgDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings,
-                (ModelConfigurationBuilder configurationBuilder) =>
-                {
-                    configurationBuilder
-                        .Properties<DateTimeOffset>()
-                        .HaveConversion<DateTimeOffsetConverterUtc>();
-                }
+                GetMssqlDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings
             ));
+
+            #endregion mssql registration
+
+            #region postgres registration
+
+            //services.AddScoped(provider => new TestDatabaseContext(
+            //    GetPgDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings,
+            //    (ModelConfigurationBuilder configurationBuilder) =>
+            //    {
+            //        configurationBuilder
+            //            .Properties<DateTimeOffset>()
+            //            .HaveConversion<DateTimeOffsetConverterUtc>();
+            //    }
+            //));
+
+            #endregion postgres registration
+
             services.AddScoped<EFDMDatabaseContext>(sp => sp.GetRequiredService<TestDatabaseContext>());
             services.AddScoped(typeof(IRepository<,>), typeof(TestRepository<,>));
 

@@ -194,10 +194,10 @@ namespace EFDM.Core.Audit
 
         protected static string GetColumnName(IProperty prop)
         {
-            var storeObjectIdentifier = StoreObjectIdentifier.Create(prop.DeclaringEntityType, StoreObjectType.Table);
+            var storeObjectIdentifier = StoreObjectIdentifier.Create(prop.DeclaringType, StoreObjectType.Table);
             return storeObjectIdentifier.HasValue
                 ? prop.GetColumnName(storeObjectIdentifier.Value)
-                : prop.GetDefaultColumnBaseName();
+                : prop.GetDefaultColumnName();
         }
 
         protected Dictionary<string, object> GetColumnValues(EntityEntry entry)
