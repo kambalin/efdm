@@ -18,7 +18,7 @@ You can find working example in `EFDM.Test.*` projects in `Test` folder
 ### Base entities
 Inherit own entities from EFDM.Core.Models.Domain
 
-```c#
+```csharp
 public class Group : DictIntDeletableEntity
 {
 	public int TypeId { get; set; }
@@ -28,7 +28,7 @@ public class Group : DictIntDeletableEntity
 ```
 
 ### Query entities
-```c#
+```csharp
 public class GroupQuery : DictIntDeletableDataQuery<Group>
 {
 	public int[] UserIds { get; set; }
@@ -51,193 +51,222 @@ public class GroupQuery : DictIntDeletableDataQuery<Group>
 ### Domain entity service
 Create domain service class for entity
 
-```c#
+```csharp
 public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService
-{        
-	readonly IRepository<User, int> UserRepo;
+{
+    readonly IRepository<User, int> UserRepo;
 
-	public GroupService(            
-		IRepository<User, int> userRepo,
-		IRepository<Group, int> repository,
-		ILogger logger
-	) : base(repository, logger) 
-	{
-		UserRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
-	}
+    public GroupService(
+        IRepository<User, int> userRepo,
+        IRepository<Group, int> repository,
+        ILogger logger
+    ) : base(repository, logger)
+    {
 
-	public void AddUser(int groupId, int userId)
-	{
-		Group group = GetById(groupId);
+        UserRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
+    }
 
-		User user = UserRepo.Fetch(new UserQuery {
-			Ids = new[] { userId },
-			IsDeleted = false,
-			Includes = new[] { nameof(User.Groups) },
-			Take = 1
-		}, true).First();
+    public async Task AddUser(int groupId, int userId, CancellationToken cancellationToken = default)
+    {
+        Group group = await GetByIdAsync(groupId, false, null, cancellationToken);
 
-		if (user.Groups.Any(e => e.GroupId == groupId))
-			return;
+        User user = (await UserRepo.FetchAsync(new UserQuery
+        {
+            Ids = new[] { userId },
+            IsDeleted = false,
+            Includes = new[] { nameof(User.Groups) },
+            Take = 1
+        }, true, cancellationToken)).First();
 
-		user.Groups.Add(new GroupUser { GroupId = groupId, UserId = userId });
-		UserRepo.Save(user);
-	}
+        if (user.Groups.Any(e => e.GroupId == groupId))
+            return;
 
-	public void RemoveUser(int groupId, int userId)
-	{
-		Group group = GetById(groupId);
+        user.Groups.Add(new GroupUser { GroupId = groupId, UserId = userId });
+        await UserRepo.SaveAsync(user, cancellationToken);
+    }
 
-		User user = UserRepo.Fetch(new UserQuery {
-			Ids = new[] { userId },
-			Includes = new[] { nameof(User.Groups) },
-			Take = 1
-		}).FirstOrDefault();
+    public async Task RemoveUser(int groupId, int userId, CancellationToken cancellationToken = default)
+    {
+        Group group = await GetByIdAsync(groupId, false, null, cancellationToken);
 
-		GroupUser groupUser = user?.Groups.FirstOrDefault(g => g.GroupId == groupId);
-		if (groupUser == null)
-			return;
+        User user = (await UserRepo.FetchAsync(new UserQuery
+        {
+            Ids = new[] { userId },
+            Includes = new[] { nameof(User.Groups) },
+            Take = 1
+        }, false, cancellationToken)).FirstOrDefault();
 
-		user.Groups.Remove(groupUser);
-		UserRepo.Save(user);
-	}
+        GroupUser groupUser = user?.Groups.FirstOrDefault(g => g.GroupId == groupId);
+        if (groupUser == null)
+            return;
+
+        user.Groups.Remove(groupUser);
+        await UserRepo.SaveAsync(user, cancellationToken);
+    }
 }
 ```
 
 ### Database context
 Create own database context class inherited from `EFDM.Core.DAL.Providers.EFDMDatabaseContext`
 
-```c#
+```csharp
 public class TestDatabaseContext : EFDMDatabaseContext
 {
-	#region fields & props
+    #region fields & properties
 
-	public override int ExecutorId { get; protected set; } = UserVals.System.Id;
+    public override int ExecutorId { get; protected set; } = UserValues.SystemId;
 
-	#endregion fields & props
+    #region dbsets
 
-	#region dbsets
-	
-	public DbSet<Group> Groups { get; set; }	
-	public DbSet<AuditGroupEvent> AuditGroupEvents { get; set; }
-	public DbSet<AuditGroupProperty> AuditGroupProperties { get; set; }
+    public DbSet<User> Users { get; set; }    
+    public DbSet<Group> Groups { get; set; }
+    public DbSet<GroupUser> GroupUsers { get; set; }
 
-	#endregion dbsets
+    #endregion dbsets
 
-	#region constructors
+    #endregion fields & properties
 
-	public TestDatabaseContext(DbContextOptions<TestDatabaseContext> options,
-		ILoggerFactory factory = null, IAuditSettings auditSettings = null)
-		: base(options, factory, auditSettings)
-	{
-	}
+    #region constructors
 
-	public TestDatabaseContext(string connectionString, IAuditSettings auditSettings = null)
-		: base(connectionString, auditSettings) 
-	{
-	}
+    public TestDatabaseContext(DbContextOptions<TestDatabaseContext> options,
+        ILoggerFactory factory = null, IAuditSettings auditSettings = null,
+        Action<ModelConfigurationBuilder> conventionsAction = null)
+        : base(options, factory, auditSettings, conventionsAction)
+    {
+    }
 
-	#endregion constructors
+    public TestDatabaseContext(string connectionString, IAuditSettings auditSettings = null,
+        Action<ModelConfigurationBuilder> conventionsAction = null)
+        : base(connectionString, auditSettings, conventionsAction)
+    {
+    }
 
-	#region context config
+    #endregion constructors
 
-	protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) 
-	{		
-		base.OnConfiguring(optionsBuilder);		
-	}
+    #region context config
 
-	protected override void OnModelCreating(ModelBuilder builder) 
-	{
-		base.OnModelCreating(builder);
-		builder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
-	}
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
+        base.OnModelCreating(builder);
+        builder.ApplyConfigurationsFromAssembly(Assembly.GetAssembly(GetType()));
 
-	#endregion context config
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            builder.ApplyConfiguration<IAuditableUserEntity>(typeof(AuditableUserEntityConfig<>), entityType.ClrType);
+        }
+    }
 
-	#region audit config
+    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    {
+        if (ConventionsAction != null)
+            ConventionsAction(configurationBuilder);
+    }
 
-	public override void InitAuditMapping() 
-	{		
-	}
+    #endregion context config
 
-	#endregion audit config
+    #region audit config
+
+    public override void InitAuditMapping()
+    {
+        // see below
+    }
+
+    #endregion audit config
 }
 ```
 
 ### Audit entities creation in database context
 Configure audit entities creation in own database context by overriding InitAuditMapping method
 
-```c#
+```csharp
 public override void InitAuditMapping()
 {
-	Auditor.Map<Group, AuditGroupEvent, AuditGroupProperty>(
-		(auditEvent, entry, eventEntity) => 
-		{
-			eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
-		}
-	);
-	Auditor.SetEventCommonAction<IAuditEventBase<long>>((auditEvent, entry, eventEntity) =>
-	{
-		eventEntity.ActionId = entry.Action;
-		eventEntity.CreatedById = ExecutorId;
-		eventEntity.ObjectType = entry.EntityType.Name;
-		eventEntity.Created = DateTimeOffset.Now;
+    Auditor.Map<GroupUser, AuditGroupEvent, AuditGroupProperty>(
+        (auditEvent, entry, eventEntity) =>
+        {
+            eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue($"{nameof(GroupUser.GroupId)}").ToString();
+        }
+    );
+    Auditor.Map<Group, AuditGroupEvent, AuditGroupProperty>(
+        (auditEvent, entry, eventEntity) =>
+        {
+            eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
+        }
+    );
+    Auditor.Map<TaskAnswer, AuditTaskAnswerEvent, AuditTaskAnswerProperty>(
+        (auditEvent, entry, eventEntity) =>
+        {
+            eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
+        }
+    );
+    Auditor.SetEventCommonAction<IAuditEventBase<long>>(async (auditEvent, entry, eventEntity) =>
+    {
+        eventEntity.ActionId = entry.Action;
+        eventEntity.CreatedById = ExecutorId;
+        eventEntity.ObjectType = entry.EntityType.Name;
+        eventEntity.Created = DateTimeOffset.Now;
 
-		Add(eventEntity);
-		BaseSaveChanges();
+        await AddAsync(eventEntity);
+        await BaseSaveChangesAsync();
 
-		Func<IAuditPropertyBase<long, long>> createPropertyEntity = () =>
-		{
-			var res = (Activator.CreateInstance(Auditor.GetPropertyType(entry.EntityType))) as IAuditPropertyBase<long, long>;
-			res.AuditId = eventEntity.Id;
-			return res;
-		};
-		Action<IAuditPropertyBase<long, long>> savePropertyEntity = (pe) =>
-		{
-			if (string.IsNullOrEmpty(pe.Name))
-				return;
-			Add(pe);
-			BaseSaveChanges();
-		};
-		switch (entry.Action)
-		{
-			case AuditStateActionVals.Insert:
-				foreach (var columnVal in entry.ColumnValues)
-				{
-					var propertyEntity = createPropertyEntity();
-					propertyEntity.Name = columnVal.Key;
-					propertyEntity.NewValue = Convert.ToString(columnVal.Value);
-					savePropertyEntity(propertyEntity);
-				}
-				break;
-			case AuditStateActionVals.Delete:
-				foreach (var columnVal in entry.ColumnValues)
-				{
-					var propertyEntity = createPropertyEntity();
-					propertyEntity.Name = columnVal.Key;
-					propertyEntity.OldValue = Convert.ToString(columnVal.Value);
-					savePropertyEntity(propertyEntity);
-				}
-				break;
-			case AuditStateActionVals.Update:
-				foreach (var change in entry.Changes)
-				{
-					var propertyEntity = createPropertyEntity();
-					propertyEntity.Name = change.ColumnName;
-					propertyEntity.NewValue = Convert.ToString(change.NewValue);
-					propertyEntity.OldValue = Convert.ToString(change.OriginalValue);
-					savePropertyEntity(propertyEntity);
-				}
-				break;
-			default:
-				break;
-		}
-	});
+        Func<IAuditPropertyBase<long, long>> createPropertyEntity = () =>
+        {
+            var res = Activator.CreateInstance(Auditor.GetPropertyType(entry.EntityType)) as IAuditPropertyBase<long, long>;
+            res.AuditId = eventEntity.Id;
+            return res;
+        };
+        switch (entry.Action)
+        {
+            case AuditStateActionVals.Insert:
+                foreach (var columnVal in entry.ColumnValues)
+                {
+                    var propertyEntity = createPropertyEntity();
+                    propertyEntity.Name = columnVal.Key;
+                    propertyEntity.NewValue = Convert.ToString(columnVal.Value);
+                    if (!string.IsNullOrEmpty(propertyEntity.Name))
+                    {
+                        await AddAsync(propertyEntity);
+                        await BaseSaveChangesAsync();
+                    }
+                }
+                break;
+            case AuditStateActionVals.Delete:
+                foreach (var columnVal in entry.ColumnValues)
+                {
+                    var propertyEntity = createPropertyEntity();
+                    propertyEntity.Name = columnVal.Key;
+                    propertyEntity.OldValue = Convert.ToString(columnVal.Value);
+                    if (!string.IsNullOrEmpty(propertyEntity.Name))
+                    {
+                        await AddAsync(propertyEntity);
+                        await BaseSaveChangesAsync();
+                    }
+                }
+                break;
+            case AuditStateActionVals.Update:
+                foreach (var change in entry.Changes)
+                {
+                    var propertyEntity = createPropertyEntity();
+                    propertyEntity.Name = change.ColumnName;
+                    propertyEntity.NewValue = Convert.ToString(change.NewValue);
+                    propertyEntity.OldValue = Convert.ToString(change.OriginalValue);
+                    if (!string.IsNullOrEmpty(propertyEntity.Name))
+                    {
+                        await AddAsync(propertyEntity);
+                        await BaseSaveChangesAsync();
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    });
 }
 ```
 ### Configure database audit for entities & properties
 On database context creation configure audit for entities & properties
 
-```c#
+```csharp
  var auditSettings = new AuditSettings() 
  {
 	Enabled = true,
@@ -269,4 +298,4 @@ services.AddScoped<EFDMDatabaseContext>(sp => sp.GetRequiredService<TestDatabase
 
 ```
 ## Examples
-You can find examples in EFDM.Test.TestConsole project
+You can find examples in `Sample` folder `EFDM.Sample.TestConsole` project
