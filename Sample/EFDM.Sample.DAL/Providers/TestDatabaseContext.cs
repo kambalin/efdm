@@ -97,28 +97,21 @@ namespace EFDM.Sample.DAL.Providers
                     eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
                 }
             );
-            Auditor.SetEventCommonAction<IAuditEventBase<long>>((auditEvent, entry, eventEntity) =>
+            Auditor.SetEventCommonAction<IAuditEventBase<long>>(async (auditEvent, entry, eventEntity) =>
             {
                 eventEntity.ActionId = entry.Action;
                 eventEntity.CreatedById = ExecutorId;
                 eventEntity.ObjectType = entry.EntityType.Name;
                 eventEntity.Created = DateTimeOffset.Now;
 
-                Add(eventEntity);
-                BaseSaveChanges();
+                await AddAsync(eventEntity);
+                await BaseSaveChangesAsync();
 
                 Func<IAuditPropertyBase<long, long>> createPropertyEntity = () =>
                 {
                     var res = Activator.CreateInstance(Auditor.GetPropertyType(entry.EntityType)) as IAuditPropertyBase<long, long>;
                     res.AuditId = eventEntity.Id;
                     return res;
-                };
-                Action<IAuditPropertyBase<long, long>> savePropertyEntity = (pe) =>
-                {
-                    if (string.IsNullOrEmpty(pe.Name))
-                        return;
-                    Add(pe);
-                    BaseSaveChanges();
                 };
                 switch (entry.Action)
                 {
@@ -128,7 +121,11 @@ namespace EFDM.Sample.DAL.Providers
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = columnVal.Key;
                             propertyEntity.NewValue = Convert.ToString(columnVal.Value);
-                            savePropertyEntity(propertyEntity);
+                            if (!string.IsNullOrEmpty(propertyEntity.Name))
+                            {
+                                await AddAsync(propertyEntity);
+                                await BaseSaveChangesAsync();
+                            }
                         }
                         break;
                     case AuditStateActionVals.Delete:
@@ -137,7 +134,11 @@ namespace EFDM.Sample.DAL.Providers
                             var propertyEntity = createPropertyEntity();
                             propertyEntity.Name = columnVal.Key;
                             propertyEntity.OldValue = Convert.ToString(columnVal.Value);
-                            savePropertyEntity(propertyEntity);
+                            if (!string.IsNullOrEmpty(propertyEntity.Name))
+                            {
+                                await AddAsync(propertyEntity);
+                                await BaseSaveChangesAsync();
+                            }
                         }
                         break;
                     case AuditStateActionVals.Update:
@@ -147,7 +148,11 @@ namespace EFDM.Sample.DAL.Providers
                             propertyEntity.Name = change.ColumnName;
                             propertyEntity.NewValue = Convert.ToString(change.NewValue);
                             propertyEntity.OldValue = Convert.ToString(change.OriginalValue);
-                            savePropertyEntity(propertyEntity);
+                            if (!string.IsNullOrEmpty(propertyEntity.Name))
+                            {
+                                await AddAsync(propertyEntity);
+                                await BaseSaveChangesAsync();
+                            }
                         }
                         break;
                     default:

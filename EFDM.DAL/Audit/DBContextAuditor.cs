@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace EFDM.Core.Audit
@@ -28,7 +29,7 @@ namespace EFDM.Core.Audit
 
         protected ConcurrentDictionary<Type, IMappingInfo> Mappings { get; } = new ConcurrentDictionary<Type, IMappingInfo>();
         protected ConcurrentDictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new ConcurrentDictionary<Type, List<int>>();
-        protected Func<IAuditEvent, IEventEntry, object, Task<bool>> EventCommonAction { get; set; }
+        protected Func<IAuditEvent, IEventEntry, object, Task> EventCommonAction { get; set; }
         protected readonly IAuditableDBContext Context;
 
         #endregion fields & properties
@@ -59,16 +60,17 @@ namespace EFDM.Core.Audit
 
         #region IDBContextAuditor implementation
 
-        public int SaveChanges(Func<int> baseSaveChanges)
+        public async Task<int> SaveChangesAsync(Func<Task<int>> baseSaveChangesAsync,
+            CancellationToken cancellationToken = default)
         {
             if (!Enabled)
-                return baseSaveChanges();
-            var auditEvent = CreateAuditEvent();
+                return await baseSaveChangesAsync();
+            var auditEvent = await CreateAuditEvent();
             if (auditEvent == null)
-                return baseSaveChanges();
+                return await baseSaveChangesAsync();
             try
             {
-                auditEvent.Result = baseSaveChanges();
+                auditEvent.Result = await baseSaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -82,22 +84,22 @@ namespace EFDM.Core.Audit
             {
                 var entityAuditEvent = Activator.CreateInstance(GetEventType(entry.EntityType));
                 var mapperEventAction = GetMapperEventAction(entry.EntityType);
-                mapperEventAction(auditEvent, entry, entityAuditEvent);
+                await mapperEventAction(auditEvent, entry, entityAuditEvent);
             }
 
             return auditEvent.Result;
         }
 
-        public Func<IAuditEvent, IEventEntry, object, Task<bool>> GetMapperEventAction(Type type)
+        public Func<IAuditEvent, IEventEntry, object, Task> GetMapperEventAction(Type type)
         {
             return async (auditEvent, entry, auditObj) =>
             {
                 Mappings.TryGetValue(type, out IMappingInfo map);
                 await map?.EventAction?.Invoke(auditEvent, entry, auditObj);
                 if (EventCommonAction != null)
-                    return await EventCommonAction.Invoke(auditEvent, entry, auditObj);
+                    await EventCommonAction(auditEvent, entry, auditObj);
                 else
-                    return true;
+                    return;
             };
         }
 
@@ -153,18 +155,17 @@ namespace EFDM.Core.Audit
             ExcludedTypeStateActions[typeof(TSourceEntity)] = actions;
         }
 
-        public void SetEventCommonAction<T>(Action<IAuditEvent, IEventEntry, T> entityAction)
+        public void SetEventCommonAction<T>(Func<IAuditEvent, IEventEntry, T, Task> entityAction)
         {
             EventCommonAction = (auditEvent, entry, auditEntity) =>
             {
-                entityAction.Invoke(auditEvent, entry, (T)auditEntity);
-                return Task.FromResult(true);
+                return entityAction(auditEvent, entry, (T)auditEntity);
             };
         }
 
         #endregion IDBContextAuditor implementation
 
-        protected IAuditEvent CreateAuditEvent()
+        protected async Task<IAuditEvent> CreateAuditEvent()
         {
             var modifiedEntries = GetModifiedEntries();
             if (modifiedEntries.Count == 0)
@@ -182,7 +183,7 @@ namespace EFDM.Core.Audit
                     Entry = entry,
                     EntityType = entry.Entity.GetType(),
                     Action = GetStateAction(entry.State),
-                    Changes = entry.State == EntityState.Modified ? GetChanges(entry) : null,
+                    Changes = entry.State == EntityState.Modified ? await GetChanges(entry) : null,
                     Table = entityName.Table,
                     Schema = entityName.Schema,
                     Name = entry.Metadata.DisplayName(),
@@ -217,7 +218,7 @@ namespace EFDM.Core.Audit
             return result;
         }
 
-        protected List<IEventEntryChange> GetChanges(EntityEntry entry)
+        protected async Task<List<IEventEntryChange>> GetChanges(EntityEntry entry)
         {
             var result = new List<IEventEntryChange>();
             var props = entry.Metadata.GetProperties();
@@ -230,13 +231,13 @@ namespace EFDM.Core.Audit
                 if (propEntry.IsModified)
                 {
                     if (IncludeProperty(entry, prop.Name))
-                        result.Add(GetPropertyChanges(propEntry, navigations, prop));
+                        result.Add(await GetPropertyChanges(propEntry, navigations, prop));
                 }
             }
             return result;
         }
 
-        protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry,
+        protected async Task<EventEntryChange> GetPropertyChanges(PropertyEntry propEntry,
             List<INavigation> navigations, IProperty prop)
         {
             var eec = new EventEntryChange()
@@ -257,15 +258,15 @@ namespace EFDM.Core.Audit
             var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
             if (eec.OriginalValue != null)
             {
-                var newRelated = dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
-                    .FirstOrDefault();
+                var newRelated = await dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
+                    .FirstOrDefaultAsync();
                 if (newRelated != null)
                     eec.NewValue = GetLookupValue(newRelated);
             }
             if (eec.OriginalValue != null)
             {
-                var oldRelated = dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
-                    .FirstOrDefault();
+                var oldRelated = await dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
+                    .FirstOrDefaultAsync();
                 if (oldRelated != null)
                     eec.OriginalValue = GetLookupValue(oldRelated);
             }

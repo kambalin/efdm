@@ -6,6 +6,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EFDM.Abstractions.DAL.Repositories
 {
@@ -19,11 +21,14 @@ namespace EFDM.Abstractions.DAL.Repositories
         /// </summary>
         public bool AutoDetectChangesEnabled { get; set; }
         int ExecutorId { get; }
-        IEnumerable<TEntity> Fetch(IDataQuery<TEntity> query = null, bool tracking = false);
-        IPagedList<TEntity> FetchPaged(IDataQuery<TEntity> query = null, bool tracking = false);
-        IEnumerable<TEntity> FetchLite(IDataQuery<TEntity> query, Expression<Func<TEntity, TEntity>> select, bool tracking = false);
-        int Count(IDataQuery<TEntity> query = null);
-        void Add(params TEntity[] entities);
+        Task<IEnumerable<TEntity>> FetchAsync(IDataQuery<TEntity> query = null, bool tracking = false,
+            CancellationToken cancellationToken = default);
+        Task<IPagedList<TEntity>> FetchPagedAsync(IDataQuery<TEntity> query = null, bool tracking = false,
+            CancellationToken cancellationToken = default);
+        Task<IEnumerable<TEntity>> FetchLiteAsync(IDataQuery<TEntity> query, Expression<Func<TEntity, TEntity>> select,
+            bool tracking = false, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(IDataQuery<TEntity> query = null, CancellationToken cancellationToken = default);
+        Task AddAsync(params TEntity[] entities);
         void Update(params TEntity[] entities);
         void Delete(params TEntity[] entities);
         /// <summary>
@@ -32,7 +37,7 @@ namespace EFDM.Abstractions.DAL.Repositories
         /// </summary>
         /// <param name="query">Query for entities.</param>
         /// <returns>The total number of rows deleted in the database.</returns>
-        int ExecuteDelete(IDataQuery<TEntity> query);
+        Task<int> ExecuteDeleteAsync(IDataQuery<TEntity> query, CancellationToken cancellationToken = default);
         /// <summary>
         /// Updates all database rows for the entity instances which match the query from the database
         /// Executes immediately and does not interact with the EF change tracker (see efcore bulk operations).
@@ -40,23 +45,24 @@ namespace EFDM.Abstractions.DAL.Repositories
         /// <param name="query">Query for entities.</param>
         /// <param name="setPropertyCalls">A collection of set property statements specifying properties to update.</param>
         /// <returns>The total number of rows updated in the database.</returns>
-        int ExecuteUpdate(IDataQuery<TEntity> query,
-            Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls);
+        Task<int> ExecuteUpdateAsync(IDataQuery<TEntity> query,
+            Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls,
+            CancellationToken cancellationToken = default);
         /// <summary>
         /// Save entity, even new, detached or not trackable
         /// </summary>
         /// <param name="entity">Entity to save</param>
         /// <returns></returns>
-        TEntity Save(TEntity entity);
+        Task<TEntity> SaveAsync(TEntity entity, CancellationToken cancellationToken = default);
         /// <summary>
         /// Save entity with only specified properties
         /// </summary>
         /// <param name="model">Entity to save</param>
         /// <param name="updateProperties">Properties that must be updated</param>
         /// <returns></returns>
-        TEntity Save(TEntity model, params Expression<Func<TEntity, object>>[] updateProperties);
-        int SaveChanges();
-        IQueryable<TEntity> Queryable();
+        Task<TEntity> SaveAsync(TEntity model, CancellationToken cancellationToken = default,
+            params Expression<Func<TEntity, object>>[] updateProperties);
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         IQueryable<TEntity> QueryableSql(string sql, params object[] parameters);
         bool IsAttached(TKey id);
         void ClearChangeTracker();
@@ -65,6 +71,6 @@ namespace EFDM.Abstractions.DAL.Repositories
         /// </summary>
         /// <param name="query">Query for filtering</param>
         /// <returns>List of Id values</returns>
-        IEnumerable<TKey> FetchIds(IDataQuery<TEntity> query);
+        Task<IEnumerable<TKey>> FetchIdsAsync(IDataQuery<TEntity> query, CancellationToken cancellationToken = default);
     }
 }

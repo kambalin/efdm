@@ -8,6 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EFDM.Core.DAL.Providers
 {
@@ -147,18 +149,19 @@ namespace EFDM.Core.DAL.Providers
             ExecutorId = id;
         }
 
-        public override int SaveChanges()
+        public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             PreSaveActions();
-            return Auditor.SaveChanges(() => base.SaveChanges());
+            return await Auditor.SaveChangesAsync(async () => await base.SaveChangesAsync(cancellationToken));
         }
 
-        protected int BaseSaveChanges()
+        protected async Task<int> BaseSaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return base.SaveChanges();
+            return await base.SaveChangesAsync(cancellationToken);
         }
 
-        public int SaveChanges<TEntity>(bool keepExcludedOriginals = false) where TEntity : class
+        public async Task<int> SaveChangesAsync<TEntity>(bool keepExcludedOriginals = false,
+            CancellationToken cancellationToken = default) where TEntity : class
         {
             List<IGrouping<EntityState, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry>> original = null;
 
@@ -175,7 +178,7 @@ namespace EFDM.Core.DAL.Providers
                 entry.State = EntityState.Unchanged;
             }
 
-            var affectedRows = SaveChanges();
+            var affectedRows = await SaveChangesAsync(cancellationToken);
 
             if (keepExcludedOriginals)
             {

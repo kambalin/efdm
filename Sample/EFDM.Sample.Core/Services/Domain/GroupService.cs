@@ -6,6 +6,8 @@ using EFDM.Sample.Core.Services.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace EFDM.Sample.Core.Services.Domain
 {
@@ -23,42 +25,42 @@ namespace EFDM.Sample.Core.Services.Domain
             UserRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
         }
 
-        public void AddUser(int groupId, int userId)
+        public async Task AddUser(int groupId, int userId, CancellationToken cancellationToken = default)
         {
-            Group group = GetById(groupId);
+            Group group = await GetByIdAsync(groupId, false, null, cancellationToken);
 
-            User user = UserRepo.Fetch(new UserQuery
+            User user = (await UserRepo.FetchAsync(new UserQuery
             {
                 Ids = new[] { userId },
                 IsDeleted = false,
                 Includes = new[] { nameof(User.Groups) },
                 Take = 1
-            }, true).First();
+            }, true, cancellationToken)).First();
 
             if (user.Groups.Any(e => e.GroupId == groupId))
                 return;
 
             user.Groups.Add(new GroupUser { GroupId = groupId, UserId = userId });
-            UserRepo.Save(user);
+            await UserRepo.SaveAsync(user, cancellationToken);
         }
 
-        public void RemoveUser(int groupId, int userId)
+        public async Task RemoveUser(int groupId, int userId, CancellationToken cancellationToken = default)
         {
-            Group group = GetById(groupId);
+            Group group = await GetByIdAsync(groupId, false, null, cancellationToken);
 
-            User user = UserRepo.Fetch(new UserQuery
+            User user = (await UserRepo.FetchAsync(new UserQuery
             {
                 Ids = new[] { userId },
                 Includes = new[] { nameof(User.Groups) },
                 Take = 1
-            }).FirstOrDefault();
+            }, false, cancellationToken)).FirstOrDefault();
 
             GroupUser groupUser = user?.Groups.FirstOrDefault(g => g.GroupId == groupId);
             if (groupUser == null)
                 return;
 
             user.Groups.Remove(groupUser);
-            UserRepo.Save(user);
+            await UserRepo.SaveAsync(user, cancellationToken);
         }
     }
 }
