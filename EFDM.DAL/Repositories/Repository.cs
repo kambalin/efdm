@@ -1,4 +1,4 @@
-﻿using EFDM.Abstractions.DAL.Repositories;
+using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Responses;
 using EFDM.Core.DAL.Providers;
@@ -56,37 +56,58 @@ namespace EFDM.Core.DAL.Repositories
 
         #region IRepository implementation
 
-        public async Task<IEnumerable<TEntity>> FetchAsync(IDataQuery<TEntity> query, bool tracking = false,
+        public async Task<IEnumerable<TEntity>> FetchAsync(IDataQuery<TEntity> query = null, bool tracking = false,
             CancellationToken cancellationToken = default)
+            => await FetchCore(false, query, tracking, cancellationToken);
+
+        public IEnumerable<TEntity> Fetch(IDataQuery<TEntity> query = null, bool tracking = false)
+            => FetchCore(true, query, tracking, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<IEnumerable<TEntity>> FetchCore(bool sync, IDataQuery<TEntity> query, bool tracking,
+            CancellationToken cancellationToken)
         {
             var dbQuery = FetchPrepare(query, tracking);
-            return await dbQuery.ToListAsync(cancellationToken);
+            return sync ? dbQuery.ToList() : await dbQuery.ToListAsync(cancellationToken);
         }
 
-        public async Task<IPagedList<TEntity>> FetchPagedAsync(IDataQuery<TEntity> query, bool tracking = false,
+        public async Task<IPagedList<TEntity>> FetchPagedAsync(IDataQuery<TEntity> query = null, bool tracking = false,
             CancellationToken cancellationToken = default)
+            => await FetchPagedCore(false, query, tracking, cancellationToken);
+
+        public IPagedList<TEntity> FetchPaged(IDataQuery<TEntity> query = null, bool tracking = false)
+            => FetchPagedCore(true, query, tracking, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<IPagedList<TEntity>> FetchPagedCore(bool sync, IDataQuery<TEntity> query, bool tracking,
+            CancellationToken cancellationToken)
         {
             var result = new PagedList<TEntity>
             {
-                TotalCount = await CountAsync(query, cancellationToken),
+                TotalCount = sync ? Count(query) : await CountAsync(query, cancellationToken),
                 Skipped = query?.Skip ?? 0
             };
-
             var dbQuery = FetchPrepare(query, tracking);
-            result.Items = await dbQuery.ToListAsync();
+            result.Items = sync ? dbQuery.ToList() : await dbQuery.ToListAsync();
             return result;
         }
 
         public async Task<IEnumerable<TEntity>> FetchLiteAsync(IDataQuery<TEntity> query,
             Expression<Func<TEntity, TEntity>> select, bool tracking = false,
             CancellationToken cancellationToken = default)
+            => await FetchLiteCore(false, query, select, tracking, cancellationToken);
+
+        public IEnumerable<TEntity> FetchLite(IDataQuery<TEntity> query, Expression<Func<TEntity, TEntity>> select,
+            bool tracking = false)
+            => FetchLiteCore(true, query, select, tracking, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<IEnumerable<TEntity>> FetchLiteCore(bool sync, IDataQuery<TEntity> query,
+            Expression<Func<TEntity, TEntity>> select, bool tracking, CancellationToken cancellationToken)
         {
             var dbQuery = FetchPrepare(query, tracking);
             IEnumerable<TEntity> entities;
             if (select != null)
-                entities = await dbQuery.Select(select).ToListAsync(cancellationToken);
+                entities = sync ? dbQuery.Select(select).ToList() : await dbQuery.Select(select).ToListAsync(cancellationToken);
             else
-                entities = await dbQuery.ToListAsync(cancellationToken);
+                entities = sync ? dbQuery.ToList() : await dbQuery.ToListAsync(cancellationToken);
             if (tracking)
                 DbSet.AttachRange(entities);
             return entities;
@@ -94,27 +115,49 @@ namespace EFDM.Core.DAL.Repositories
 
         public async Task<IEnumerable<TKey>> FetchIdsAsync(IDataQuery<TEntity> query,
             CancellationToken cancellationToken = default)
+            => await FetchIdsCore(false, query, cancellationToken);
+
+        public IEnumerable<TKey> FetchIds(IDataQuery<TEntity> query)
+            => FetchIdsCore(true, query, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<IEnumerable<TKey>> FetchIdsCore(bool sync, IDataQuery<TEntity> query,
+            CancellationToken cancellationToken)
         {
             var dbQuery = FetchPrepare(query, false);
             Expression<Func<TEntity, TEntity>> selector = x => new TEntity { Id = x.Id };
-            var result = await dbQuery.Select(selector).ToListAsync(cancellationToken);
+            var result = sync ? dbQuery.Select(selector).ToList() : await dbQuery.Select(selector).ToListAsync(cancellationToken);
             return result.Select(x => x.Id);
         }
 
         public virtual async Task<int> CountAsync(IDataQuery<TEntity> query = null,
             CancellationToken cancellationToken = default)
+            => await CountCore(false, query, cancellationToken);
+
+        public virtual int Count(IDataQuery<TEntity> query = null)
+            => CountCore(true, query, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<int> CountCore(bool sync, IDataQuery<TEntity> query, CancellationToken cancellationToken)
         {
             var dbQuery = CountPrepare(query);
-            return await dbQuery.CountAsync(cancellationToken);
+            return sync ? dbQuery.Count() : await dbQuery.CountAsync(cancellationToken);
         }
 
         public virtual async Task AddAsync(params TEntity[] entities)
+            => await AddCore(false, entities);
+
+        public virtual void Add(params TEntity[] entities)
+            => AddCore(true, entities).GetAwaiter().GetResult();
+
+        private async Task AddCore(bool sync, TEntity[] entities)
         {
             if (entities?.Any() != true)
                 return;
             using (new ActionExecutor(Context, AutoDetectChanges))
             {
-                await DbSet.AddRangeAsync(entities);
+                if (sync)
+                    DbSet.AddRange(entities);
+                else
+                    await DbSet.AddRangeAsync(entities);
             }
         }
 
@@ -130,17 +173,32 @@ namespace EFDM.Core.DAL.Repositories
 
         public virtual async Task<int> ExecuteDeleteAsync(IDataQuery<TEntity> query,
             CancellationToken cancellationToken = default)
+            => await ExecuteDeleteCore(false, query, cancellationToken);
+
+        public virtual int ExecuteDelete(IDataQuery<TEntity> query)
+            => ExecuteDeleteCore(true, query, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<int> ExecuteDeleteCore(bool sync, IDataQuery<TEntity> query, CancellationToken cancellationToken)
         {
             var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
-            return await dbQuery.ExecuteDeleteAsync(cancellationToken);
+            return sync ? dbQuery.ExecuteDelete() : await dbQuery.ExecuteDeleteAsync(cancellationToken);
         }
 
         public virtual async Task<int> ExecuteUpdateAsync(IDataQuery<TEntity> query,
             Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls,
             CancellationToken cancellationToken = default)
+            => await ExecuteUpdateCore(false, query, setPropertyCalls, cancellationToken);
+
+        public virtual int ExecuteUpdate(IDataQuery<TEntity> query,
+            Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls)
+            => ExecuteUpdateCore(true, query, setPropertyCalls, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<int> ExecuteUpdateCore(bool sync, IDataQuery<TEntity> query,
+            Expression<Func<SetPropertyCalls<TEntity>, SetPropertyCalls<TEntity>>> setPropertyCalls,
+            CancellationToken cancellationToken)
         {
             var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
-            return await dbQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken);
+            return sync ? dbQuery.ExecuteUpdate(setPropertyCalls) : await dbQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken);
         }
 
         public virtual void Update(params TEntity[] entities)
@@ -151,6 +209,12 @@ namespace EFDM.Core.DAL.Repositories
         }
 
         public virtual async Task<TEntity> SaveAsync(TEntity entity, CancellationToken cancellationToken = default)
+            => await SaveCore(false, entity, cancellationToken);
+
+        public virtual TEntity Save(TEntity entity)
+            => SaveCore(true, entity, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<TEntity> SaveCore(bool sync, TEntity entity, CancellationToken cancellationToken)
         {
             bool isEntityDetached = Context.Entry(entity).State == EntityState.Detached;
             TEntity attachedEntity = null;
@@ -163,7 +227,7 @@ namespace EFDM.Core.DAL.Repositories
                     var dbQuery = DbSet.Where(e => e.Id.Equals(entity.Id)).AsQueryable();
                     foreach (var pi in entityProperties.ColProps)
                         dbQuery = dbQuery.Include(pi.Name);
-                    attachedEntity = await dbQuery.FirstOrDefaultAsync(cancellationToken);
+                    attachedEntity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken);
                     if (attachedEntity == null)
                         throw new Exception($"Entity is detached, cannot find entity with Id = '{entity.Id}'");
                 }
@@ -181,12 +245,22 @@ namespace EFDM.Core.DAL.Repositories
                     SetValueNotCollectionNavProp(property, attachedEntity, entity);
                 }
             }
-            await SaveChangesAsync(cancellationToken);
+            if (sync)
+                SaveChanges();
+            else
+                await SaveChangesAsync(cancellationToken);
             return !isEntityDetached ? entity : attachedEntity;
         }
 
         public virtual async Task<TEntity> SaveAsync(TEntity model, CancellationToken cancellationToken = default,
             params Expression<Func<TEntity, object>>[] updateProperties)
+            => await SaveWithPropsCore(false, model, cancellationToken, updateProperties);
+
+        public virtual TEntity Save(TEntity model, params Expression<Func<TEntity, object>>[] updateProperties)
+            => SaveWithPropsCore(true, model, CancellationToken.None, updateProperties).GetAwaiter().GetResult();
+
+        private async Task<TEntity> SaveWithPropsCore(bool sync, TEntity model, CancellationToken cancellationToken,
+            Expression<Func<TEntity, object>>[] updateProperties)
         {
             var type = typeof(TEntity);
             var modified = false;
@@ -198,7 +272,7 @@ namespace EFDM.Core.DAL.Repositories
             var dbQuery = DbSet.Where(e => e.Id.Equals(model.Id)).AsQueryable();
             foreach (var pi in entityProperties.ColProps)
                 dbQuery = dbQuery.Include(pi.Name);
-            var entity = await dbQuery.FirstOrDefaultAsync(cancellationToken);
+            var entity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken);
             if (entity == null)
                 throw new Exception($"Cannot find entity with Id = '{model.Id}'");
             var entry = Context.Entry(entity);
@@ -237,14 +311,21 @@ namespace EFDM.Core.DAL.Repositories
             if (modified)
                 entry.State = EntityState.Modified;
 
-            await Context.SaveChangesAsync(cancellationToken);
+            if (sync)
+                Context.SaveChanges();
+            else
+                await Context.SaveChangesAsync(cancellationToken);
             return entity;
         }
 
         public virtual async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return await Context.SaveChangesAsync(cancellationToken);
-        }
+            => await SaveChangesCore(false, cancellationToken);
+
+        public virtual int SaveChanges()
+            => SaveChangesCore(true, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<int> SaveChangesCore(bool sync, CancellationToken cancellationToken)
+            => sync ? Context.SaveChanges() : await Context.SaveChangesAsync(cancellationToken);
 
         public virtual void ClearChangeTracker()
         {

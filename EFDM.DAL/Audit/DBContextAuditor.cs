@@ -150,6 +150,9 @@ namespace EFDM.Core.Audit
             return auditEvent.Result;
         }
 
+        public int SaveChanges(Func<int> baseSaveChanges)
+            => SaveChangesAsync(() => Task.FromResult(baseSaveChanges())).GetAwaiter().GetResult();
+
         public Func<IAuditEvent, IEventEntry, object, Task> GetMapperEventAction(Type type)
         {
             Mappings.TryGetValue(type, out IMappingInfo map);

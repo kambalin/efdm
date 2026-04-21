@@ -5,6 +5,7 @@ nupkgs/
 *.exe
 .vs/
 .vscode/
+.claude/
 copilot-instructions.md
 
 # User-specific files

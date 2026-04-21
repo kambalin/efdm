@@ -150,11 +150,19 @@ namespace EFDM.Core.DAL.Providers
             ExecutorId = id;
         }
 
+        public override int SaveChanges()
+        {
+            PreSaveActions();
+            return Auditor.SaveChanges(() => base.SaveChanges());
+        }
+
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             PreSaveActions();
             return await Auditor.SaveChangesAsync(async () => await base.SaveChangesAsync(cancellationToken));
         }
+
+        protected int BaseSaveChanges() => base.SaveChanges();
 
         protected async Task<int> BaseSaveChangesAsync(CancellationToken cancellationToken = default)
         {

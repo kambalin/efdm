@@ -14,6 +14,7 @@ namespace EFDM.Abstractions.Audit
         ConcurrentDictionary<Type, byte> IncludedTypes { get; }
         ConcurrentDictionary<Type, HashSet<string>> IgnoredTypeProperties { get; }
         Task<int> SaveChangesAsync(Func<Task<int>> baseSaveChanges, CancellationToken cancellationToken = default);
+        int SaveChanges(Func<int> baseSaveChanges);
         Func<IAuditEvent, IEventEntry, object, Task> GetMapperEventAction(Type type);
         Type GetEventType(Type type);
         Type GetPropertyType(Type type);

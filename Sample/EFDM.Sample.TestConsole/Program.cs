@@ -37,15 +37,17 @@ namespace EFDM.Sample.TestConsole
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    await AddGroupWithSvc(scope);
-                    await AddUserWithSvc(scope);
+                    //await AddGroupWithSvc(scope);
+                    //await AddUserWithSvcAsync(scope);
+                    AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
-                    await ChangeGroupTypeWithSvc(scope);
+                    //await ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
-                    await AddNTimesGroupsWithSvc(scope);
+                    //await AddNTimesGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, false);
-                    await ChangeNGroupsWithSvc(scope);
+                    //await ChangeNGroupsWithSvcAsync(scope);
+                    ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
                     //TestDeserialization(scope);
                     //TestTaskAnswerService(scope);
@@ -56,7 +58,7 @@ namespace EFDM.Sample.TestConsole
                     //GetUsersFromGroup(scope);
                     //UpdateExecuteUsers(scope);                    
                     //BulkInsertUsers(scope);
-                    InsertUsers(scope);
+                    //InsertUsers(scope);
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);
@@ -399,7 +401,7 @@ namespace EFDM.Sample.TestConsole
             Console.WriteLine($"DBContextAuditor enabled: {enabled}");
         }
 
-        static async Task ChangeNGroupsWithSvc(IServiceScope scope)
+        static async Task ChangeNGroupsWithSvcAsync(IServiceScope scope)
         {
             var take = 3;
             var sw = new Stopwatch();
@@ -425,6 +427,37 @@ namespace EFDM.Sample.TestConsole
                 //groupSvc.Save(group);
             }
             await groupSvc.SaveChangesAsync();
+
+            sw.Stop();
+            Console.WriteLine("Elapsed={0}", sw.Elapsed);
+        }
+
+        static void ChangeNGroupsWithSvc(IServiceScope scope)
+        {
+            var take = 3;
+            var sw = new Stopwatch();
+            sw.Start();
+
+            var groupQuery = new GroupQuery
+            {
+                Includes = new[] {
+                    $"{nameof(Group.Type)}"
+                },
+                Take = take,
+                Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
+            };
+            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+            var groups = groupSvc.Fetch(groupQuery, true);
+
+            foreach (var group in groups)
+            {
+                group.Title = $"Group_{Guid.NewGuid()}";
+                group.TypeId = group.TypeId == GroupTypeValues.Administrators ? GroupTypeValues.Users : GroupTypeValues.Administrators;
+                group.TextField1 = $"textfield1 {DateTime.Now}";
+                group.TextField2 = $"textfield2 {DateTime.Now}";
+                //groupSvc.Save(group);
+            }
+            groupSvc.SaveChanges();
 
             sw.Stop();
             Console.WriteLine("Elapsed={0}", sw.Elapsed);
@@ -584,7 +617,7 @@ namespace EFDM.Sample.TestConsole
             Console.WriteLine(group.Id);
         }
 
-        static async Task AddUserWithSvc(IServiceScope scope)
+        static async Task AddUserWithSvcAsync(IServiceScope scope)
         {
             var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
             var group = await groupSvc.GetAsync(new GroupQuery
@@ -600,6 +633,25 @@ namespace EFDM.Sample.TestConsole
             user.Groups.Add(new GroupUser { User = user, GroupId = group.Id });
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             user = await userSvc.SaveAsync(user);
+            Console.WriteLine(user.Id);
+        }
+
+        static void AddUserWithSvc(IServiceScope scope)
+        {
+            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+            var group = groupSvc.Get(new GroupQuery
+            {
+                TypeIds = new int[] { GroupTypeValues.Users }
+            });
+            var user = new User
+            {
+                Login = "efdm\\user" + Guid.NewGuid(),
+                Title = "Title " + Guid.NewGuid(),
+                Groups = new List<GroupUser>()
+            };
+            user.Groups.Add(new GroupUser { User = user, GroupId = group.Id });
+            var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
+            user = userSvc.Save(user);
             Console.WriteLine(user.Id);
         }
 
