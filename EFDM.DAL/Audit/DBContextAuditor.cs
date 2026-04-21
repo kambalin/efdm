@@ -82,8 +82,15 @@ namespace EFDM.Core.Audit
 
             foreach (var entry in auditEvent.Entries)
             {
-                var entityAuditEvent = Activator.CreateInstance(GetEventType(entry.EntityType));
+                var eventType = GetEventType(entry.EntityType);
+                if (eventType == null)
+                    continue; // no mapping for this entity type
+
+                var entityAuditEvent = Activator.CreateInstance(eventType);
                 var mapperEventAction = GetMapperEventAction(entry.EntityType);
+                if (mapperEventAction == null)
+                    continue; // nothing to invoke for this entity type
+
                 await mapperEventAction(auditEvent, entry, entityAuditEvent);
             }
 
@@ -92,14 +99,18 @@ namespace EFDM.Core.Audit
 
         public Func<IAuditEvent, IEventEntry, object, Task> GetMapperEventAction(Type type)
         {
+            Mappings.TryGetValue(type, out IMappingInfo map);
+
+            if (map == null && EventCommonAction == null)
+                return null;
+
             return async (auditEvent, entry, auditObj) =>
             {
-                Mappings.TryGetValue(type, out IMappingInfo map);
-                await map?.EventAction?.Invoke(auditEvent, entry, auditObj);
+                if (map?.EventAction != null)
+                    await map.EventAction.Invoke(auditEvent, entry, auditObj);
+
                 if (EventCommonAction != null)
                     await EventCommonAction(auditEvent, entry, auditObj);
-                else
-                    return;
             };
         }
 
@@ -256,19 +267,23 @@ namespace EFDM.Core.Audit
                 return eec;
             var relatedType = navProp.ForeignKey.DependentToPrincipal.ClrType;
             var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
-            if (eec.OriginalValue != null)
+            if (dbSet != null)
             {
-                var newRelated = await dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
-                    .FirstOrDefaultAsync();
-                if (newRelated != null)
-                    eec.NewValue = GetLookupValue(newRelated);
-            }
-            if (eec.OriginalValue != null)
-            {
-                var oldRelated = await dbSet?.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
-                    .FirstOrDefaultAsync();
-                if (oldRelated != null)
-                    eec.OriginalValue = GetLookupValue(oldRelated);
+                if (eec.NewValue != null)
+                {
+                    var newRelated = await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
+                        .FirstOrDefaultAsync();
+                    if (newRelated != null)
+                        eec.NewValue = GetLookupValue(newRelated);
+                }
+
+                if (eec.OriginalValue != null)
+                {
+                    var oldRelated = await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
+                        .FirstOrDefaultAsync();
+                    if (oldRelated != null)
+                        eec.OriginalValue = GetLookupValue(oldRelated);
+                }
             }
             return eec;
         }
