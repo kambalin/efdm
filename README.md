@@ -318,6 +318,29 @@ services.AddScoped(provider => new TestDatabaseContext(
 services.AddScoped<EFDMDatabaseContext>(sp => sp.GetRequiredService<TestDatabaseContext>());
 ```
 
+RegisterLookupResolver
+----------------------
+When auditing navigation properties (foreign keys), EFDM resolves related entities to a human-readable string. By default it uses `Id` and `Title` properties (e.g. `"42: Admin"`). Use `RegisterLookupResolver` in `InitAuditMapping` to override this for a specific entity type:
+
+```csharp
+public override void InitAuditMapping()
+{
+    // Override how User entities are displayed in audit property values
+    Auditor.RegisterLookupResolver<User>(user => $"{user.Id}: {user.LastName} {user.FirstName}");
+
+    // Or using the non-generic overload
+    Auditor.RegisterLookupResolver(typeof(Group), obj =>
+    {
+        var group = (Group)obj;
+        return $"{group.Id}: {group.Name}";
+    });
+
+    // ... rest of mapping
+}
+```
+
+The registered resolver takes precedence over the default reflection-based resolver. If the resolver throws, EFDM falls back to the default behavior.
+
 Examples
 --------
 You can find examples in the `Sample` folder (`EFDM.Sample.TestConsole`) and tests in the `Test` folder (`EFDM.Test.*` projects).
