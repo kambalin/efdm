@@ -12,7 +12,7 @@ namespace EFDM.Core.Audit
         public string Name { get; set; }
         public int Action { get; set; }
         public IList<IEventEntryChange> Changes { get; set; }
-        public IReadOnlyDictionary<string, object> ColumnValues { get; set; }
+        public IDictionary<string, object> ColumnValues { get; set; }
         public bool Valid { get; set; }
         public IList<string> ValidationResults { get; set; }
         [JsonIgnore]

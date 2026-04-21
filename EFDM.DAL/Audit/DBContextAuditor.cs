@@ -32,6 +32,11 @@ namespace EFDM.Core.Audit
         protected Func<IAuditEvent, IEventEntry, object, Task> EventCommonAction { get; set; }
         protected readonly IAuditableDBContext Context;
         private readonly List<(object Entity, object Parent)> _queuedAuditEntities = new List<(object, object)>();
+        protected ConcurrentDictionary<Type, Func<object, string>> LookupValueCache { get; } = new ConcurrentDictionary<Type, Func<object, string>>();
+        /// <summary>
+        /// Optional global resolver. If set and returns non-null for an entity, its value is used.
+        /// </summary>
+        public Func<object, string> LookupValueResolver { get; set; }        
 
         #endregion fields & properties
 
@@ -64,6 +69,7 @@ namespace EFDM.Core.Audit
         public async Task<int> SaveChangesAsync(Func<Task<int>> baseSaveChangesAsync,
             CancellationToken cancellationToken = default)
         {
+            var changed = 0;
             if (!Enabled)
                 return await baseSaveChangesAsync();
             var auditEvent = await CreateAuditEvent();
@@ -72,6 +78,7 @@ namespace EFDM.Core.Audit
             try
             {
                 auditEvent.Result = await baseSaveChangesAsync();
+                changed = await baseSaveChangesAsync();
             }
             catch (Exception ex)
             {
@@ -80,6 +87,7 @@ namespace EFDM.Core.Audit
                 throw;
             }
             auditEvent.Success = true;
+            FillOutColumnValues(auditEvent);
 
             foreach (var entry in auditEvent.Entries)
             {
@@ -91,7 +99,6 @@ namespace EFDM.Core.Audit
                 var mapperEventAction = GetMapperEventAction(entry.EntityType);
                 if (mapperEventAction == null)
                     continue; // nothing to invoke for this entity type
-
                 await mapperEventAction(auditEvent, entry, entityAuditEvent);
             }
 
@@ -230,6 +237,29 @@ namespace EFDM.Core.Audit
             };
         }
 
+        /// <summary>
+        /// Register a custom resolver for a specific entity type. 
+        /// This will be stored in the cache and take precedence over reflection-built resolver.
+        /// </summary>
+        public void RegisterLookupResolver(Type entityType, Func<object, string> resolver)
+        {
+            if (entityType == null)
+                throw new ArgumentNullException(nameof(entityType));
+            if (resolver == null)
+                throw new ArgumentNullException(nameof(resolver));
+            LookupValueCache[entityType] = (obj) => resolver(obj);
+        }
+
+        /// <summary>
+        /// Generic overload to register resolver for TEntity.
+        /// </summary>
+        public void RegisterLookupResolver<T>(Func<T, string> resolver)
+        {
+            if (resolver == null)
+                throw new ArgumentNullException(nameof(resolver));
+            RegisterLookupResolver(typeof(T), (obj) => resolver((T)obj));
+        }
+
         #endregion IDBContextAuditor implementation
 
         protected async Task<IAuditEvent> CreateAuditEvent()
@@ -253,8 +283,7 @@ namespace EFDM.Core.Audit
                     Changes = entry.State == EntityState.Modified ? await GetChanges(entry) : null,
                     Table = entityName.Table,
                     Schema = entityName.Schema,
-                    Name = entry.Metadata.DisplayName(),
-                    ColumnValues = GetColumnValues(entry)
+                    Name = entry.Metadata.DisplayName()
                 });
             }
             return efEvent;
@@ -283,6 +312,26 @@ namespace EFDM.Core.Audit
                 }
             }
             return result;
+        }
+
+        protected void FillOutColumnValues(IAuditEvent auditEvent)
+        {
+            foreach (var auditEntry in auditEvent.Entries)
+            {
+                var entry = auditEntry.GetEntry();
+                auditEntry.ColumnValues = new Dictionary<string, object>();
+                var props = entry.Metadata.GetProperties();
+                foreach (var prop in props)
+                {
+                    PropertyEntry propEntry = entry.Property(prop.Name);
+                    if (IncludeProperty(entry, prop.Name))
+                    {
+                        object value = entry.State != EntityState.Deleted ?
+                            propEntry.CurrentValue : propEntry.OriginalValue;
+                        auditEntry.ColumnValues.Add(GetColumnName(prop), value);
+                    }
+                }
+            }
         }
 
         protected async Task<List<IEventEntryChange>> GetChanges(EntityEntry entry)
@@ -346,8 +395,66 @@ namespace EFDM.Core.Audit
 
         protected string GetLookupValue(object entity)
         {
-            // TODO: <int>
-            return $"{(entity as IIdKeyEntity<int>)?.Id}: {(entity as ITitleEntity)?.Title}";
+            if (entity == null)
+                return null;
+
+            // If a global resolver is provided, use it first (allows user-supplied override)
+            if (LookupValueResolver != null)
+            {
+                try
+                {
+                    var resolved = LookupValueResolver(entity);
+                    if (resolved != null)
+                        return resolved;
+                }
+                catch
+                {
+                    // swallow resolver exceptions and fall back to built-in behavior
+                }
+            }
+
+            var entityType = entity.GetType();
+
+            // Check if we have a cached lookup builder for this type (or a previously registered custom resolver)
+            if (!LookupValueCache.TryGetValue(entityType, out var lookupBuilder))
+            {
+                lookupBuilder = BuildLookupValueBuilder(entityType);
+                LookupValueCache.TryAdd(entityType, lookupBuilder);
+            }
+
+            return lookupBuilder?.Invoke(entity);
+        }
+
+        protected Func<object, string> BuildLookupValueBuilder(Type entityType)
+        {
+            // Try to get Id property through IEntity interface
+            var idProp = entityType.GetProperty("Id", 
+                BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+            
+            // Try to get Title property through ITitleEntity interface
+            var titleProp = entityType.GetProperty("Title",
+                BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+
+            if (idProp == null)
+                return null;
+
+            return (entity) =>
+            {
+                try
+                {
+                    var idValue = idProp.GetValue(entity);
+                    var titleValue = titleProp?.GetValue(entity) as string;
+
+                    if (string.IsNullOrEmpty(titleValue))
+                        return idValue?.ToString() ?? "(null)";
+
+                    return $"{idValue}: {titleValue}";
+                }
+                catch
+                {
+                    return null;
+                }
+            };
         }
 
         protected bool IncludeProperty(EntityEntry entry, string propName)

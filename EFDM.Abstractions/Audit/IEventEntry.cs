@@ -10,7 +10,7 @@ namespace EFDM.Abstractions.Audit
         string Name { get; set; }
         int Action { get; set; }
         IList<IEventEntryChange> Changes { get; set; }
-        IReadOnlyDictionary<string, object> ColumnValues { get; set; }
+        IDictionary<string, object> ColumnValues { get; set; }
         bool Valid { get; set; }
         IList<string> ValidationResults { get; set; }
         Type EntityType { get; set; }

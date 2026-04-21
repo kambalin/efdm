@@ -5,6 +5,7 @@ nupkgs/
 *.exe
 .vs/
 .vscode/
+copilot-instructions.md
 
 # User-specific files
 *.suo
