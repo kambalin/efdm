@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LinqKit.Core" Version="1.2.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.11" />
+    <PackageReference Include="LinqKit.Core" Version="1.2.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,55 +1,73 @@
 # EFDM
-Entity framework data manager
+Entity Framework Data Manager
 
-## [NuGet](https://www.nuget.org/packages/EFDM.Core/)
+# NuGet
 
 [![NuGet Status](https://img.shields.io/nuget/v/EFDM.Core.svg?style=flat)](https://www.nuget.org/packages/EFDM.Core/)
 [![NuGet Count](https://img.shields.io/nuget/dt/EFDM.Core.svg)](https://www.nuget.org/packages/EFDM.Core/)
 
-To install the package run the following command on the Package Manager Console:
+Package targets .NET 8.
 
+To install the package use the .NET CLI:
+
+```powershell
+dotnet add package EFDM.Core
 ```
-PM> Install-Package EFDM.Core
-```
 
-## Usage
-You can find working example in `EFDM.Test.*` projects in `Test` folder
+# Usage
+You can find working examples in `Sample` folder (`EFDM.Sample.TestConsole`).
 
-### Base entities
-Inherit own entities from EFDM.Core.Models.Domain
+# Quick start
+1. Create domain entities by inheriting from EFDM.Core models (for example, DictIntDeletableEntity).
+2. Create DataQuery classes (inheriting from DictIntDeletableDataQuery or appropriate base) and override ToFilter to build query filters.
+3. Implement domain services by inheriting DomainServiceBase and injecting IRepository<T, TKey>.
+4. If you need auditing, create AuditSettings and pass them to your DbContext constructor and override InitAuditMapping.
+
+Tips
+- Use dotnet CLI to add the package and to run sample projects.
+- Keep audit IncludedTypes and Ignored/OnlyIncluded properties small for better performance.
+- Use Includes on queries to eager-load navigation properties when required.
+
+Base entities
+-------------
+Inherit your entities from EFDM.Core.Models.Domain (or appropriate base types):
 
 ```csharp
 public class Group : DictIntDeletableEntity
 {
-	public int TypeId { get; set; }
-	public virtual GroupType Type { get; set; }
-	public virtual ICollection<GroupUser> Users { get; set; }
+    public int TypeId { get; set; }
+    public virtual GroupType Type { get; set; }
+    public virtual ICollection<GroupUser> Users { get; set; }
 }
 ```
 
-### Query entities
+Query entities
+--------------
+Example of a DataQuery with ToFilter override:
+
 ```csharp
 public class GroupQuery : DictIntDeletableDataQuery<Group>
 {
-	public int[] UserIds { get; set; }
-	public int[] TypeIds { get; set; }
+    public int[] UserIds { get; set; }
+    public int[] TypeIds { get; set; }
 
-	public override IQueryFilter<Group> ToFilter() {
-		var and = new QueryFilter<Group>();
+    public override IQueryFilter<Group> ToFilter() {
+        var and = new QueryFilter<Group>();
 
-		if (UserIds?.Any() == true)
-			and.Add(x => x.Users.Any(xx => UserIds.Contains(xx.UserId)));
+        if (UserIds?.Any() == true)
+            and.Add(x => x.Users.Any(xx => UserIds.Contains(xx.UserId)));
 
-		if (TypeIds?.Any() == true)
-			and.Add(x => TypeIds.Contains(x.TypeId));
+        if (TypeIds?.Any() == true)
+            and.Add(x => TypeIds.Contains(x.TypeId));
 
-		return base.ToFilter().Add(and);
-	}
+        return base.ToFilter().Add(and);
+    }
 }
 ```
 
-### Domain entity service
-Create domain service class for entity
+Domain entity service
+---------------------
+Create domain service class for entity by inheriting DomainServiceBase:
 
 ```csharp
 public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepository<Group, int>>, IGroupService
@@ -62,7 +80,6 @@ public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepositor
         ILogger logger
     ) : base(repository, logger)
     {
-
         UserRepo = userRepo ?? throw new ArgumentNullException(nameof(userRepo));
     }
 
@@ -106,8 +123,9 @@ public class GroupService : DomainServiceBase<Group, GroupQuery, int, IRepositor
 }
 ```
 
-### Database context
-Create own database context class inherited from `EFDM.Core.DAL.Providers.EFDMDatabaseContext`
+Database context
+----------------
+Create your DbContext inheriting from EFDM.Core.DAL.Providers.EFDMDatabaseContext. Example:
 
 ```csharp
 public class TestDatabaseContext : EFDMDatabaseContext
@@ -118,7 +136,7 @@ public class TestDatabaseContext : EFDMDatabaseContext
 
     #region dbsets
 
-    public DbSet<User> Users { get; set; }    
+    public DbSet<User> Users { get; set; }
     public DbSet<Group> Groups { get; set; }
     public DbSet<GroupUser> GroupUsers { get; set; }
 
@@ -175,8 +193,9 @@ public class TestDatabaseContext : EFDMDatabaseContext
 }
 ```
 
-### Audit entities creation in database context
-Configure audit entities creation in own database context by overriding InitAuditMapping method
+Audit entities creation in database context
+------------------------------------------
+Configure audit entities creation in your DbContext by overriding InitAuditMapping. Example mapping and common action:
 
 ```csharp
 public override void InitAuditMapping()
@@ -263,39 +282,42 @@ public override void InitAuditMapping()
     });
 }
 ```
-### Configure database audit for entities & properties
-On database context creation configure audit for entities & properties
+
+Configure database audit for entities & properties
+-------------------------------------------------
+On DbContext creation configure AuditSettings and pass them to the context. Example:
 
 ```csharp
- var auditSettings = new AuditSettings() 
- {
-	Enabled = true,
-	IncludedTypes = new ConcurrentDictionary<Type, byte>() 
-	{
-		[typeof(Group)] = 1,
-		[typeof(GroupUser)] = 1,
-		[typeof(TaskAnswer)] = 1
-	},
-	ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>() 
-	{
-		[typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }                    
-	},
-	IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(),
-	OnlyIncludedTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
+var auditSettings = new AuditSettings()
+{
+    Enabled = true,
+    IncludedTypes = new ConcurrentDictionary<Type, byte>()
+    {
+        [typeof(Group)] = 1,
+        [typeof(GroupUser)] = 1,
+        [typeof(TaskAnswer)] = 1
+    },
+    ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>()
+    {
+        [typeof(Group)] = new List<int>() { AuditStateActionVals.Insert }
+    },
+    IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(),
+    OnlyIncludedTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>()
 };
 auditSettings.IgnoredTypeProperties.TryAdd(typeof(Group), new HashSet<string>()
 {
-	$"{nameof(Group.TextField1)}"
+    $"{nameof(Group.TextField1)}"
 });
 auditSettings.OnlyIncludedTypeProperties.TryAdd(typeof(TaskAnswer), new HashSet<string>() {
-	$"{nameof(TaskAnswer.TextField1)}"
+    $"{nameof(TaskAnswer.TextField1)}"
 });
 
 services.AddScoped(provider => new TestDatabaseContext(
-	GetDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings)
+    GetDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings)
 );
 services.AddScoped<EFDMDatabaseContext>(sp => sp.GetRequiredService<TestDatabaseContext>());
-
 ```
-## Examples
-You can find examples in `Sample` folder `EFDM.Sample.TestConsole` project
+
+Examples
+--------
+You can find examples in the `Sample` folder (`EFDM.Sample.TestConsole`) and tests in the `Test` folder (`EFDM.Test.*` projects).
