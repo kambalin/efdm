@@ -2,7 +2,6 @@
 using EFDM.Core.Audit;
 using EFDM.Core.Constants;
 using EFDM.Core.DAL.Providers;
-using EFDM.DAL.Converters;
 using EFDM.Sample.Core.Constants.System;
 using EFDM.Sample.Core.Models.Domain;
 using EFDM.Sample.Core.Services.Domain;
@@ -52,23 +51,23 @@ namespace EFDM.Sample.IOC.Managers
 
             #region mssql registration
 
-            //services.AddScoped(provider => new TestDatabaseContext(
-            //    GetMssqlDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings
-            //));
+            services.AddScoped(provider => new TestDatabaseContext(
+                GetMssqlDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings
+            ));
 
             #endregion mssql registration
 
             #region postgres registration
 
-            services.AddScoped(provider => new TestDatabaseContext(
-                GetPgDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings,
-                (ModelConfigurationBuilder configurationBuilder) =>
-                {
-                    configurationBuilder
-                        .Properties<DateTimeOffset>()
-                        .HaveConversion<DateTimeOffsetConverterUtc>();
-                }
-            ));
+            //services.AddScoped(provider => new TestDatabaseContext(
+            //    GetPgDbOptions(provider, configuration), provider.GetService<ILoggerFactory>(), auditSettings,
+            //    (ModelConfigurationBuilder configurationBuilder) =>
+            //    {
+            //        configurationBuilder
+            //            .Properties<DateTimeOffset>()
+            //            .HaveConversion<DateTimeOffsetConverterUtc>();
+            //    }
+            //));
 
             #endregion postgres registration
 

@@ -31,6 +31,7 @@ namespace EFDM.Core.Audit
         protected ConcurrentDictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new ConcurrentDictionary<Type, List<int>>();
         protected Func<IAuditEvent, IEventEntry, object, Task> EventCommonAction { get; set; }
         protected readonly IAuditableDBContext Context;
+        private readonly List<(object Entity, object Parent)> _queuedAuditEntities = new List<(object, object)>();
 
         #endregion fields & properties
 
@@ -94,6 +95,51 @@ namespace EFDM.Core.Audit
                 await mapperEventAction(auditEvent, entry, entityAuditEvent);
             }
 
+            // Persist queued audit entities after all mapping actions completed
+            List<(object Entity, object Parent)> toSave = null;
+            lock (_queuedAuditEntities)
+            {
+                if (_queuedAuditEntities.Count > 0)
+                {
+                    toSave = _queuedAuditEntities.ToList();
+                    _queuedAuditEntities.Clear();
+                }
+            }
+
+            if (toSave != null && toSave.Count > 0)
+            {
+                // First persist event entities so their keys are generated
+                var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
+                if (eventEntities.Count > 0)
+                {
+                    foreach (var ev in eventEntities)
+                        Context.DbContext.Add(ev);
+                    await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken);
+                }
+
+                // Then set AuditId on property entities (if any) and persist them
+                var propEntities = toSave.Where(x => x.Parent != null).ToList();
+                if (propEntities.Count > 0)
+                {
+                    foreach (var pair in propEntities)
+                    {
+                        var parent = pair.Parent;
+                        if (parent != null)
+                        {
+                            var parentIdProp = parent.GetType().GetProperty("Id");
+                            var auditIdProp = pair.Entity.GetType().GetProperty("AuditId");
+                            if (parentIdProp != null && auditIdProp != null)
+                            {
+                                var parentId = parentIdProp.GetValue(parent);
+                                auditIdProp.SetValue(pair.Entity, parentId);
+                            }
+                        }
+                        Context.DbContext.Add(pair.Entity);
+                    }
+                    await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken);
+                }
+            }
+
             return auditEvent.Result;
         }
 
@@ -143,6 +189,16 @@ namespace EFDM.Core.Audit
         public void IncludeAuditEntity(Type entityType)
         {
             IncludedTypes.AddOrUpdate(entityType, 1, (key, oldValue) => 1);
+        }
+
+        public void EnqueueAuditEntity(object entity, object parent = null)
+        {
+            if (entity == null)
+                return;
+            lock (_queuedAuditEntities)
+            {
+                _queuedAuditEntities.Add((entity, parent));
+            }
         }
 
         public void Map<TSourceEntity, TAuditEventEntity, TAuditPropertyEntity>(

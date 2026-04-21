@@ -56,7 +56,7 @@ namespace EFDM.Sample.TestConsole
                     //GetUsersFromGroup(scope);
                     //UpdateExecuteUsers(scope);                    
                     //BulkInsertUsers(scope);
-                    //InsertUsers(scope);
+                    InsertUsers(scope);
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);

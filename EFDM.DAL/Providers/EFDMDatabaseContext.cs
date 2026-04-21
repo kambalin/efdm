@@ -3,6 +3,7 @@ using EFDM.Abstractions.DAL.Providers;
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Core.Audit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -160,10 +161,29 @@ namespace EFDM.Core.DAL.Providers
             return await base.SaveChangesAsync(cancellationToken);
         }
 
+        public virtual async Task<int> PersistAuditEntriesAsync(IEnumerable<object> entities,
+            CancellationToken cancellationToken = default)
+        {
+            if (entities == null)
+                return 0;
+            var any = false;
+            foreach (var e in entities)
+            {
+                if (e == null)
+                    continue;
+                base.Add(e);
+                any = true;
+            }
+            if (!any)
+                return 0;
+            // perform a single save for all queued audit entities
+            return await BaseSaveChangesAsync(cancellationToken);
+        }
+
         public async Task<int> SaveChangesAsync<TEntity>(bool keepExcludedOriginals = false,
             CancellationToken cancellationToken = default) where TEntity : class
         {
-            List<IGrouping<EntityState, Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry>> original = null;
+            List<IGrouping<EntityState, EntityEntry>> original = null;
 
             if (keepExcludedOriginals)
             {

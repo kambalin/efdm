@@ -104,13 +104,13 @@ namespace EFDM.Sample.DAL.Providers
                 eventEntity.ObjectType = entry.EntityType.Name;
                 eventEntity.Created = DateTimeOffset.Now;
 
-                await AddAsync(eventEntity);
-                await BaseSaveChangesAsync();
+                // Enqueue audit event entity to be persisted after SaveChanges completes
+                Auditor.EnqueueAuditEntity(eventEntity);
 
                 Func<IAuditPropertyBase<long, long>> createPropertyEntity = () =>
                 {
                     var res = Activator.CreateInstance(Auditor.GetPropertyType(entry.EntityType)) as IAuditPropertyBase<long, long>;
-                    res.AuditId = eventEntity.Id;
+                    // AuditId will be set when audit entities are persisted
                     return res;
                 };
                 switch (entry.Action)
@@ -122,10 +122,7 @@ namespace EFDM.Sample.DAL.Providers
                             propertyEntity.Name = columnVal.Key;
                             propertyEntity.NewValue = Convert.ToString(columnVal.Value);
                             if (!string.IsNullOrEmpty(propertyEntity.Name))
-                            {
-                                await AddAsync(propertyEntity);
-                                await BaseSaveChangesAsync();
-                            }
+                                Auditor.EnqueueAuditEntity(propertyEntity, eventEntity);
                         }
                         break;
                     case AuditStateActionVals.Delete:
@@ -135,10 +132,7 @@ namespace EFDM.Sample.DAL.Providers
                             propertyEntity.Name = columnVal.Key;
                             propertyEntity.OldValue = Convert.ToString(columnVal.Value);
                             if (!string.IsNullOrEmpty(propertyEntity.Name))
-                            {
-                                await AddAsync(propertyEntity);
-                                await BaseSaveChangesAsync();
-                            }
+                                Auditor.EnqueueAuditEntity(propertyEntity, eventEntity);
                         }
                         break;
                     case AuditStateActionVals.Update:
@@ -149,10 +143,7 @@ namespace EFDM.Sample.DAL.Providers
                             propertyEntity.NewValue = Convert.ToString(change.NewValue);
                             propertyEntity.OldValue = Convert.ToString(change.OriginalValue);
                             if (!string.IsNullOrEmpty(propertyEntity.Name))
-                            {
-                                await AddAsync(propertyEntity);
-                                await BaseSaveChangesAsync();
-                            }
+                                Auditor.EnqueueAuditEntity(propertyEntity, eventEntity);
                         }
                         break;
                     default:

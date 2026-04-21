@@ -13,7 +13,7 @@ public class DbContextFactory : IDesignTimeDbContextFactory<TestDatabaseContext>
     {
         var configuration = GetConfiguration();
         var connectionString = configuration
-            .GetSection(SettingsValuesNames.ConnectionStringPg)?
+            .GetSection(SettingsValuesNames.ConnectionStringMssql)?
             .Get<string>();
 
         var builder = new DbContextOptionsBuilder<TestDatabaseContext>()

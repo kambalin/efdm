@@ -9,10 +9,10 @@ namespace EFDM.Abstractions.Audit
         string Table { get; set; }
         string Name { get; set; }
         int Action { get; set; }
-        List<IEventEntryChange> Changes { get; set; }
-        IDictionary<string, object> ColumnValues { get; set; }
+        IList<IEventEntryChange> Changes { get; set; }
+        IReadOnlyDictionary<string, object> ColumnValues { get; set; }
         bool Valid { get; set; }
-        List<string> ValidationResults { get; set; }
+        IList<string> ValidationResults { get; set; }
         Type EntityType { get; set; }
         /// <summary>
         /// Returns the EntityEntry associated to this audit event entry

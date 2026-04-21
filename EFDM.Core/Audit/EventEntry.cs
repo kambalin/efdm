@@ -11,10 +11,10 @@ namespace EFDM.Core.Audit
         public string Table { get; set; }
         public string Name { get; set; }
         public int Action { get; set; }
-        public List<IEventEntryChange> Changes { get; set; }
-        public IDictionary<string, object> ColumnValues { get; set; }
+        public IList<IEventEntryChange> Changes { get; set; }
+        public IReadOnlyDictionary<string, object> ColumnValues { get; set; }
         public bool Valid { get; set; }
-        public List<string> ValidationResults { get; set; }
+        public IList<string> ValidationResults { get; set; }
         [JsonIgnore]
         public Type EntityType { get; set; }
         [JsonIgnore]

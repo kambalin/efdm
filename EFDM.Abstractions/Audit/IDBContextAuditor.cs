@@ -22,5 +22,11 @@ namespace EFDM.Abstractions.Audit
             Action<IAuditEvent, IEventEntry, TAuditEventEntity> eventAction);
         void SetEventCommonAction<T>(Func<IAuditEvent, IEventEntry, T, Task> entityAction);
         void ExcludeTypeStateActions<TSourceEntity>(List<int> actions);
+        /// <summary>
+        /// Enqueue an audit entity to be persisted after the main SaveChanges completes.
+        /// Use this to avoid performing nested SaveChanges during ChangeTracker processing.
+        /// </summary>
+        /// <param name="entity">Audit entity instance to persist later.</param>
+        void EnqueueAuditEntity(object entity, object parent = null);
     }
 }
