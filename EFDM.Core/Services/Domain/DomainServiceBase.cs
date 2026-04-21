@@ -136,9 +136,9 @@ namespace EFDM.Core.Services.Domain
             var isNew = model.Id.Equals(default);
             if (isNew)
             {
-                if (sync) 
+                if (sync)
                     Repository.Add(model);
-                else 
+                else
                     await Repository.AddAsync(model);
             }
             return sync ? Repository.Save(model) : await Repository.SaveAsync(model, cancellationToken);
@@ -186,9 +186,9 @@ namespace EFDM.Core.Services.Domain
                 Repository.Delete(entity);
             else if (!deletable.IsDeleted)
                 deletable.IsDeleted = true;
-            if (sync) 
+            if (sync)
                 SaveChanges();
-            else 
+            else
                 await SaveChangesAsync(cancellationToken);
         }
 

@@ -36,7 +36,7 @@ namespace EFDM.Core.Audit
         /// <summary>
         /// Optional global resolver. If set and returns non-null for an entity, its value is used.
         /// </summary>
-        public Func<object, string> LookupValueResolver { get; set; }        
+        public Func<object, string> LookupValueResolver { get; set; }
 
         #endregion fields & properties
 
@@ -431,9 +431,9 @@ namespace EFDM.Core.Audit
         protected Func<object, string> BuildLookupValueBuilder(Type entityType)
         {
             // Try to get Id property through IEntity interface
-            var idProp = entityType.GetProperty("Id", 
+            var idProp = entityType.GetProperty("Id",
                 BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
-            
+
             // Try to get Title property through ITitleEntity interface
             var titleProp = entityType.GetProperty("Title",
                 BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
