@@ -14,5 +14,6 @@ namespace EFDM.Sample.Core.Models.Domain
         public string JobTitle { get; set; }
 
         public virtual ICollection<GroupUser> Groups { get; set; }
+        public virtual ICollection<UserAssignee> UserAssignees { get; set; }
     }
 }

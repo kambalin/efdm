@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\EFDM.Abstractions\EFDM.Abstractions.csproj" />
     <ProjectReference Include="..\..\EFDM.Core\EFDM.Core.csproj" />    
   </ItemGroup>

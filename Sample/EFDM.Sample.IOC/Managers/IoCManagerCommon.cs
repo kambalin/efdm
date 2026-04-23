@@ -83,7 +83,8 @@ namespace EFDM.Sample.IOC.Managers
             services.AddScoped<IGroupTypeService, GroupTypeService>();
             services.AddScoped<ITaskAnswerService, TaskAnswerService>();
             services.AddScoped<ITaskAnswerCommentService, TaskAnswerCommentService>();
-
+            services.AddScoped<IUserAssigneeService, UserAssigneeService>();
+            services.AddScoped<IUserAssigneeTypeService, UserAssigneeTypeService>();            
 
             #endregion domain services
         }

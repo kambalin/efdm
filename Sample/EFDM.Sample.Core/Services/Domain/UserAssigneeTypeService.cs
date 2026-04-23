@@ -7,10 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace EFDM.Sample.Core.Services.Domain;
 
-public class UserService : DomainServiceBase<User, UserQuery, int, IRepository<User, int>>, IUserService
+public class UserAssigneeTypeService : DomainServiceBase<UserAssigneeType, UserAssigneeTypeQuery, int, IRepository<UserAssigneeType, int>>, IUserAssigneeTypeService
 {
-    public UserService(IRepository<User, int> repository, ILogger logger)
-        : base(repository, logger)
+    public UserAssigneeTypeService(IRepository<UserAssigneeType, int> repository, ILogger logger) : base(repository, logger)
     {
     }
 }

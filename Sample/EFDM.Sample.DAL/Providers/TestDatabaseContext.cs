@@ -32,6 +32,12 @@ namespace EFDM.Sample.DAL.Providers
         public DbSet<TaskAnswerComment> TaskAnswerComments { get; set; }
         public DbSet<AuditTaskAnswerEvent> AuditTaskAnswerEvents { get; set; }
         public DbSet<AuditTaskAnswerProperty> AuditTaskAnswerProperties { get; set; }
+        public DbSet<UserAssignee> UserAssignees { get; set; }
+        public DbSet<UserAssigneeType> UserAssigneeTypes { get; set; }
+        public DbSet<AuditAssignment1Event> AuditAssignment1Events { get; set; }
+        public DbSet<AuditAssignment1Property> AuditAssignment1Properties { get; set; }
+        public DbSet<AuditAssignment2Event> AuditAssignment2Events { get; set; }
+        public DbSet<AuditAssignment2Property> AuditAssignment2Properties { get; set; }
 
         #endregion dbsets
 

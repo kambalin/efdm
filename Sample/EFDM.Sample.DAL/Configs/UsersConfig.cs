@@ -16,15 +16,6 @@ public class UsersConfig : IEntityTypeConfiguration<User>
         builder.Property(x => x.Login).IsRequired().HasMaxLength(100).HasColumnOrder(1);
         builder.Property(x => x.Title).HasColumnOrder(2);
 
-        //builder.HasOne(x => x.CreatedBy)
-        //    .WithMany()
-        //    .HasForeignKey(x => x.CreatedById)
-        //    .OnDelete(DeleteBehavior.Restrict);
-        //builder.HasOne(x => x.ModifiedBy)
-        //    .WithMany()
-        //    .HasForeignKey(x => x.ModifiedById)
-        //    .OnDelete(DeleteBehavior.Restrict);
-
         builder.HasData
         (
             new User
