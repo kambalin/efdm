@@ -2,14 +2,14 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>1.8.5</version>
+		<version>1.8.6</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-			Added synchronous methods. Fixed an audit issue where a related entity created at the same time was not recorded.
+			Removed unnecessary async awaits. DBContextAuditor.SaveChangesAsync split into two paths - sync and async.
 		</releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>
