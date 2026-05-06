@@ -66,19 +66,24 @@ namespace EFDM.Core.Audit
 
         #region IDBContextAuditor implementation
 
-        public async Task<int> SaveChangesAsync(Func<Task<int>> baseSaveChangesAsync,
+        public Task<int> SaveChangesAsync(Func<Task<int>> baseSaveChangesAsync,
             CancellationToken cancellationToken = default)
+            => SaveChangesCore(false, baseSaveChangesAsync, null, cancellationToken);
+
+        public int SaveChanges(Func<int> baseSaveChanges)
+            => SaveChangesCore(true, null, baseSaveChanges, CancellationToken.None).GetAwaiter().GetResult();
+
+        private async Task<int> SaveChangesCore(bool sync, Func<Task<int>> baseSaveChangesAsync,
+            Func<int> baseSaveChanges, CancellationToken cancellationToken)
         {
-            var changed = 0;
             if (!Enabled)
-                return await baseSaveChangesAsync();
-            var auditEvent = await CreateAuditEvent();
+                return sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
+            var auditEvent = sync ? CreateAuditEvent() : await CreateAuditEventAsync().ConfigureAwait(false);
             if (auditEvent == null)
-                return await baseSaveChangesAsync();
+                return sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
             try
             {
-                auditEvent.Result = await baseSaveChangesAsync();
-                changed = await baseSaveChangesAsync();
+                auditEvent.Result = sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
             }
             catch (Exception ex)
             {
@@ -99,7 +104,10 @@ namespace EFDM.Core.Audit
                 var mapperEventAction = GetMapperEventAction(entry.EntityType);
                 if (mapperEventAction == null)
                     continue; // nothing to invoke for this entity type
-                await mapperEventAction(auditEvent, entry, entityAuditEvent);
+                if (sync)
+                    mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
+                else
+                    await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
             }
 
             // Persist queued audit entities after all mapping actions completed
@@ -121,7 +129,10 @@ namespace EFDM.Core.Audit
                 {
                     foreach (var ev in eventEntities)
                         Context.DbContext.Add(ev);
-                    await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken);
+                    if (sync)
+                        Context.PersistAuditEntries(eventEntities);
+                    else
+                        await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
                 }
 
                 // Then set AuditId on property entities (if any) and persist them
@@ -143,15 +154,15 @@ namespace EFDM.Core.Audit
                         }
                         Context.DbContext.Add(pair.Entity);
                     }
-                    await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken);
+                    if (sync)
+                        Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
+                    else
+                        await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
                 }
             }
 
             return auditEvent.Result;
         }
-
-        public int SaveChanges(Func<int> baseSaveChanges)
-            => SaveChangesAsync(() => Task.FromResult(baseSaveChanges())).GetAwaiter().GetResult();
 
         public Func<IAuditEvent, IEventEntry, object, Task> GetMapperEventAction(Type type)
         {
@@ -163,10 +174,10 @@ namespace EFDM.Core.Audit
             return async (auditEvent, entry, auditObj) =>
             {
                 if (map?.EventAction != null)
-                    await map.EventAction.Invoke(auditEvent, entry, auditObj);
+                    await map.EventAction.Invoke(auditEvent, entry, auditObj).ConfigureAwait(false);
 
                 if (EventCommonAction != null)
-                    await EventCommonAction(auditEvent, entry, auditObj);
+                    await EventCommonAction(auditEvent, entry, auditObj).ConfigureAwait(false);
             };
         }
 
@@ -264,8 +275,8 @@ namespace EFDM.Core.Audit
         }
 
         #endregion IDBContextAuditor implementation
-
-        protected async Task<IAuditEvent> CreateAuditEvent()
+        // TODO make ...Core version for duplicate code
+        protected IAuditEvent CreateAuditEvent()
         {
             var modifiedEntries = GetModifiedEntries();
             if (modifiedEntries.Count == 0)
@@ -283,7 +294,34 @@ namespace EFDM.Core.Audit
                     Entry = entry,
                     EntityType = entry.Entity.GetType(),
                     Action = GetStateAction(entry.State),
-                    Changes = entry.State == EntityState.Modified ? await GetChanges(entry) : null,
+                    Changes = entry.State == EntityState.Modified ? GetChanges(entry) : null,
+                    Table = entityName.Table,
+                    Schema = entityName.Schema,
+                    Name = entry.Metadata.DisplayName()
+                });
+            }
+            return efEvent;
+        }
+
+        protected async Task<IAuditEvent> CreateAuditEventAsync()
+        {
+            var modifiedEntries = GetModifiedEntries();
+            if (modifiedEntries.Count == 0)
+                return null;
+            var efEvent = new AuditEvent()
+            {
+                Entries = new List<IEventEntry>(),
+                ContextId = Context.DbContext.ContextId.ToString()
+            };
+            foreach (var entry in modifiedEntries)
+            {
+                var entityName = GetEntityName(entry);
+                efEvent.Entries.Add(new EventEntry()
+                {
+                    Entry = entry,
+                    EntityType = entry.Entity.GetType(),
+                    Action = GetStateAction(entry.State),
+                    Changes = entry.State == EntityState.Modified ? await GetChangesAsync(entry).ConfigureAwait(false) : null,
                     Table = entityName.Table,
                     Schema = entityName.Schema,
                     Name = entry.Metadata.DisplayName()
@@ -336,8 +374,8 @@ namespace EFDM.Core.Audit
                 }
             }
         }
-
-        protected async Task<List<IEventEntryChange>> GetChanges(EntityEntry entry)
+        // TODO make ...Core version for duplicate code
+        protected List<IEventEntryChange> GetChanges(EntityEntry entry)
         {
             var result = new List<IEventEntryChange>();
             var props = entry.Metadata.GetProperties();
@@ -350,13 +388,69 @@ namespace EFDM.Core.Audit
                 if (propEntry.IsModified)
                 {
                     if (IncludeProperty(entry, prop.Name))
-                        result.Add(await GetPropertyChanges(propEntry, navigations, prop));
+                        result.Add(GetPropertyChanges(propEntry, navigations, prop));
                 }
             }
             return result;
         }
 
-        protected async Task<EventEntryChange> GetPropertyChanges(PropertyEntry propEntry,
+        protected async Task<List<IEventEntryChange>> GetChangesAsync(EntityEntry entry)
+        {
+            var result = new List<IEventEntryChange>();
+            var props = entry.Metadata.GetProperties();
+            var entityType = entry.Entity.GetType();
+            var navigations = Context.DbContext.Model.FindEntityType(entityType)
+                .GetNavigations().ToList();
+            foreach (var prop in props)
+            {
+                PropertyEntry propEntry = entry.Property(prop.Name);
+                if (propEntry.IsModified)
+                {
+                    if (IncludeProperty(entry, prop.Name))
+                        result.Add(await GetPropertyChangesAsync(propEntry, navigations, prop).ConfigureAwait(false));
+                }
+            }
+            return result;
+        }
+        // TODO make ...Core version for duplicate code
+        protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry,
+            List<INavigation> navigations, IProperty prop)
+        {
+            var eec = new EventEntryChange()
+            {
+                ColumnName = GetColumnName(prop),
+                NewValue = propEntry.CurrentValue,
+                OriginalValue = propEntry.OriginalValue
+            };
+            if (navigations == null)
+                return eec;
+            var navProp = navigations
+                .Where(x => x.ForeignKey.Properties.Any(
+                    y => y.Name == propEntry.Metadata.PropertyInfo.Name)
+                ).FirstOrDefault();
+            if (navProp == null)
+                return eec;
+            var relatedType = navProp.ForeignKey.DependentToPrincipal.ClrType;
+            var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
+            if (dbSet != null)
+            {
+                if (eec.NewValue != null)
+                {
+                    var newRelated = dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue)).FirstOrDefault();
+                    if (newRelated != null)
+                        eec.NewValue = GetLookupValue(newRelated);
+                }
+                if (eec.OriginalValue != null)
+                {
+                    var oldRelated = dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue)).FirstOrDefault();
+                    if (oldRelated != null)
+                        eec.OriginalValue = GetLookupValue(oldRelated);
+                }
+            }
+            return eec;
+        }
+
+        protected async Task<EventEntryChange> GetPropertyChangesAsync(PropertyEntry propEntry,
             List<INavigation> navigations, IProperty prop)
         {
             var eec = new EventEntryChange()
@@ -380,7 +474,7 @@ namespace EFDM.Core.Audit
                 if (eec.NewValue != null)
                 {
                     var newRelated = await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefaultAsync().ConfigureAwait(false);
                     if (newRelated != null)
                         eec.NewValue = GetLookupValue(newRelated);
                 }
@@ -388,7 +482,7 @@ namespace EFDM.Core.Audit
                 if (eec.OriginalValue != null)
                 {
                     var oldRelated = await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
-                        .FirstOrDefaultAsync();
+                        .FirstOrDefaultAsync().ConfigureAwait(false);
                     if (oldRelated != null)
                         eec.OriginalValue = GetLookupValue(oldRelated);
                 }

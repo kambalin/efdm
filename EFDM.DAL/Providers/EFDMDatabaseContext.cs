@@ -159,14 +159,31 @@ namespace EFDM.Core.DAL.Providers
         public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
         {
             PreSaveActions();
-            return await Auditor.SaveChangesAsync(async () => await base.SaveChangesAsync(cancellationToken));
+            return await Auditor.SaveChangesAsync(async () => await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
         }
 
         protected int BaseSaveChanges() => base.SaveChanges();
 
         protected async Task<int> BaseSaveChangesAsync(CancellationToken cancellationToken = default)
         {
-            return await base.SaveChangesAsync(cancellationToken);
+            return await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        public virtual int PersistAuditEntries(IEnumerable<object> entities)
+        {
+            if (entities == null)
+                return 0;
+            var any = false;
+            foreach (var e in entities)
+            {
+                if (e == null)
+                    continue;
+                base.Add(e);
+                any = true;
+            }
+            if (!any)
+                return 0;
+            return BaseSaveChanges();
         }
 
         public virtual async Task<int> PersistAuditEntriesAsync(IEnumerable<object> entities,
@@ -184,8 +201,7 @@ namespace EFDM.Core.DAL.Providers
             }
             if (!any)
                 return 0;
-            // perform a single save for all queued audit entities
-            return await BaseSaveChangesAsync(cancellationToken);
+            return await BaseSaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public async Task<int> SaveChangesAsync<TEntity>(bool keepExcludedOriginals = false,
@@ -206,7 +222,7 @@ namespace EFDM.Core.DAL.Providers
                 entry.State = EntityState.Unchanged;
             }
 
-            var affectedRows = await SaveChangesAsync(cancellationToken);
+            var affectedRows = await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
             if (keepExcludedOriginals)
             {

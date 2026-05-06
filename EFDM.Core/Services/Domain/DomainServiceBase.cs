@@ -67,66 +67,50 @@ namespace EFDM.Core.Services.Domain
 
         #region IDomainService implementation
 
-        public virtual async Task<IEnumerable<TModel>> FetchAsync(TQuery query = null, bool tracking = false,
+        public virtual Task<IEnumerable<TModel>> FetchAsync(TQuery query = null, bool tracking = false,
             CancellationToken cancellationToken = default)
-        {
-            var result = await Repository.FetchAsync(query, tracking, cancellationToken);
-            return result;
-        }
+            => Repository.FetchAsync(query, tracking, cancellationToken);
 
         public virtual IEnumerable<TModel> Fetch(TQuery query = null, bool tracking = false)
             => Repository.Fetch(query, tracking);
 
-        public virtual async Task<IPagedList<TModel>> FetchPagedAsync(TQuery query = null,
+        public virtual Task<IPagedList<TModel>> FetchPagedAsync(TQuery query = null,
             CancellationToken cancellationToken = default)
-        {
-            var result = await Repository.FetchPagedAsync(query, false, cancellationToken);
-            return result;
-        }
+            => Repository.FetchPagedAsync(query, false, cancellationToken);
 
         public virtual IPagedList<TModel> FetchPaged(TQuery query = null)
             => Repository.FetchPaged(query, false);
 
-        public virtual async Task<IEnumerable<TModel>> FetchLiteAsync(TQuery query,
+        public virtual Task<IEnumerable<TModel>> FetchLiteAsync(TQuery query,
             Expression<Func<TModel, TModel>> select,
             bool tracking = false, CancellationToken cancellationToken = default)
-        {
-            var result = await Repository.FetchLiteAsync(query, select, tracking, cancellationToken);
-            return result;
-        }
+            => Repository.FetchLiteAsync(query, select, tracking, cancellationToken);
 
         public virtual IEnumerable<TModel> FetchLite(TQuery query, Expression<Func<TModel, TModel>> select,
             bool tracking = false)
             => Repository.FetchLite(query, select, tracking);
 
-        public virtual async Task<IEnumerable<TModel>> FetchLiteAsync(TQuery query, bool tracking = false,
+        public virtual Task<IEnumerable<TModel>> FetchLiteAsync(TQuery query, bool tracking = false,
             CancellationToken cancellationToken = default)
-        {
-            return await FetchLiteAsync(query, LiteSelector, tracking, cancellationToken);
-        }
+            => FetchLiteAsync(query, LiteSelector, tracking, cancellationToken);
 
         public virtual IEnumerable<TModel> FetchLite(TQuery query, bool tracking = false)
             => FetchLite(query, LiteSelector, tracking);
 
-        public virtual async Task<int> CountAsync(TQuery query = null, CancellationToken cancellationToken = default)
-        {
-            var result = await Repository.CountAsync(query);
-            return result;
-        }
+        public virtual Task<int> CountAsync(TQuery query = null, CancellationToken cancellationToken = default)
+            => Repository.CountAsync(query);
 
         public virtual int Count(TQuery query = null)
             => Repository.Count(query);
 
-        public virtual async Task AddAsync(params TModel[] models)
-        {
-            await Repository.AddAsync(models);
-        }
+        public virtual Task AddAsync(params TModel[] models)
+            => Repository.AddAsync(models);
 
         public virtual void Add(params TModel[] models)
             => Repository.Add(models);
 
-        public virtual async Task<TModel> SaveAsync(TModel model, CancellationToken cancellationToken = default)
-            => await SaveCore(false, model, cancellationToken);
+        public virtual Task<TModel> SaveAsync(TModel model, CancellationToken cancellationToken = default)
+            => SaveCore(false, model, cancellationToken);
 
         public virtual TModel Save(TModel model)
             => SaveCore(true, model, CancellationToken.None).GetAwaiter().GetResult();
@@ -139,27 +123,27 @@ namespace EFDM.Core.Services.Domain
                 if (sync)
                     Repository.Add(model);
                 else
-                    await Repository.AddAsync(model);
+                    await Repository.AddAsync(model).ConfigureAwait(false);
             }
-            return sync ? Repository.Save(model) : await Repository.SaveAsync(model, cancellationToken);
+            return sync ? Repository.Save(model) : await Repository.SaveAsync(model, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task DeleteAsync(TKey id, bool forceDeleteEvenDeletable = false,
+        public virtual Task DeleteAsync(TKey id, bool forceDeleteEvenDeletable = false,
             CancellationToken cancellationToken = default)
-            => await DeleteCore(false, id, forceDeleteEvenDeletable, cancellationToken);
+            => DeleteCore(false, id, forceDeleteEvenDeletable, cancellationToken);
 
         public virtual void Delete(TKey id, bool forceDeleteEvenDeletable = false)
             => DeleteCore(true, id, forceDeleteEvenDeletable, CancellationToken.None).GetAwaiter().GetResult();
 
         private async Task DeleteCore(bool sync, TKey id, bool forceDeleteEvenDeletable, CancellationToken cancellationToken)
         {
-            var entity = sync ? GetById(id, true) : await GetByIdAsync(id, true, null, cancellationToken);
-            await DeleteCore(sync, entity, forceDeleteEvenDeletable, cancellationToken);
+            var entity = sync ? GetById(id, true) : await GetByIdAsync(id, true, null, cancellationToken).ConfigureAwait(false);
+            await DeleteCore(sync, entity, forceDeleteEvenDeletable, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task DeleteAsync(IEnumerable<TModel> entities, bool forceDeleteEvenDeletable = false,
+        public virtual Task DeleteAsync(IEnumerable<TModel> entities, bool forceDeleteEvenDeletable = false,
             CancellationToken cancellationToken = default)
-            => await DeleteCore(false, entities, forceDeleteEvenDeletable, cancellationToken);
+            => DeleteCore(false, entities, forceDeleteEvenDeletable, cancellationToken);
 
         public virtual void Delete(IEnumerable<TModel> entities, bool forceDeleteEvenDeletable = false)
             => DeleteCore(true, entities, forceDeleteEvenDeletable, CancellationToken.None).GetAwaiter().GetResult();
@@ -168,12 +152,12 @@ namespace EFDM.Core.Services.Domain
             CancellationToken cancellationToken)
         {
             foreach (var entity in entities)
-                await DeleteCore(sync, entity, forceDeleteEvenDeletable, cancellationToken);
+                await DeleteCore(sync, entity, forceDeleteEvenDeletable, cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task DeleteAsync(TModel entity, bool forceDeleteEvenDeletable = false,
+        public virtual Task DeleteAsync(TModel entity, bool forceDeleteEvenDeletable = false,
             CancellationToken cancellationToken = default)
-            => await DeleteCore(false, entity, forceDeleteEvenDeletable, cancellationToken);
+            => DeleteCore(false, entity, forceDeleteEvenDeletable, cancellationToken);
 
         public virtual void Delete(TModel entity, bool forceDeleteEvenDeletable = false)
             => DeleteCore(true, entity, forceDeleteEvenDeletable, CancellationToken.None).GetAwaiter().GetResult();
@@ -189,32 +173,27 @@ namespace EFDM.Core.Services.Domain
             if (sync)
                 SaveChanges();
             else
-                await SaveChangesAsync(cancellationToken);
+                await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        public virtual async Task<int> ExecuteDeleteAsync(TQuery query, CancellationToken cancellationToken = default)
-        {
-            var res = await Repository.ExecuteDeleteAsync(query, cancellationToken);
-            return res;
-        }
+        public virtual Task<int> ExecuteDeleteAsync(TQuery query, CancellationToken cancellationToken = default)
+            => Repository.ExecuteDeleteAsync(query, cancellationToken);
 
         public virtual int ExecuteDelete(TQuery query)
             => Repository.ExecuteDelete(query);
 
-        public virtual async Task<int> ExecuteUpdateAsync(IDataQuery<TModel> query,
+        public virtual Task<int> ExecuteUpdateAsync(IDataQuery<TModel> query,
             Expression<Func<SetPropertyCalls<TModel>, SetPropertyCalls<TModel>>> setPropertyCalls,
             CancellationToken cancellationToken = default)
-        {
-            return await Repository.ExecuteUpdateAsync(query, setPropertyCalls, cancellationToken);
-        }
+            => Repository.ExecuteUpdateAsync(query, setPropertyCalls, cancellationToken);
 
         public virtual int ExecuteUpdate(IDataQuery<TModel> query,
             Expression<Func<SetPropertyCalls<TModel>, SetPropertyCalls<TModel>>> setPropertyCalls)
             => Repository.ExecuteUpdate(query, setPropertyCalls);
 
-        public virtual async Task<TModel> GetAsync(TQuery query, bool tracking = false,
+        public virtual Task<TModel> GetAsync(TQuery query, bool tracking = false,
             CancellationToken cancellationToken = default)
-            => await GetCore(false, query, tracking, cancellationToken);
+            => GetCore(false, query, tracking, cancellationToken);
 
         public virtual TModel Get(TQuery query, bool tracking = false)
             => GetCore(true, query, tracking, CancellationToken.None).GetAwaiter().GetResult();
@@ -222,7 +201,7 @@ namespace EFDM.Core.Services.Domain
         private async Task<TModel> GetCore(bool sync, TQuery query, bool tracking, CancellationToken cancellationToken)
         {
             query.Take = 1;
-            var result = sync ? Repository.Fetch(query, tracking) : await Repository.FetchAsync(query, tracking, cancellationToken);
+            var result = sync ? Repository.Fetch(query, tracking) : await Repository.FetchAsync(query, tracking, cancellationToken).ConfigureAwait(false);
             return result.FirstOrDefault();
         }
 
@@ -230,7 +209,7 @@ namespace EFDM.Core.Services.Domain
             IEnumerable<string> includes = null, CancellationToken cancellationToken = default)
         {
             var keys = new TKey[] { key };
-            return (await GetByIdsAsync(keys, tracking, includes, cancellationToken)).FirstOrDefault();
+            return (await GetByIdsAsync(keys, tracking, includes, cancellationToken).ConfigureAwait(false)).FirstOrDefault();
         }
 
         public virtual TModel GetById(TKey key, bool tracking = false, IEnumerable<string> includes = null)
@@ -238,7 +217,7 @@ namespace EFDM.Core.Services.Domain
 
         public virtual async Task<List<TModel>> GetByIdsAsync(IEnumerable<TKey> keys, bool tracking = false,
             IEnumerable<string> includes = null, CancellationToken cancellationToken = default)
-            => await GetByIdsCore(false, keys, tracking, includes, cancellationToken);
+            => await GetByIdsCore(false, keys, tracking, includes, cancellationToken).ConfigureAwait(false);
 
         public virtual List<TModel> GetByIds(IEnumerable<TKey> keys, bool tracking = false,
             IEnumerable<string> includes = null)
@@ -253,13 +232,13 @@ namespace EFDM.Core.Services.Domain
                 query.Take = 1;
             if (includes != null)
                 query.Includes = includes;
-            var result = sync ? Repository.Fetch(query, tracking) : await Repository.FetchAsync(query, tracking);
+            var result = sync ? Repository.Fetch(query, tracking) : await Repository.FetchAsync(query, tracking).ConfigureAwait(false);
             return result.ToList();
         }
 
         public virtual async Task<TModel> GetLiteAsync(TQuery query, Expression<Func<TModel, TModel>> select,
             bool tracking = false, CancellationToken cancellationToken = default)
-            => await GetLiteCore(false, query, select, tracking, cancellationToken);
+            => await GetLiteCore(false, query, select, tracking, cancellationToken).ConfigureAwait(false);
 
         public virtual TModel GetLite(TQuery query, Expression<Func<TModel, TModel>> select, bool tracking = false)
             => GetLiteCore(true, query, select, tracking, CancellationToken.None).GetAwaiter().GetResult();
@@ -270,7 +249,7 @@ namespace EFDM.Core.Services.Domain
             query.Take = 1;
             var result = sync
                 ? Repository.FetchLite(query, select, tracking)
-                : await Repository.FetchLiteAsync(query, select, tracking, cancellationToken);
+                : await Repository.FetchLiteAsync(query, select, tracking, cancellationToken).ConfigureAwait(false);
             return result.FirstOrDefault();
         }
 
@@ -278,7 +257,7 @@ namespace EFDM.Core.Services.Domain
             bool tracking = false, IEnumerable<string> includes = null, CancellationToken cancellationToken = default)
         {
             var keys = new TKey[] { key };
-            return (await GetLiteByIdsAsync(keys, select, tracking, includes, cancellationToken)).FirstOrDefault();
+            return (await GetLiteByIdsAsync(keys, select, tracking, includes, cancellationToken).ConfigureAwait(false)).FirstOrDefault();
         }
 
         public virtual TModel GetLiteById(TKey key, Expression<Func<TModel, TModel>> select, bool tracking = false,
@@ -288,7 +267,7 @@ namespace EFDM.Core.Services.Domain
         public virtual async Task<List<TModel>> GetLiteByIdsAsync(IEnumerable<TKey> keys,
             Expression<Func<TModel, TModel>> select,
             bool tracking = false, IEnumerable<string> includes = null, CancellationToken cancellationToken = default)
-            => await GetLiteByIdsCore(false, keys, select, tracking, includes, cancellationToken);
+            => await GetLiteByIdsCore(false, keys, select, tracking, includes, cancellationToken).ConfigureAwait(false);
 
         public virtual List<TModel> GetLiteByIds(IEnumerable<TKey> keys, Expression<Func<TModel, TModel>> select,
             bool tracking = false, IEnumerable<string> includes = null)
@@ -306,40 +285,34 @@ namespace EFDM.Core.Services.Domain
                 query.Includes = includes;
             var result = sync
                 ? Repository.FetchLite(query, select, tracking)
-                : await Repository.FetchLiteAsync(query, select, tracking, cancellationToken);
+                : await Repository.FetchLiteAsync(query, select, tracking, cancellationToken).ConfigureAwait(false);
             return result.ToList();
         }
 
-        public virtual async Task<TModel> GetLiteAsync(TQuery query, bool tracking = false,
+        public virtual Task<TModel> GetLiteAsync(TQuery query, bool tracking = false,
             CancellationToken cancellationToken = default)
-        {
-            return await GetLiteAsync(query, LiteSelector, tracking, cancellationToken);
-        }
+            => GetLiteAsync(query, LiteSelector, tracking, cancellationToken);
 
         public virtual TModel GetLite(TQuery query, bool tracking = false)
             => GetLite(query, LiteSelector, tracking);
 
-        public virtual async Task<TModel> GetLiteByIdAsync(TKey key, bool tracking = false,
+        public virtual Task<TModel> GetLiteByIdAsync(TKey key, bool tracking = false,
             IEnumerable<string> includes = null, CancellationToken cancellationToken = default)
-        {
-            return await GetLiteByIdAsync(key, LiteSelector, tracking, includes, cancellationToken);
-        }
+            => GetLiteByIdAsync(key, LiteSelector, tracking, includes, cancellationToken);
 
         public virtual TModel GetLiteById(TKey key, bool tracking = false, IEnumerable<string> includes = null)
             => GetLiteById(key, LiteSelector, tracking, includes);
 
-        public virtual async Task<List<TModel>> GetLiteByIdsAsync(IEnumerable<TKey> keys, bool tracking = false,
+        public virtual Task<List<TModel>> GetLiteByIdsAsync(IEnumerable<TKey> keys, bool tracking = false,
             IEnumerable<string> includes = null, CancellationToken cancellationToken = default)
-        {
-            return await GetLiteByIdsAsync(keys, LiteSelector, tracking, includes, cancellationToken);
-        }
+            => GetLiteByIdsAsync(keys, LiteSelector, tracking, includes, cancellationToken);
 
         public virtual List<TModel> GetLiteByIds(IEnumerable<TKey> keys, bool tracking = false,
             IEnumerable<string> includes = null)
             => GetLiteByIds(keys, LiteSelector, tracking, includes);
 
-        public virtual async Task<bool> ExistsAsync(TKey key, CancellationToken cancellationToken = default)
-            => await ExistsCore(false, key, cancellationToken);
+        public virtual Task<bool> ExistsAsync(TKey key, CancellationToken cancellationToken = default)
+            => ExistsCore(false, key, cancellationToken);
 
         public virtual bool Exists(TKey key)
             => ExistsCore(true, key, CancellationToken.None).GetAwaiter().GetResult();
@@ -348,13 +321,11 @@ namespace EFDM.Core.Services.Domain
         {
             var query = Activator.CreateInstance<TQuery>();
             query.Ids = new[] { key };
-            return sync ? Repository.Count(query) > 0 : await Repository.CountAsync(query, cancellationToken) > 0;
+            return sync ? Repository.Count(query) > 0 : await Repository.CountAsync(query, cancellationToken).ConfigureAwait(false) > 0;
         }
 
-        public virtual async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-        {
-            return await Repository.SaveChangesAsync(cancellationToken);
-        }
+        public virtual Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+            => Repository.SaveChangesAsync(cancellationToken);
 
         public virtual int SaveChanges()
             => Repository.SaveChanges();
@@ -377,11 +348,9 @@ namespace EFDM.Core.Services.Domain
             Repository.ClearChangeTracker();
         }
 
-        public async Task<IEnumerable<TKey>> FetchIdsAsync(IDataQuery<TModel> query,
+        public Task<IEnumerable<TKey>> FetchIdsAsync(IDataQuery<TModel> query,
             CancellationToken cancellationToken = default)
-        {
-            return await Repository.FetchIdsAsync(query);
-        }
+            => Repository.FetchIdsAsync(query);
 
         public IEnumerable<TKey> FetchIds(IDataQuery<TModel> query)
             => Repository.FetchIds(query);

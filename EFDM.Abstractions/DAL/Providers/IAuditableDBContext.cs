@@ -18,5 +18,6 @@ namespace EFDM.Abstractions.DAL.Providers
         /// <param name="entities">Audit entities to persist.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         Task<int> PersistAuditEntriesAsync(IEnumerable<object> entities, CancellationToken cancellationToken = default);
+        int PersistAuditEntries(IEnumerable<object> entities);
     }
 }

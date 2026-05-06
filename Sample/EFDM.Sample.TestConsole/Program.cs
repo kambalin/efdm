@@ -62,7 +62,7 @@ namespace EFDM.Sample.TestConsole
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);
-                    //TestTaskAnswersValidFromQuery(scope);
+                     await TestTaskAnswersValidFromQuery(scope);
                     //TestPrincipalSorts(scope);
                     //TestTaskAnswersValidFromTillOrderQuery(scope);
                 }
