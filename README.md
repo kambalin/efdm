@@ -344,3 +344,8 @@ The registered resolver takes precedence over the default reflection-based resol
 Examples
 --------
 You can find examples in the `Sample` folder (`EFDM.Sample.TestConsole`) and tests in the `Test` folder (`EFDM.Test.*` projects).
+- Choose database provider in IoCManagerCommon
+- To deploy sample DB, switch to Sample.DAL folder. Change connection string in local appsettings files and run command
+```
+dotnet ef database update --context TestDatabaseContext
+```

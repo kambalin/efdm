@@ -1,8 +1,6 @@
 ﻿using EFDM.Core.Models.Domain;
-using EFDM.Sample.Core.Utilities;
 using System;
 using System.Collections.Generic;
-using System.Text.Json;
 
 namespace EFDM.Sample.Core.Models.Domain
 {

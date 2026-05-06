@@ -1,6 +1,4 @@
-﻿using EFDM.Abstractions.DAL.Repositories;
-using EFDM.Abstractions.Services.Domain;
-using EFDM.Sample.Core.Constants.ModelValues;
+﻿using EFDM.Abstractions.Services.Domain;
 using EFDM.Sample.Core.DataQueries.Models;
 using EFDM.Sample.Core.Models.Domain;
 using System.Collections.Generic;

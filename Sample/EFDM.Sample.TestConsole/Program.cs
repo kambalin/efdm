@@ -37,16 +37,16 @@ namespace EFDM.Sample.TestConsole
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    //await AddGroupWithSvc(scope);
-                    //await AddUserWithSvcAsync(scope);
+                    await AddGroupWithSvc(scope);
+                    await AddUserWithSvcAsync(scope);
                     AddUserWithSvc(scope);
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
                     //await ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
-                    //await AddNTimesGroupsWithSvc(scope);
+                    await AddNTimesGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, false);
-                    //await ChangeNGroupsWithSvcAsync(scope);
+                    await ChangeNGroupsWithSvcAsync(scope);
                     ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
                     //TestDeserialization(scope);
@@ -62,7 +62,7 @@ namespace EFDM.Sample.TestConsole
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);
-                     await TestTaskAnswersValidFromQuery(scope);
+                    await TestTaskAnswersValidFromQuery(scope);
                     //TestPrincipalSorts(scope);
                     //TestTaskAnswersValidFromTillOrderQuery(scope);
                 }

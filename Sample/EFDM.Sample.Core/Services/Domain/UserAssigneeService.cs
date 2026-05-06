@@ -95,7 +95,7 @@ public class UserAssigneeService :
                     $"{nameof(UserAssignee.User)}",
                 }
         }).ToList();
-    }    
+    }
 
     public List<UserAssignee> GetAssignment1ForObjectAndWorkflow(int objectId, int? assignment1Field1, int? assignment1Field2)
     {
@@ -114,7 +114,7 @@ public class UserAssigneeService :
     {
         var assignment = Repository.Fetch(new UserAssigneeQuery
         {
-            TypeId = UserAssigneeTypeVals.Assignment2,            
+            TypeId = UserAssigneeTypeVals.Assignment2,
             Assignment2Field1 = assignment2Field1,
             ObjectId = objectId,
             Includes = new[] { $"{nameof(UserAssignee.User)}" },

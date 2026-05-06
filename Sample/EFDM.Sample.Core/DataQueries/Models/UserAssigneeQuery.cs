@@ -29,7 +29,7 @@ public class UserAssigneeQuery : IdKeyDataQueryBase<UserAssignee, int>
     // Фильтры по полям в Data
     public int? Assignment1Field1 { get; set; }
     public int? Assignment1Field2 { get; set; }
-    public int? Assignment2Field1 { get; set; }    
+    public int? Assignment2Field1 { get; set; }
     public int[]? Assignment1Field1Array { get; set; }
 
     string FormatAsJsonValue(DateTimeOffset dt)
@@ -80,7 +80,7 @@ public class UserAssigneeQuery : IdKeyDataQueryBase<UserAssignee, int>
 
         if (Active.HasValue)
             and.Add(x => x.Active == Active);
-        
+
         if (StartDate.HasValue && EndDate.HasValue)
             and.Add(x => x.StartDate >= StartDate && x.EndDate <= EndDate);
 
