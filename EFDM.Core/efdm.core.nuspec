@@ -2,21 +2,21 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>1.8.6</version>
+		<version>1.8.7</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-			Removed unnecessary async awaits. DBContextAuditor.SaveChangesAsync split into two paths - sync and async.
+			Updated nuget dependency version to match in libraries.
 		</releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>
 		<dependencies>
 			<group targetFramework="net8.0">
 				<dependency id="Microsoft.EntityFrameworkCore" version="8.0.26" />
-				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="8.1.7" />
+				<dependency id="LinqKit.Microsoft.EntityFrameworkCore" version="8.1.11" />
 			</group>
 		</dependencies>
 	</metadata>
