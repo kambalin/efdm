@@ -1,5 +1,4 @@
-﻿using EFDM.Abstractions.DAL.Repositories;
-using EFDM.Core.DataQueries;
+﻿using EFDM.Core.DataQueries;
 using EFDM.Core.Models.Domain;
 using EFDM.Sample.Core.Constants.ModelValues;
 using EFDM.Sample.Core.DataQueries.Models;
@@ -14,12 +13,12 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Transactions;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Transactions;
 using System.Xml.Serialization;
 
 namespace EFDM.Sample.TestConsole

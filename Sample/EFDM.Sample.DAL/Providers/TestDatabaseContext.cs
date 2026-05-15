@@ -1,7 +1,7 @@
 ﻿using EFDM.Abstractions.Audit;
 using EFDM.Core.Constants;
-using EFDM.Core.DAL.Providers;
 using EFDM.Core.Extensions;
+using EFDM.DAL.Providers;
 using EFDM.Sample.Core.Constants.ModelValues;
 using EFDM.Sample.Core.Models.Audit;
 using EFDM.Sample.Core.Models.Domain;

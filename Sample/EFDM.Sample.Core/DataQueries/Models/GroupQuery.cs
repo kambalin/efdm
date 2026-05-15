@@ -8,8 +8,8 @@ namespace EFDM.Sample.Core.DataQueries.Models
 {
     public class GroupQuery : DictIntDeletableDataQuery<Group>
     {
-        public int[] UserIds { get; set; }
-        public int[] TypeIds { get; set; }
+        public int[]? UserIds { get; set; }
+        public int[]? TypeIds { get; set; }
 
         public override IQueryFilter<Group> ToFilter()
         {

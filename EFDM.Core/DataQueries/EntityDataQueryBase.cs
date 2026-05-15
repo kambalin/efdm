@@ -3,6 +3,7 @@ using EFDM.Abstractions.Models.Domain;
 using LinqKit;
 using System;
 using System.Linq;
+using System.Linq.Expressions;
 
 namespace EFDM.Core.DataQueries
 {
@@ -29,7 +30,7 @@ namespace EFDM.Core.DataQueries
             if (CreatedQueryParams != null)
             {
                 var createdQueryParamsCondition = false;
-                var predicate = PredicateBuilder.True<TModel>();
+                Expression<Func<TModel, bool>> predicate = PredicateBuilder.New<TModel>(true);
 
                 if (CreatedQueryParams.LessOrEquals.HasValue)
                 {
@@ -56,7 +57,7 @@ namespace EFDM.Core.DataQueries
             if (ModifiedQueryParams != null)
             {
                 var modifiedQueryParamsCondition = false;
-                var predicate = PredicateBuilder.True<TModel>();
+                Expression<Func<TModel, bool>> predicate = PredicateBuilder.New<TModel>(true);
 
                 if (ModifiedQueryParams.LessOrEquals.HasValue)
                 {

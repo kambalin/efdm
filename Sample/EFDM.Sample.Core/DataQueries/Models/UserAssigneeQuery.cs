@@ -14,11 +14,11 @@ public class UserAssigneeQuery : IdKeyDataQueryBase<UserAssignee, int>
 {
     public int? UserAssigneeId { get; set; }
     public int? UserId { get; set; }
-    public int[] UserIds { get; set; }
+    public int[]? UserIds { get; set; }
     public int? TypeId { get; set; }
-    public int[] TypeIds { get; set; }
+    public int[]? TypeIds { get; set; }
     public long? ObjectId { get; set; }
-    public long?[] ObjectIds { get; set; }
+    public long?[]? ObjectIds { get; set; }
     public bool? Active { get; set; }
     public bool? FitNowRange { get; set; }
     public DateTimeOffset? StartDate { get; set; }

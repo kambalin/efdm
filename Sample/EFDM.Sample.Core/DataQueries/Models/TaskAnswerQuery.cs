@@ -2,6 +2,8 @@
 using EFDM.Core.DataQueries;
 using EFDM.Sample.Core.Models.Domain;
 using LinqKit;
+using System;
+using System.Linq.Expressions;
 
 namespace EFDM.Sample.Core.DataQueries.Models
 {
@@ -17,7 +19,7 @@ namespace EFDM.Sample.Core.DataQueries.Models
             if (ValidFromOffsetQueryParams != null)
             {
                 var validFromOffsetQueryParamsCondition = false;
-                var predicate = PredicateBuilder.True<TaskAnswer>();
+                Expression<Func<TaskAnswer, bool>> predicate = PredicateBuilder.New<TaskAnswer>(true);
 
                 if (ValidFromOffsetQueryParams.LessOrEquals.HasValue)
                 {
@@ -42,7 +44,7 @@ namespace EFDM.Sample.Core.DataQueries.Models
             if (ValidTillOffsetQueryParams != null)
             {
                 var validTillOffsetQueryParamsCondition = false;
-                var predicate = PredicateBuilder.True<TaskAnswer>();
+                Expression<Func<TaskAnswer, bool>> predicate = PredicateBuilder.New<TaskAnswer>(true);
 
                 if (ValidTillOffsetQueryParams.LessOrEquals.HasValue)
                 {

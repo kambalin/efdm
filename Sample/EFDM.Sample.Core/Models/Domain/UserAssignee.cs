@@ -7,9 +7,9 @@ namespace EFDM.Sample.Core.Models.Domain
     public class UserAssignee : IdKeyEntityBase<int>
     {
         public int UserId { get; set; }
-        public virtual User User { get; set; }
+        public virtual User User { get; set; } = default!;
         public int TypeId { get; set; }
-        public virtual UserAssigneeType Type { get; set; }
+        public virtual UserAssigneeType Type { get; set; } = default!;
         public int ObjectId { get; set; }
         public bool Active { get; set; }
         public DateTimeOffset Created { get; set; } = DateTimeOffset.Now;

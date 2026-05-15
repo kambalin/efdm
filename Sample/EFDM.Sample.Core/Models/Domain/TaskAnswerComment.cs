@@ -7,6 +7,6 @@ namespace EFDM.Sample.Core.Models.Domain
     {
         public string? Comment { get; set; }
         [Required]
-        public virtual TaskAnswer TaskAnswer { get; set; }
+        public virtual TaskAnswer TaskAnswer { get; set; } = default!;
     }
 }

@@ -3,8 +3,8 @@
     public class GroupUser
     {
         public int GroupId { get; set; }
-        public Group Group { get; set; }
+        public Group Group { get; set; } = default!;
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User User { get; set; } = default!;
     }
 }

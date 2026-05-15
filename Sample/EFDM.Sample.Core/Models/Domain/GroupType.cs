@@ -5,6 +5,6 @@ namespace EFDM.Sample.Core.Models.Domain
 {
     public class GroupType : DictIntDeletableEntity
     {
-        public virtual ICollection<Group> Groups { get; set; }
+        public virtual ICollection<Group> Groups { get; set; } = default!;
     }
 }

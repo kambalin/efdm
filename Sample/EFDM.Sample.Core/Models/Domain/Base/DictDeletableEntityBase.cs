@@ -7,6 +7,6 @@ namespace EFDM.Sample.Core.Models.Domain.Base
         IDictDeletableEntityBase<TKey>
         where TKey : IComparable, IEquatable<TKey>
     {
-        public virtual string Title { get; set; }
+        public virtual string Title { get; set; } = default!;
     }
 }

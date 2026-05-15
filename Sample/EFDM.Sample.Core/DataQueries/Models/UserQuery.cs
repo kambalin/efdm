@@ -8,9 +8,9 @@ namespace EFDM.Sample.Core.DataQueries.Models
 {
     public class UserQuery : DictIntDeletableDataQuery<User>
     {
-        public string[] Logins { get; set; }
-        public string[] Emails { get; set; }
-        public string Text { get; set; }
+        public string[]? Logins { get; set; }
+        public string[]? Emails { get; set; }
+        public string? Text { get; set; }
         public int? GroupId { get; set; }
 
         public override IQueryFilter<User> ToFilter()

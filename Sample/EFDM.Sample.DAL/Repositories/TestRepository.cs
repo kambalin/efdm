@@ -1,5 +1,5 @@
-﻿using EFDM.Core.DAL.Repositories;
-using EFDM.Core.Models.Domain;
+﻿using EFDM.Core.Models.Domain;
+using EFDM.DAL.Repositories;
 using EFDM.Sample.DAL.Providers;
 using System;
 

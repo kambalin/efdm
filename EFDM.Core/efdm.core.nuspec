@@ -2,14 +2,22 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>1.8.8</version>
+		<version>1.8.9</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
 		<projectUrl>https://github.com/kambalin/efdm</projectUrl>
 		<license type="expression">MIT</license>
 		<releaseNotes>
-			Added transaction support.
+			<![CDATA[
+			1.8.9
+			- Change namespace to correct in Repository and EFDMDatabaseContext
+			- Fixed NullReferenceException in IsCreator: check auditable != null instead of model != null
+			- Pass cancellationToken to CountAsync, FetchAsync, FetchIdsAsync in Repository
+			- EntityDataQueryBase changed obsolete PredicateBuilder.True<TModel>
+				() to
+				PredicateBuilder.New<TModel>(true)
+			]]>
 		</releaseNotes>
 		<description>Entity framework data manager</description>
 		<tags>entityframeworkcore</tags>

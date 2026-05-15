@@ -1,7 +1,7 @@
 ﻿using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Core.Audit;
 using EFDM.Core.Constants;
-using EFDM.Core.DAL.Providers;
+using EFDM.DAL.Providers;
 using EFDM.Sample.Core.Constants.System;
 using EFDM.Sample.Core.Models.Domain;
 using EFDM.Sample.Core.Services.Domain;

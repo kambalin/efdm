@@ -98,7 +98,7 @@ namespace EFDM.Core.Services.Domain
             => FetchLite(query, LiteSelector, tracking);
 
         public virtual Task<int> CountAsync(TQuery query = null, CancellationToken cancellationToken = default)
-            => Repository.CountAsync(query);
+            => Repository.CountAsync(query, cancellationToken);
 
         public virtual int Count(TQuery query = null)
             => Repository.Count(query);
@@ -232,7 +232,7 @@ namespace EFDM.Core.Services.Domain
                 query.Take = 1;
             if (includes != null)
                 query.Includes = includes;
-            var result = sync ? Repository.Fetch(query, tracking) : await Repository.FetchAsync(query, tracking).ConfigureAwait(false);
+            var result = sync ? Repository.Fetch(query, tracking) : await Repository.FetchAsync(query, tracking, cancellationToken).ConfigureAwait(false);
             return result.ToList();
         }
 
@@ -338,7 +338,7 @@ namespace EFDM.Core.Services.Domain
         public virtual bool IsCreator(TModel model, int userId)
         {
             var auditable = model as IAuditablePrincipalEntity;
-            if (model != null)
+            if (auditable != null)
                 return auditable.CreatedById == userId;
             return false;
         }
@@ -350,7 +350,7 @@ namespace EFDM.Core.Services.Domain
 
         public Task<IEnumerable<TKey>> FetchIdsAsync(IDataQuery<TModel> query,
             CancellationToken cancellationToken = default)
-            => Repository.FetchIdsAsync(query);
+            => Repository.FetchIdsAsync(query, cancellationToken);
 
         public IEnumerable<TKey> FetchIds(IDataQuery<TModel> query)
             => Repository.FetchIds(query);
