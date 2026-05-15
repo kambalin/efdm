@@ -3,8 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <Version>$(VersionPrefix)</Version>
-	  <VersionPrefix>1.8.7</VersionPrefix>
+	  <VersionPrefix>1.8.8</VersionPrefix>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EFDM.Core.csproj.lscache" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="LinqKit.Core" Version="1.2.11" />

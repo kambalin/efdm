@@ -2,12 +2,14 @@
 using EFDM.Abstractions.Models.Domain;
 using EFDM.Abstractions.Models.Responses;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 
 namespace EFDM.Abstractions.DAL.Repositories
 {
@@ -75,6 +77,8 @@ namespace EFDM.Abstractions.DAL.Repositories
         TEntity Save(TEntity model, params Expression<Func<TEntity, object>>[] updateProperties);
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
         int SaveChanges();
+        IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+        Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
         IQueryable<TEntity> QueryableSql(string sql, params object[] parameters);
         bool IsAttached(TKey id);
         void ClearChangeTracker();

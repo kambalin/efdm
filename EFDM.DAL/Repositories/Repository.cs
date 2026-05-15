@@ -9,9 +9,11 @@ using LinqKit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Transactions;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -326,6 +328,12 @@ namespace EFDM.Core.DAL.Repositories
 
         private async Task<int> SaveChangesCore(bool sync, CancellationToken cancellationToken)
             => sync ? Context.SaveChanges() : await Context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        public virtual IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+            => Context.BeginTransaction(isolationLevel);
+
+        public virtual Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
+            => Context.BeginTransactionAsync(isolationLevel, cancellationToken);
 
         public virtual void ClearChangeTracker()
         {

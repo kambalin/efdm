@@ -1,6 +1,8 @@
 ﻿using EFDM.Abstractions.Audit;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections.Generic;
+using System.Transactions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,6 +13,8 @@ namespace EFDM.Abstractions.DAL.Providers
         IDBContextAuditor Auditor { get; }
         DbContext DbContext { get; }
         void InitAuditMapping();
+        IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified);
+        Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default);
         /// <summary>
         /// Persist provided audit entities. Implementations should persist audit entities
         /// after the main SaveChanges has completed to avoid nested SaveChanges during ChangeTracker processing.

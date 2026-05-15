@@ -341,6 +341,35 @@ public override void InitAuditMapping()
 
 The registered resolver takes precedence over the default reflection-based resolver. If the resolver throws, EFDM falls back to the default behavior.
 
+Transactions
+------------
+Use `BeginTransaction` on your DbContext or repository to wrap multiple operations in a single transaction. The `isolationLevel` parameter is optional (defaults to `IsolationLevel.Unspecified`):
+
+```csharp
+var dbContext = scope.ServiceProvider.GetRequiredService<TestDatabaseContext>();
+using var tx = dbContext.BeginTransaction(IsolationLevel.ReadCommitted);
+try
+{
+    var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+    var groups = await groupSvc.FetchAsync(new GroupQuery { Take = 2 }, true);
+
+    foreach (var group in groups)
+    {
+        group.Title = $"Group_{Guid.NewGuid()}";
+        await groupSvc.SaveChangesAsync();
+    }
+
+    await tx.CommitAsync();
+}
+catch (Exception ex)
+{
+    await tx.RollbackAsync();
+    Console.WriteLine($"Transaction rolled back: {ex.Message}");
+}
+```
+
+Available isolation levels: `ReadUncommitted`, `ReadCommitted`, `RepeatableRead`, `Serializable`, `Snapshot`.
+
 Examples
 --------
 You can find examples in the `Sample` folder (`EFDM.Sample.TestConsole`) and tests in the `Test` folder (`EFDM.Test.*` projects).

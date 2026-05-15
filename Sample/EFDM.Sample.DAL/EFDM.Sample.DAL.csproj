@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="EFDM.Sample.DAL.csproj.lscache" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\EFDM.Abstractions\EFDM.Abstractions.csproj" />
     <ProjectReference Include="..\..\EFDM.Core\EFDM.Core.csproj" />
     <ProjectReference Include="..\..\EFDM.DAL\EFDM.DAL.csproj" />

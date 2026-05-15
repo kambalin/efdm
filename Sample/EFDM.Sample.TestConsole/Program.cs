@@ -1,4 +1,5 @@
-﻿using EFDM.Core.DataQueries;
+﻿using EFDM.Abstractions.DAL.Repositories;
+using EFDM.Core.DataQueries;
 using EFDM.Core.Models.Domain;
 using EFDM.Sample.Core.Constants.ModelValues;
 using EFDM.Sample.Core.DataQueries.Models;
@@ -13,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Transactions;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -37,17 +39,20 @@ namespace EFDM.Sample.TestConsole
             {
                 using (var scope = serviceProvider.CreateScope())
                 {
-                    await AddGroupWithSvc(scope);
-                    await AddUserWithSvcAsync(scope);
-                    AddUserWithSvc(scope);
+                    //await AddGroupWithSvc(scope);
+                    //await AddUserWithSvcAsync(scope);
+                    //AddUserWithSvc(scope);
+
+                    //await ChangeGroupsWithTransactionAsync(scope);                    
+
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
                     //await ChangeGroupTypeWithSvc(scope);
                     //ChangeGroupUsersWithSvc(scope);
-                    await AddNTimesGroupsWithSvc(scope);
+                    //await AddNTimesGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, false);
                     await ChangeNGroupsWithSvcAsync(scope);
-                    ChangeNGroupsWithSvc(scope);
+                    //ChangeNGroupsWithSvc(scope);
                     //ChangeEnabledDBContextAuditor(scope, true);
                     //TestDeserialization(scope);
                     //TestTaskAnswerService(scope);
@@ -62,7 +67,7 @@ namespace EFDM.Sample.TestConsole
                     //AddTaskAnswers(scope);
                     //TestAuditTaskAnswers(scope);
                     //GetUserIds(scope);
-                    await TestTaskAnswersValidFromQuery(scope);
+                    //await TestTaskAnswersValidFromQuery(scope);
                     //TestPrincipalSorts(scope);
                     //TestTaskAnswersValidFromTillOrderQuery(scope);
                 }
@@ -653,6 +658,50 @@ namespace EFDM.Sample.TestConsole
             var userSvc = scope.ServiceProvider.GetRequiredService<IUserService>();
             user = userSvc.Save(user);
             Console.WriteLine(user.Id);
+        }
+
+        static async Task ChangeGroupsWithTransactionAsync(IServiceScope scope, bool throwException = false)
+        {
+
+            var dbContext = scope.ServiceProvider.GetRequiredService<TestDatabaseContext>();
+            using var tx = dbContext.BeginTransaction(IsolationLevel.ReadCommitted);
+            try
+            {
+                var take = 2;
+                var counter = 0;
+                var groupQuery = new GroupQuery
+                {
+                    Includes = new[] {
+                    $"{nameof(Group.Type)}"
+                },
+                    Take = take,
+                    Sorts = new[] { new Sort { Field = nameof(Group.Id), Desc = true } },
+                };
+                var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+                var groups = await groupSvc.FetchAsync(groupQuery, true);
+
+                foreach (var group in groups)
+                {
+                    group.Title = $"Group_{Guid.NewGuid()}";
+                    group.TypeId = group.TypeId == GroupTypeValues.Administrators ? GroupTypeValues.Users : GroupTypeValues.Administrators;
+                    group.TextField1 = $"textfield1 {DateTime.Now}";
+                    group.TextField2 = $"textfield2 {DateTime.Now}";
+                    await groupSvc.SaveChangesAsync();
+                    if (throwException)
+                    {
+                        if (counter == take - 1)
+                            throw new Exception("Simulated error — transaction will be rolled back");
+                        counter++;
+                    }
+                }
+                await tx.CommitAsync();
+                Console.WriteLine($"Transaction committed");
+            }
+            catch (Exception ex)
+            {
+                await tx.RollbackAsync();
+                Console.WriteLine($"Transaction rolled back: {ex.Message}");
+            }
         }
 
         #region di settings

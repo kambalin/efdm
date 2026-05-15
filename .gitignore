@@ -216,3 +216,4 @@ __pycache__/
 /e2e/*.map
 *.jfm
 *.js.map
+*.lscache

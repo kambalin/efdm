@@ -81,84 +81,120 @@ namespace EFDM.Core.Audit
             var auditEvent = sync ? CreateAuditEvent() : await CreateAuditEventAsync().ConfigureAwait(false);
             if (auditEvent == null)
                 return sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
+
+            // If no ambient transaction exists, wrap main save + audit persistence in one transaction
+            // so that audit records are always consistent with the data they describe.
+            var hasAmbientTransaction = Context.DbContext.Database.CurrentTransaction != null;
+            var ownTransaction = hasAmbientTransaction
+                ? null
+                : sync
+                    ? Context.DbContext.Database.BeginTransaction()
+                    : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
             try
             {
-                auditEvent.Result = sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
+                try
+                {
+                    auditEvent.Result = sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    auditEvent.Success = false;
+                    auditEvent.ErrorMessage = ex.ToString();
+                    throw;
+                }
+                auditEvent.Success = true;
+                FillOutColumnValues(auditEvent);
+
+                foreach (var entry in auditEvent.Entries)
+                {
+                    var eventType = GetEventType(entry.EntityType);
+                    if (eventType == null)
+                        // no mapping for this entity type
+                        continue;
+
+                    var entityAuditEvent = Activator.CreateInstance(eventType);
+                    var mapperEventAction = GetMapperEventAction(entry.EntityType);
+                    if (mapperEventAction == null)
+                        // nothing to invoke for this entity type
+                        continue;
+                    if (sync)
+                        mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
+                    else
+                        await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
+                }
+
+                // Persist queued audit entities after all mapping actions completed
+                List<(object Entity, object Parent)> toSave = null;
+                lock (_queuedAuditEntities)
+                {
+                    if (_queuedAuditEntities.Count > 0)
+                    {
+                        toSave = [.. _queuedAuditEntities];
+                        _queuedAuditEntities.Clear();
+                    }
+                }
+
+                if (toSave != null && toSave.Count > 0)
+                {
+                    // First persist event entities so their keys are generated
+                    var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
+                    if (eventEntities.Count > 0)
+                    {
+                        foreach (var ev in eventEntities)
+                            Context.DbContext.Add(ev);
+                        if (sync)
+                            Context.PersistAuditEntries(eventEntities);
+                        else
+                            await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    // Then set AuditId on property entities (if any) and persist them
+                    var propEntities = toSave.Where(x => x.Parent != null).ToList();
+                    if (propEntities.Count > 0)
+                    {
+                        foreach (var (entity, parent) in propEntities)
+                        {
+                            if (parent != null)
+                            {
+                                var parentIdProp = parent.GetType().GetProperty("Id");
+                                var auditIdProp = entity.GetType().GetProperty("AuditId");
+                                if (parentIdProp != null && auditIdProp != null)
+                                {
+                                    var parentId = parentIdProp.GetValue(parent);
+                                    auditIdProp.SetValue(entity, parentId);
+                                }
+                            }
+                            Context.DbContext.Add(entity);
+                        }
+                        if (sync)
+                            Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
+                        else
+                            await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
+                    }
+                }
+
+                if (ownTransaction != null)
+                {
+                    if (sync)
+                        ownTransaction.Commit();
+                    else
+                        await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                }
             }
-            catch (Exception ex)
+            catch
             {
-                auditEvent.Success = false;
-                auditEvent.ErrorMessage = ex.ToString();
+                if (ownTransaction != null)
+                {
+                    if (sync)
+                        ownTransaction.Rollback();
+                    else
+                        await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+                }
                 throw;
             }
-            auditEvent.Success = true;
-            FillOutColumnValues(auditEvent);
-
-            foreach (var entry in auditEvent.Entries)
+            finally
             {
-                var eventType = GetEventType(entry.EntityType);
-                if (eventType == null)
-                    continue; // no mapping for this entity type
-
-                var entityAuditEvent = Activator.CreateInstance(eventType);
-                var mapperEventAction = GetMapperEventAction(entry.EntityType);
-                if (mapperEventAction == null)
-                    continue; // nothing to invoke for this entity type
-                if (sync)
-                    mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
-                else
-                    await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
-            }
-
-            // Persist queued audit entities after all mapping actions completed
-            List<(object Entity, object Parent)> toSave = null;
-            lock (_queuedAuditEntities)
-            {
-                if (_queuedAuditEntities.Count > 0)
-                {
-                    toSave = _queuedAuditEntities.ToList();
-                    _queuedAuditEntities.Clear();
-                }
-            }
-
-            if (toSave != null && toSave.Count > 0)
-            {
-                // First persist event entities so their keys are generated
-                var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
-                if (eventEntities.Count > 0)
-                {
-                    foreach (var ev in eventEntities)
-                        Context.DbContext.Add(ev);
-                    if (sync)
-                        Context.PersistAuditEntries(eventEntities);
-                    else
-                        await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
-                }
-
-                // Then set AuditId on property entities (if any) and persist them
-                var propEntities = toSave.Where(x => x.Parent != null).ToList();
-                if (propEntities.Count > 0)
-                {
-                    foreach (var pair in propEntities)
-                    {
-                        var parent = pair.Parent;
-                        if (parent != null)
-                        {
-                            var parentIdProp = parent.GetType().GetProperty("Id");
-                            var auditIdProp = pair.Entity.GetType().GetProperty("AuditId");
-                            if (parentIdProp != null && auditIdProp != null)
-                            {
-                                var parentId = parentIdProp.GetValue(parent);
-                                auditIdProp.SetValue(pair.Entity, parentId);
-                            }
-                        }
-                        Context.DbContext.Add(pair.Entity);
-                    }
-                    if (sync)
-                        Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
-                    else
-                        await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
-                }
+                ownTransaction?.Dispose();
             }
 
             return auditEvent.Result;

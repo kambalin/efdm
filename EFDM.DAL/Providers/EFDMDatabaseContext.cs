@@ -4,9 +4,12 @@ using EFDM.Abstractions.Models.Domain;
 using EFDM.Core.Audit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using SysData = System.Data;
+using System.Transactions;
 using System.Linq;
 using System.Reflection;
 using System.Threading;
@@ -149,6 +152,27 @@ namespace EFDM.Core.DAL.Providers
         {
             ExecutorId = id;
         }
+
+        public IDbContextTransaction BeginTransaction(IsolationLevel isolationLevel = IsolationLevel.Unspecified)
+            => isolationLevel == IsolationLevel.Unspecified
+                ? Database.BeginTransaction()
+                : Database.BeginTransaction(ToDataIsolationLevel(isolationLevel));
+
+        public Task<IDbContextTransaction> BeginTransactionAsync(IsolationLevel isolationLevel = IsolationLevel.Unspecified, CancellationToken cancellationToken = default)
+            => isolationLevel == IsolationLevel.Unspecified
+                ? Database.BeginTransactionAsync(cancellationToken)
+                : Database.BeginTransactionAsync(ToDataIsolationLevel(isolationLevel), cancellationToken);
+
+        private static SysData.IsolationLevel ToDataIsolationLevel(IsolationLevel level) => level switch
+        {
+            IsolationLevel.ReadCommitted   => SysData.IsolationLevel.ReadCommitted,
+            IsolationLevel.ReadUncommitted => SysData.IsolationLevel.ReadUncommitted,
+            IsolationLevel.RepeatableRead  => SysData.IsolationLevel.RepeatableRead,
+            IsolationLevel.Serializable    => SysData.IsolationLevel.Serializable,
+            IsolationLevel.Snapshot        => SysData.IsolationLevel.Snapshot,
+            IsolationLevel.Chaos           => SysData.IsolationLevel.Chaos,
+            _                              => SysData.IsolationLevel.Unspecified
+        };
 
         public override int SaveChanges()
         {

@@ -3,8 +3,12 @@
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
 	  <Version>$(VersionPrefix)</Version>
-	  <VersionPrefix>1.8.7</VersionPrefix>
+	  <VersionPrefix>1.8.8</VersionPrefix>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="EFDM.Abstractions.csproj.lscache" />
+  </ItemGroup>
 
   <ItemGroup>    
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
