@@ -227,8 +227,13 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
             if (attachedEntity == null)
             {
                 var dbQuery = DbSet.Where(e => e.Id.Equals(entity.Id)).AsQueryable();
-                foreach (var pi in entityProperties.ColProps)
-                    dbQuery = dbQuery.Include(pi.Name);
+                if (entityProperties.ColProps.Any())
+                {
+                    dbQuery = dbQuery.AsSplitQuery();
+                    foreach (var pi in entityProperties.ColProps)
+                        dbQuery = dbQuery.Include(pi.Name);
+                }                   
+                
                 attachedEntity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
                 if (attachedEntity == null)
                     throw new Exception($"Entity is detached, cannot find entity with Id = '{entity.Id}'");
@@ -272,8 +277,13 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
             Context.Entry(model).State = EntityState.Detached;
 
         var dbQuery = DbSet.Where(e => e.Id.Equals(model.Id)).AsQueryable();
-        foreach (var pi in entityProperties.ColProps)
-            dbQuery = dbQuery.Include(pi.Name);
+        if (entityProperties.ColProps.Any())
+        {
+            dbQuery = dbQuery.AsSplitQuery();
+            foreach (var pi in entityProperties.ColProps)
+                dbQuery = dbQuery.Include(pi.Name);
+        }
+        
         var entity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (entity == null)
             throw new Exception($"Cannot find entity with Id = '{model.Id}'");
