@@ -370,6 +370,29 @@ catch (Exception ex)
 
 Available isolation levels: `ReadUncommitted`, `ReadCommitted`, `RepeatableRead`, `Serializable`, `Snapshot`.
 
+Bulk execute audit (ExecuteUpdate / ExecuteDelete)
+---------------------------------------------------
+When auditing is enabled for an entity type, `ExecuteUpdateAsync` and `ExecuteDeleteAsync` on the repository/service automatically produce audit records — one audit event per affected entity.
+
+For `ExecuteDelete`, the entity's column values at the time of deletion are recorded as `OldValue`:
+
+```csharp
+var groupQuery = new GroupQuery { Ids = new[] { g1.Id, g2.Id } };
+var deletedCount = await groupSvc.ExecuteDeleteAsync(groupQuery);
+// → audit events with action=Delete, OldValue set per property
+```
+
+For `ExecuteUpdate`, both old and new values are recorded. New values are extracted from the `SetProperty` calls:
+
+```csharp
+var updatedCount = await groupSvc.ExecuteUpdateAsync(groupQuery,
+    s => s.SetProperty(b => b.TextField1, b => "after_bulk_update")
+          .SetProperty(b => b.TextField2, b => "new_field2"));
+// → audit events with action=Update, OldValue/NewValue per changed property
+```
+
+No extra configuration is required beyond the standard `AuditSettings` setup. Auditing is skipped automatically when the entity type is not in `IncludedTypes` or when `Enabled` is `false`.
+
 Examples
 --------
 You can find examples in the `Sample` folder (`EFDM.Sample.TestConsole`) and tests in the `Test` folder (`EFDM.Test.*` projects).

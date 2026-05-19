@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>1.8.9</version>
+		<version>8.0</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -10,13 +10,9 @@
 		<license type="expression">MIT</license>
 		<releaseNotes>
 			<![CDATA[
-			1.8.9
-			- Change namespace to correct in Repository and EFDMDatabaseContext
-			- Fixed NullReferenceException in IsCreator: check auditable != null instead of model != null
-			- Pass cancellationToken to CountAsync, FetchAsync, FetchIdsAsync in Repository
-			- EntityDataQueryBase changed obsolete PredicateBuilder.True<TModel>
-				() to
-				PredicateBuilder.New<TModel>(true)
+			8.0
+			- Update execute and delete execute audit
+			- Use AsSplitQuery for eager-loading collection navigation properties in Repository			
 			]]>
 		</releaseNotes>
 		<description>Entity framework data manager</description>
