@@ -88,19 +88,31 @@ namespace EFDM.Sample.DAL.Providers
             Auditor.Map<GroupUser, AuditGroupEvent, AuditGroupProperty>(
                 (auditEvent, entry, eventEntity) =>
                 {
-                    eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue($"{nameof(GroupUser.GroupId)}").ToString();
+                    var entityEntry = entry.GetEntry();
+                    eventEntity.ObjectId = entityEntry != null
+                        ? entityEntry.Entity.GetPropValue($"{nameof(GroupUser.GroupId)}").ToString()
+                        : entry.ColumnValues?.TryGetValue(nameof(GroupUser.GroupId), out var colVal) == true
+                            ? colVal?.ToString() : null;
                 }
             );
             Auditor.Map<Group, AuditGroupEvent, AuditGroupProperty>(
                 (auditEvent, entry, eventEntity) =>
                 {
-                    eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
+                    var entityEntry = entry.GetEntry();
+                    eventEntity.ObjectId = entityEntry != null
+                        ? entityEntry.Entity.GetPropValue("Id").ToString()
+                        : entry.ColumnValues?.TryGetValue("Id", out var colVal) == true
+                            ? colVal?.ToString() : null;
                 }
             );
             Auditor.Map<TaskAnswer, AuditTaskAnswerEvent, AuditTaskAnswerProperty>(
                 (auditEvent, entry, eventEntity) =>
                 {
-                    eventEntity.ObjectId = entry.GetEntry().Entity.GetPropValue("Id").ToString();
+                    var entityEntry = entry.GetEntry();
+                    eventEntity.ObjectId = entityEntry != null
+                        ? entityEntry.Entity.GetPropValue("Id").ToString()
+                        : entry.ColumnValues?.TryGetValue("Id", out var colVal) == true
+                            ? colVal?.ToString() : null;
                 }
             );
             Auditor.SetEventCommonAction<IAuditEventBase<long>>(async (auditEvent, entry, eventEntity) =>

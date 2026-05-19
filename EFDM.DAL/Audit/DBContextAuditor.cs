@@ -395,7 +395,10 @@ namespace EFDM.Core.Audit
         {
             foreach (var auditEntry in auditEvent.Entries)
             {
-                var entry = auditEntry.GetEntry();
+                var entry = auditEntry.GetEntry();                
+                if (entry == null)
+                    // ColumnValues already pre-populated (bulk ops)
+                    continue;
                 auditEntry.ColumnValues = new Dictionary<string, object>();
                 var props = entry.Metadata.GetProperties();
                 foreach (var prop in props)
@@ -595,14 +598,17 @@ namespace EFDM.Core.Audit
             var entityType = GetDefiningType(entry)?.ClrType;
             if (entityType == null)
                 return true;
+            return IncludeProperty(entityType, propName);
+        }
+
+        protected bool IncludeProperty(Type entityType, string propName)
+        {
             var ignoredProperties = EnsurePropertiesIgnoreAttrCache(entityType);
             if (ignoredProperties != null && ignoredProperties.Contains(propName))
                 return false;
             if (GlobalIgnoredProperties != null
                 && GlobalIgnoredProperties.ContainsKey(propName))
-            {
                 return false;
-            }
             var onlyIncludedProperties = EnsurePropertiesOnlyIncludedAttrCache(entityType);
             if (onlyIncludedProperties != null && !onlyIncludedProperties.Contains(propName))
                 return false;
@@ -680,6 +686,210 @@ namespace EFDM.Core.Audit
                 default:
                     return AuditStateActionVals.Unknown;
             }
+        }
+
+        protected IDictionary<string, object> GetBulkEntityColumnValues(object entity, Type clrType)
+        {
+            var efEntityType = Context.DbContext.Model.FindEntityType(clrType);
+            if (efEntityType == null)
+                return new Dictionary<string, object>();
+            var result = new Dictionary<string, object>();
+            foreach (var prop in efEntityType.GetProperties())
+            {
+                if (prop.PropertyInfo == null)
+                    continue;
+                if (!IncludeProperty(clrType, prop.Name))
+                    continue;
+                result[GetColumnName(prop)] = prop.PropertyInfo.GetValue(entity);
+            }
+            return result;
+        }
+
+        protected string GetColumnNameForProperty(Type entityType, string clrPropertyName)
+        {
+            var efEntityType = Context.DbContext.Model.FindEntityType(entityType);
+            if (efEntityType == null)
+                return null;
+            var prop = efEntityType.FindProperty(clrPropertyName);
+            if (prop == null)
+                return null;
+            return GetColumnName(prop);
+        }
+
+        public int AuditBulkOperation(Type entityType, int action, IList<object> entities, Func<int> execute)
+            => AuditBulkOperationCore(true, entityType, action, entities, null, null, execute, CancellationToken.None)
+                .GetAwaiter().GetResult();
+
+        public Task<int> AuditBulkOperationAsync(Type entityType, int action, IList<object> entities,
+            Func<Task<int>> execute, CancellationToken cancellationToken = default)
+            => AuditBulkOperationCore(false, entityType, action, entities, null, execute, null, cancellationToken);
+
+        public int AuditBulkOperation(Type entityType, int action, IList<object> entities,
+            Func<object, IDictionary<string, object>> newValueExtractor, Func<int> execute)
+            => AuditBulkOperationCore(true, entityType, action, entities, newValueExtractor, null, execute, CancellationToken.None)
+                .GetAwaiter().GetResult();
+
+        public Task<int> AuditBulkOperationAsync(Type entityType, int action, IList<object> entities,
+            Func<object, IDictionary<string, object>> newValueExtractor,
+            Func<Task<int>> execute, CancellationToken cancellationToken = default)
+            => AuditBulkOperationCore(false, entityType, action, entities, newValueExtractor, execute, null, cancellationToken);
+
+        private async Task<int> AuditBulkOperationCore(bool sync, Type entityType, int action,
+            IList<object> entities, Func<object, IDictionary<string, object>> newValueExtractor,
+            Func<Task<int>> executeAsync, Func<int> execute,
+            CancellationToken cancellationToken)
+        {
+            if (!Enabled || GetEventType(entityType) == null || entities == null || entities.Count == 0)
+                return sync ? execute() : await executeAsync().ConfigureAwait(false);
+
+            var efEntityType = Context.DbContext.Model.FindEntityType(entityType);
+            var auditEvent = new AuditEvent
+            {
+                Entries = entities.Select(e =>
+                {
+                    var columnValues = GetBulkEntityColumnValues(e, entityType);
+                    IList<IEventEntryChange> changes = null;
+                    if (newValueExtractor != null)
+                    {
+                        var newValues = newValueExtractor(e);
+                        if (newValues != null)
+                        {
+                            changes = new List<IEventEntryChange>();
+                            foreach (var kv in newValues)
+                            {
+                                if (!IncludeProperty(entityType, kv.Key))
+                                    continue;
+                                var colName = GetColumnNameForProperty(entityType, kv.Key);
+                                if (colName == null)
+                                    continue;
+                                changes.Add(new EventEntryChange
+                                {
+                                    ColumnName = colName,
+                                    OriginalValue = columnValues.TryGetValue(colName, out var old) ? old : null,
+                                    NewValue = kv.Value
+                                });
+                            }
+                        }
+                    }
+                    return (IEventEntry)new EventEntry
+                    {
+                        EntityType = entityType,
+                        Action = action,
+                        Name = efEntityType?.DisplayName(),
+                        Table = efEntityType?.GetTableName(),
+                        Schema = efEntityType?.GetSchema(),
+                        Entry = null,
+                        ColumnValues = columnValues,
+                        Changes = changes
+                    };
+                }).ToList(),
+                ContextId = Context.DbContext.ContextId.ToString()
+            };
+
+            var hasAmbientTransaction = Context.DbContext.Database.CurrentTransaction != null;
+            var ownTransaction = hasAmbientTransaction
+                ? null
+                : sync
+                    ? Context.DbContext.Database.BeginTransaction()
+                    : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+            try
+            {
+                try
+                {
+                    auditEvent.Result = sync ? execute() : await executeAsync().ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    auditEvent.Success = false;
+                    auditEvent.ErrorMessage = ex.ToString();
+                    throw;
+                }
+                auditEvent.Success = true;
+
+                foreach (var entry in auditEvent.Entries)
+                {
+                    var eventType = GetEventType(entry.EntityType);
+                    if (eventType == null)
+                        continue;
+                    var entityAuditEvent = Activator.CreateInstance(eventType);
+                    var mapperEventAction = GetMapperEventAction(entry.EntityType);
+                    if (mapperEventAction == null)
+                        continue;
+                    if (sync)
+                        mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
+                    else
+                        await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
+                }
+
+                List<(object Entity, object Parent)> toSave = null;
+                lock (_queuedAuditEntities)
+                {
+                    if (_queuedAuditEntities.Count > 0)
+                    {
+                        toSave = [.. _queuedAuditEntities];
+                        _queuedAuditEntities.Clear();
+                    }
+                }
+
+                if (toSave != null && toSave.Count > 0)
+                {
+                    var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
+                    if (eventEntities.Count > 0)
+                    {
+                        foreach (var ev in eventEntities)
+                            Context.DbContext.Add(ev);
+                        if (sync)
+                            Context.PersistAuditEntries(eventEntities);
+                        else
+                            await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
+                    }
+
+                    var propEntities = toSave.Where(x => x.Parent != null).ToList();
+                    if (propEntities.Count > 0)
+                    {
+                        foreach (var (entity, parent) in propEntities)
+                        {
+                            if (parent != null)
+                            {
+                                var parentIdProp = parent.GetType().GetProperty("Id");
+                                var auditIdProp = entity.GetType().GetProperty("AuditId");
+                                if (parentIdProp != null && auditIdProp != null)
+                                    auditIdProp.SetValue(entity, parentIdProp.GetValue(parent));
+                            }
+                            Context.DbContext.Add(entity);
+                        }
+                        if (sync)
+                            Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
+                        else
+                            await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
+                    }
+                }
+
+                if (ownTransaction != null)
+                {
+                    if (sync)
+                        ownTransaction.Commit();
+                    else
+                        await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch
+            {
+                if (ownTransaction != null)
+                {
+                    if (sync)
+                        ownTransaction.Rollback();
+                    else
+                        await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+                }
+                throw;
+            }
+            finally
+            {
+                ownTransaction?.Dispose();
+            }
+
+            return auditEvent.Result;
         }
     }
 }

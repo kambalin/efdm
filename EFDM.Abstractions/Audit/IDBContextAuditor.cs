@@ -29,5 +29,13 @@ namespace EFDM.Abstractions.Audit
         /// </summary>
         /// <param name="entity">Audit entity instance to persist later.</param>
         void EnqueueAuditEntity(object entity, object parent = null);
+        int AuditBulkOperation(Type entityType, int action, IList<object> entities, Func<int> execute);
+        Task<int> AuditBulkOperationAsync(Type entityType, int action, IList<object> entities,
+            Func<Task<int>> execute, CancellationToken cancellationToken = default);
+        int AuditBulkOperation(Type entityType, int action, IList<object> entities,
+            Func<object, IDictionary<string, object>> newValueExtractor, Func<int> execute);
+        Task<int> AuditBulkOperationAsync(Type entityType, int action, IList<object> entities,
+            Func<object, IDictionary<string, object>> newValueExtractor,
+            Func<Task<int>> execute, CancellationToken cancellationToken = default);
     }
 }

@@ -183,6 +183,17 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
     private async Task<int> ExecuteDeleteCore(bool sync, IDataQuery<TEntity> query, CancellationToken cancellationToken)
     {
         var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
+        if (Context.Auditor.Enabled && Context.Auditor.GetEventType(typeof(TEntity)) != null)
+        {
+            var entities = sync
+                ? dbQuery.AsNoTracking().Cast<object>().ToList()
+                : await dbQuery.AsNoTracking().Cast<object>().ToListAsync(cancellationToken).ConfigureAwait(false);
+            return sync
+                ? Context.Auditor.AuditBulkOperation(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Delete,
+                    entities, () => dbQuery.ExecuteDelete())
+                : await Context.Auditor.AuditBulkOperationAsync(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Delete,
+                    entities, () => dbQuery.ExecuteDeleteAsync(cancellationToken), cancellationToken).ConfigureAwait(false);
+        }
         return sync ? dbQuery.ExecuteDelete() : await dbQuery.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -200,6 +211,20 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         CancellationToken cancellationToken)
     {
         var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
+        if (Context.Auditor.Enabled && Context.Auditor.GetEventType(typeof(TEntity)) != null)
+        {
+            var entities = sync
+                ? dbQuery.AsNoTracking().Cast<object>().ToList()
+                : await dbQuery.AsNoTracking().Cast<object>().ToListAsync(cancellationToken).ConfigureAwait(false);
+            var setters = EFDM.DAL.Helpers.SetPropertyCallsParser.Parse(setPropertyCalls);
+            System.Collections.Generic.IDictionary<string, object> NewValueExtractor(object e) =>
+                setters.ToDictionary(s => s.PropertyName, s => s.GetNewValue(e));
+            return sync
+                ? Context.Auditor.AuditBulkOperation(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Update,
+                    entities, NewValueExtractor, () => dbQuery.ExecuteUpdate(setPropertyCalls))
+                : await Context.Auditor.AuditBulkOperationAsync(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Update,
+                    entities, NewValueExtractor, () => dbQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken), cancellationToken).ConfigureAwait(false);
+        }
         return sync ? dbQuery.ExecuteUpdate(setPropertyCalls) : await dbQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken).ConfigureAwait(false);
     }
 

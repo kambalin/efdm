@@ -7,6 +7,7 @@ using EFDM.Sample.Core.Services.Domain.Interfaces;
 using EFDM.Sample.DAL.Providers;
 using EFDM.Sample.IOC.Managers;
 using EFDM.Sample.TestConsole.Utilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -42,7 +43,7 @@ namespace EFDM.Sample.TestConsole
                     //await AddUserWithSvcAsync(scope);
                     //AddUserWithSvc(scope);
 
-                    //await ChangeGroupsWithTransactionAsync(scope);                    
+                    //await ChangeGroupsWithTransactionAsync(scope);
 
                     //GetGroupsWithSvc(scope);
                     //ChangeGroupsWithSvc(scope);
@@ -60,7 +61,7 @@ namespace EFDM.Sample.TestConsole
                     //TestSplitQueryGroupSvc(scope);
                     //DeleteExecuteUsers(scope);
                     //GetUsersFromGroup(scope);
-                    //UpdateExecuteUsers(scope);                    
+                    //UpdateExecuteUsers(scope);
                     //BulkInsertUsers(scope);
                     //InsertUsers(scope);
                     //AddTaskAnswers(scope);
@@ -69,6 +70,8 @@ namespace EFDM.Sample.TestConsole
                     //await TestTaskAnswersValidFromQuery(scope);
                     //TestPrincipalSorts(scope);
                     //TestTaskAnswersValidFromTillOrderQuery(scope);
+                    await TestAuditExecuteUpdateGroups(scope);
+                    //await TestAuditExecuteDeleteGroups(scope);
                 }
             }
 
@@ -253,6 +256,88 @@ namespace EFDM.Sample.TestConsole
         //        Console.WriteLine($"User {user.Login} id is '{user.Id}'");
         //    }
         //}
+
+        static async Task TestAuditExecuteUpdateGroups(IServiceScope scope)
+        {
+            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<TestDatabaseContext>();
+
+            // создаём тестовые группы
+            var created = DateTimeOffset.Now;
+            var g1 = new Group { Title = $"AuditTest_Update_1_{Guid.NewGuid()}", TypeId = GroupTypeValues.Users, TextField1 = "before1", TextField2 = "before2" };
+            var g2 = new Group { Title = $"AuditTest_Update_2_{Guid.NewGuid()}", TypeId = GroupTypeValues.Users, TextField1 = "before1", TextField2 = "before2" };
+            await groupSvc.AddAsync(g1);
+            await groupSvc.AddAsync(g2);
+            await groupSvc.SaveChangesAsync();
+            Console.WriteLine($"Created groups: {g1.Id}, {g2.Id}");
+
+            // bulk update через ExecuteUpdate
+            var groupQuery = new GroupQuery { Ids = new[] { g1.Id, g2.Id } };
+            var updatedCount = await groupSvc.ExecuteUpdateAsync(groupQuery,
+                s => s.SetProperty(b => b.TextField1, b => "after_bulk_update")
+                      .SetProperty(b => b.TextField2, b => "new_field2"));
+            Console.WriteLine($"ExecuteUpdate affected: {updatedCount}");
+
+            // читаем аудит
+            var auditEvents = await dbContext.AuditGroupEvents
+                .Where(x => x.ObjectType == nameof(Group)
+                         && x.ActionId == EFDM.Core.Constants.AuditStateActionVals.Update
+                         && (x.ObjectId == g1.Id.ToString() || x.ObjectId == g2.Id.ToString()))
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
+
+            Console.WriteLine($"Audit events created: {auditEvents.Count}");
+            foreach (var ev in auditEvents)
+            {
+                Console.WriteLine($"  Event id={ev.Id}, objectId={ev.ObjectId}, action={ev.ActionId}");
+                var props = await dbContext.AuditGroupProperties
+                    .Where(x => x.AuditId == ev.Id)
+                    .ToListAsync();
+                foreach (var p in props)
+                    Console.WriteLine($"    [{p.Name}] old='{p.OldValue}' → new='{p.NewValue}'");
+            }
+
+            // чистим тестовые данные
+            //await groupSvc.ExecuteDeleteAsync(groupQuery);
+        }
+
+        static async Task TestAuditExecuteDeleteGroups(IServiceScope scope)
+        {
+            var groupSvc = scope.ServiceProvider.GetRequiredService<IGroupService>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<TestDatabaseContext>();
+
+            // создаём тестовые группы
+            var g1 = new Group { Title = $"AuditTest_Delete_1_{Guid.NewGuid()}", TypeId = GroupTypeValues.Users, TextField1 = "to_be_deleted" };
+            var g2 = new Group { Title = $"AuditTest_Delete_2_{Guid.NewGuid()}", TypeId = GroupTypeValues.Users, TextField1 = "to_be_deleted" };
+            await groupSvc.AddAsync(g1);
+            await groupSvc.AddAsync(g2);
+            await groupSvc.SaveChangesAsync();
+            Console.WriteLine($"Created groups: {g1.Id}, {g2.Id}");
+
+            // bulk delete через ExecuteDelete
+            var groupQuery = new GroupQuery { Ids = new[] { g1.Id, g2.Id } };
+            var deletedCount = await groupSvc.ExecuteDeleteAsync(groupQuery);
+            Console.WriteLine($"ExecuteDelete affected: {deletedCount}");
+
+            // читаем аудит
+            var auditEvents = await dbContext.AuditGroupEvents
+                .Where(x => x.ObjectType == nameof(Group)
+                         && x.ActionId == EFDM.Core.Constants.AuditStateActionVals.Delete
+                         && (x.ObjectId == g1.Id.ToString() || x.ObjectId == g2.Id.ToString()))
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
+
+            Console.WriteLine($"Audit events created: {auditEvents.Count}");
+            foreach (var ev in auditEvents)
+            {
+                Console.WriteLine($"  Event id={ev.Id}, objectId={ev.ObjectId}, action={ev.ActionId}");
+                var props = await dbContext.AuditGroupProperties
+                    .Where(x => x.AuditId == ev.Id)
+                    .ToListAsync();
+                foreach (var p in props)
+                    Console.WriteLine($"    [{p.Name}] old='{p.OldValue}'");
+            }
+        }
 
         static async Task UpdateExecuteUsers(IServiceScope scope)
         {
