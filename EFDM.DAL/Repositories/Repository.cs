@@ -538,11 +538,13 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
     {
         private EFDMDatabaseContext _context;
         private bool _autoDetectChanges;
+        private bool _originalAutoDetectChangesEnabled;
 
         public ActionExecutor(EFDMDatabaseContext context, bool autoDetectChanges)
         {
             _context = context;
             _autoDetectChanges = autoDetectChanges;
+            _originalAutoDetectChangesEnabled = _context.ChangeTracker.AutoDetectChangesEnabled;
 
             if (!_autoDetectChanges)
                 _context.ChangeTracker.AutoDetectChangesEnabled = false;
@@ -551,7 +553,7 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         public void Dispose()
         {
             if (!_autoDetectChanges)
-                _context.ChangeTracker.AutoDetectChangesEnabled = true;
+                _context.ChangeTracker.AutoDetectChangesEnabled = _originalAutoDetectChangesEnabled;
         }
     }
 }
