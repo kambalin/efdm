@@ -85,6 +85,29 @@ namespace EFDM.Core.Audit
             return await RunAuditedOperation(sync, auditEvent, baseSaveChanges, baseSaveChangesAsync, cancellationToken).ConfigureAwait(false);
         }
 
+        /// <summary>
+        /// Blocks on a user-supplied async delegate with SynchronizationContext temporarily removed,
+        /// so awaits inside the delegate continue on the thread pool and cannot deadlock the blocked thread.
+        /// </summary>
+        private static void RunSync(Func<Task> action)
+        {
+            var prevContext = SynchronizationContext.Current;
+            if (prevContext == null)
+            {
+                action().GetAwaiter().GetResult();
+                return;
+            }
+            try
+            {
+                SynchronizationContext.SetSynchronizationContext(null);
+                action().GetAwaiter().GetResult();
+            }
+            finally
+            {
+                SynchronizationContext.SetSynchronizationContext(prevContext);
+            }
+        }
+
         private async Task<int> RunAuditedOperation(bool sync, IAuditEvent auditEvent,
             Func<int> execute, Func<Task<int>> executeAsync, CancellationToken cancellationToken)
         {
@@ -136,7 +159,7 @@ namespace EFDM.Core.Audit
                             // nothing to invoke for this entity type
                             continue;
                         if (sync)
-                            mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
+                            RunSync(() => mapperEventAction(auditEvent, entry, entityAuditEvent));
                         else
                             await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
                     }
