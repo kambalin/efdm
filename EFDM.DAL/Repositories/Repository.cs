@@ -261,7 +261,7 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
                 
                 attachedEntity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
                 if (attachedEntity == null)
-                    throw new Exception($"Entity is detached, cannot find entity with Id = '{entity.Id}'");
+                    throw new InvalidOperationException($"Entity is detached, cannot find entity with Id = '{entity.Id}'");
             }
 
             var entry = Context.Entry(attachedEntity);
@@ -310,7 +310,7 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         
         var entity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
         if (entity == null)
-            throw new Exception($"Cannot find entity with Id = '{model.Id}'");
+            throw new InvalidOperationException($"Cannot find entity with Id = '{model.Id}'");
         var entry = Context.Entry(entity);
 
         foreach (var up in updateProperties)

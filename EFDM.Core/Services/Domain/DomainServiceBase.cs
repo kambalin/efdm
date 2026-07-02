@@ -45,7 +45,7 @@ namespace EFDM.Core.Services.Domain
             get
             {
                 if (_liteSelector == null)
-                    throw new NullReferenceException($"Need to initialize '{nameof(LiteSelector)}' in domain service class");
+                    throw new InvalidOperationException($"Need to initialize '{nameof(LiteSelector)}' in domain service class");
                 return _liteSelector;
             }
             set
