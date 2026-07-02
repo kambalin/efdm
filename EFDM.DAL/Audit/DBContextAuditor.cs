@@ -181,8 +181,6 @@ namespace EFDM.Core.Audit
                         var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
                         if (eventEntities.Count > 0)
                         {
-                            foreach (var ev in eventEntities)
-                                Context.DbContext.Add(ev);
                             if (sync)
                                 Context.PersistAuditEntries(eventEntities);
                             else
@@ -205,7 +203,6 @@ namespace EFDM.Core.Audit
                                         auditIdProp.SetValue(entity, parentId);
                                     }
                                 }
-                                Context.DbContext.Add(entity);
                             }
                             if (sync)
                                 Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
