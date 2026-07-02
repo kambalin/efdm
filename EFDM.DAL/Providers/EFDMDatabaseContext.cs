@@ -85,6 +85,9 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
         var auditPrincipalEntity = entity as IAuditablePrincipalEntity;
         if (auditPrincipalEntity == null)
             return;
+        // if the creator was not forcibly set (for example, when it has to be system user)
+        if (auditPrincipalEntity.CreatedById < 1)
+            auditPrincipalEntity.CreatedById = ExecutorId;
         if (!auditPrincipalEntity.PreserveLastModifiedBy)
             auditPrincipalEntity.ModifiedById = ExecutorId;
         else
@@ -94,9 +97,6 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
             if (auditPrincipalEntity.ModifiedById < 1)
                 auditPrincipalEntity.ModifiedById = auditPrincipalEntity.CreatedById;
         }
-        // if the creator was not forcibly set (for example, when it has to be system user)
-        if (auditPrincipalEntity.CreatedById < 1)
-            auditPrincipalEntity.CreatedById = ExecutorId;
     }
 
     protected virtual void PreSaveDateAuditValues<TEntity>(TEntity entity)
