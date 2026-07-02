@@ -388,7 +388,7 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         return dbQuery;
     }
 
-    private IQueryable<TEntity> CountPrepare(IDataQuery<TEntity> query, bool tracking = false)
+    private IQueryable<TEntity> CountPrepare(IDataQuery<TEntity> query)
     {
         var dbQuery = DbSet.AsNoTracking().AsQueryable();
         if (query != null)
