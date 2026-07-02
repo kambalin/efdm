@@ -152,7 +152,11 @@ namespace EFDM.Core.Services.Domain
             CancellationToken cancellationToken)
         {
             foreach (var entity in entities)
-                await DeleteCore(sync, entity, forceDeleteEvenDeletable, cancellationToken).ConfigureAwait(false);
+                MarkDeleted(entity, forceDeleteEvenDeletable);
+            if (sync)
+                SaveChanges();
+            else
+                await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public virtual Task DeleteAsync(TModel entity, bool forceDeleteEvenDeletable = false,
@@ -165,15 +169,20 @@ namespace EFDM.Core.Services.Domain
         private async Task DeleteCore(bool sync, TModel entity, bool forceDeleteEvenDeletable,
             CancellationToken cancellationToken)
         {
+            MarkDeleted(entity, forceDeleteEvenDeletable);
+            if (sync)
+                SaveChanges();
+            else
+                await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        private void MarkDeleted(TModel entity, bool forceDeleteEvenDeletable)
+        {
             var deletable = entity as IDeletableEntity;
             if (deletable == null || forceDeleteEvenDeletable)
                 Repository.Delete(entity);
             else if (!deletable.IsDeleted)
                 deletable.IsDeleted = true;
-            if (sync)
-                SaveChanges();
-            else
-                await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         }
 
         public virtual Task<int> ExecuteDeleteAsync(TQuery query, CancellationToken cancellationToken = default)
