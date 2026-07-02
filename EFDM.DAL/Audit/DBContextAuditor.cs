@@ -84,125 +84,138 @@ namespace EFDM.Core.Audit
 
             // If no ambient transaction exists, wrap main save + audit persistence in one transaction
             // so that audit records are always consistent with the data they describe.
+            // The own transaction is started through the execution strategy, otherwise retrying
+            // strategies (e.g. EnableRetryOnFailure) throw on user-initiated transactions.
             var hasAmbientTransaction = Context.DbContext.Database.CurrentTransaction != null;
-            var ownTransaction = hasAmbientTransaction
-                ? null
-                : sync
-                    ? Context.DbContext.Database.BeginTransaction()
-                    : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            try
+            if (hasAmbientTransaction)
+                return await SaveInTransaction(false).ConfigureAwait(false);
+
+            var strategy = Context.DbContext.Database.CreateExecutionStrategy();
+            return sync
+                ? strategy.Execute(() => SaveInTransaction(true).GetAwaiter().GetResult())
+                : await strategy.ExecuteAsync(() => SaveInTransaction(true)).ConfigureAwait(false);
+
+            async Task<int> SaveInTransaction(bool useOwnTransaction)
             {
+                var ownTransaction = !useOwnTransaction
+                    ? null
+                    : sync
+                        ? Context.DbContext.Database.BeginTransaction()
+                        : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    auditEvent.Result = sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    auditEvent.Success = false;
-                    auditEvent.ErrorMessage = ex.ToString();
-                    throw;
-                }
-                auditEvent.Success = true;
-                FillOutColumnValues(auditEvent);
-
-                foreach (var entry in auditEvent.Entries)
-                {
-                    var eventType = GetEventType(entry.EntityType);
-                    if (eventType == null)
-                        // no mapping for this entity type
-                        continue;
-
-                    var entityAuditEvent = Activator.CreateInstance(eventType);
-                    var mapperEventAction = GetMapperEventAction(entry.EntityType);
-                    if (mapperEventAction == null)
-                        // nothing to invoke for this entity type
-                        continue;
-                    if (sync)
-                        mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
-                    else
-                        await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
-                }
-
-                // Persist queued audit entities after all mapping actions completed
-                List<(object Entity, object Parent)> toSave = null;
-                lock (_queuedAuditEntities)
-                {
-                    if (_queuedAuditEntities.Count > 0)
+                    try
                     {
-                        toSave = [.. _queuedAuditEntities];
+                        auditEvent.Result = sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        auditEvent.Success = false;
+                        auditEvent.ErrorMessage = ex.ToString();
+                        throw;
+                    }
+                    auditEvent.Success = true;
+                    FillOutColumnValues(auditEvent);
+
+                    foreach (var entry in auditEvent.Entries)
+                    {
+                        var eventType = GetEventType(entry.EntityType);
+                        if (eventType == null)
+                            // no mapping for this entity type
+                            continue;
+
+                        var entityAuditEvent = Activator.CreateInstance(eventType);
+                        var mapperEventAction = GetMapperEventAction(entry.EntityType);
+                        if (mapperEventAction == null)
+                            // nothing to invoke for this entity type
+                            continue;
+                        if (sync)
+                            mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
+                        else
+                            await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
+                    }
+
+                    // Persist queued audit entities after all mapping actions completed
+                    List<(object Entity, object Parent)> toSave = null;
+                    lock (_queuedAuditEntities)
+                    {
+                        if (_queuedAuditEntities.Count > 0)
+                        {
+                            toSave = [.. _queuedAuditEntities];
+                            _queuedAuditEntities.Clear();
+                        }
+                    }
+
+                    if (toSave != null && toSave.Count > 0)
+                    {
+                        // First persist event entities so their keys are generated
+                        var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
+                        if (eventEntities.Count > 0)
+                        {
+                            foreach (var ev in eventEntities)
+                                Context.DbContext.Add(ev);
+                            if (sync)
+                                Context.PersistAuditEntries(eventEntities);
+                            else
+                                await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        // Then set AuditId on property entities (if any) and persist them
+                        var propEntities = toSave.Where(x => x.Parent != null).ToList();
+                        if (propEntities.Count > 0)
+                        {
+                            foreach (var (entity, parent) in propEntities)
+                            {
+                                if (parent != null)
+                                {
+                                    var parentIdProp = parent.GetType().GetProperty("Id");
+                                    var auditIdProp = entity.GetType().GetProperty("AuditId");
+                                    if (parentIdProp != null && auditIdProp != null)
+                                    {
+                                        var parentId = parentIdProp.GetValue(parent);
+                                        auditIdProp.SetValue(entity, parentId);
+                                    }
+                                }
+                                Context.DbContext.Add(entity);
+                            }
+                            if (sync)
+                                Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
+                            else
+                                await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
+                        }
+                    }
+
+                    if (ownTransaction != null)
+                    {
+                        if (sync)
+                            ownTransaction.Commit();
+                        else
+                            await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch
+                {
+                    // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
+                    lock (_queuedAuditEntities)
+                    {
                         _queuedAuditEntities.Clear();
                     }
-                }
-
-                if (toSave != null && toSave.Count > 0)
-                {
-                    // First persist event entities so their keys are generated
-                    var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
-                    if (eventEntities.Count > 0)
+                    if (ownTransaction != null)
                     {
-                        foreach (var ev in eventEntities)
-                            Context.DbContext.Add(ev);
                         if (sync)
-                            Context.PersistAuditEntries(eventEntities);
+                            ownTransaction.Rollback();
                         else
-                            await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
+                            await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
                     }
-
-                    // Then set AuditId on property entities (if any) and persist them
-                    var propEntities = toSave.Where(x => x.Parent != null).ToList();
-                    if (propEntities.Count > 0)
-                    {
-                        foreach (var (entity, parent) in propEntities)
-                        {
-                            if (parent != null)
-                            {
-                                var parentIdProp = parent.GetType().GetProperty("Id");
-                                var auditIdProp = entity.GetType().GetProperty("AuditId");
-                                if (parentIdProp != null && auditIdProp != null)
-                                {
-                                    var parentId = parentIdProp.GetValue(parent);
-                                    auditIdProp.SetValue(entity, parentId);
-                                }
-                            }
-                            Context.DbContext.Add(entity);
-                        }
-                        if (sync)
-                            Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
-                        else
-                            await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
-                    }
+                    throw;
+                }
+                finally
+                {
+                    ownTransaction?.Dispose();
                 }
 
-                if (ownTransaction != null)
-                {
-                    if (sync)
-                        ownTransaction.Commit();
-                    else
-                        await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-                }
+                return auditEvent.Result;
             }
-            catch
-            {
-                // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
-                lock (_queuedAuditEntities)
-                {
-                    _queuedAuditEntities.Clear();
-                }
-                if (ownTransaction != null)
-                {
-                    if (sync)
-                        ownTransaction.Rollback();
-                    else
-                        await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                }
-                throw;
-            }
-            finally
-            {
-                ownTransaction?.Dispose();
-            }
-
-            return auditEvent.Result;
         }
 
         public Func<IAuditEvent, IEventEntry, object, Task> GetMapperEventAction(Type type)
@@ -791,115 +804,128 @@ namespace EFDM.Core.Audit
                 ContextId = Context.DbContext.ContextId.ToString()
             };
 
+            // The own transaction is started through the execution strategy, otherwise retrying
+            // strategies (e.g. EnableRetryOnFailure) throw on user-initiated transactions.
             var hasAmbientTransaction = Context.DbContext.Database.CurrentTransaction != null;
-            var ownTransaction = hasAmbientTransaction
-                ? null
-                : sync
-                    ? Context.DbContext.Database.BeginTransaction()
-                    : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-            try
+            if (hasAmbientTransaction)
+                return await ExecuteInTransaction(false).ConfigureAwait(false);
+
+            var strategy = Context.DbContext.Database.CreateExecutionStrategy();
+            return sync
+                ? strategy.Execute(() => ExecuteInTransaction(true).GetAwaiter().GetResult())
+                : await strategy.ExecuteAsync(() => ExecuteInTransaction(true)).ConfigureAwait(false);
+
+            async Task<int> ExecuteInTransaction(bool useOwnTransaction)
             {
+                var ownTransaction = !useOwnTransaction
+                    ? null
+                    : sync
+                        ? Context.DbContext.Database.BeginTransaction()
+                        : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
                 try
                 {
-                    auditEvent.Result = sync ? execute() : await executeAsync().ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    auditEvent.Success = false;
-                    auditEvent.ErrorMessage = ex.ToString();
-                    throw;
-                }
-                auditEvent.Success = true;
-
-                foreach (var entry in auditEvent.Entries)
-                {
-                    var eventType = GetEventType(entry.EntityType);
-                    if (eventType == null)
-                        continue;
-                    var entityAuditEvent = Activator.CreateInstance(eventType);
-                    var mapperEventAction = GetMapperEventAction(entry.EntityType);
-                    if (mapperEventAction == null)
-                        continue;
-                    if (sync)
-                        mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
-                    else
-                        await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
-                }
-
-                List<(object Entity, object Parent)> toSave = null;
-                lock (_queuedAuditEntities)
-                {
-                    if (_queuedAuditEntities.Count > 0)
+                    try
                     {
-                        toSave = [.. _queuedAuditEntities];
+                        auditEvent.Result = sync ? execute() : await executeAsync().ConfigureAwait(false);
+                    }
+                    catch (Exception ex)
+                    {
+                        auditEvent.Success = false;
+                        auditEvent.ErrorMessage = ex.ToString();
+                        throw;
+                    }
+                    auditEvent.Success = true;
+
+                    foreach (var entry in auditEvent.Entries)
+                    {
+                        var eventType = GetEventType(entry.EntityType);
+                        if (eventType == null)
+                            continue;
+                        var entityAuditEvent = Activator.CreateInstance(eventType);
+                        var mapperEventAction = GetMapperEventAction(entry.EntityType);
+                        if (mapperEventAction == null)
+                            continue;
+                        if (sync)
+                            mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
+                        else
+                            await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
+                    }
+
+                    List<(object Entity, object Parent)> toSave = null;
+                    lock (_queuedAuditEntities)
+                    {
+                        if (_queuedAuditEntities.Count > 0)
+                        {
+                            toSave = [.. _queuedAuditEntities];
+                            _queuedAuditEntities.Clear();
+                        }
+                    }
+
+                    if (toSave != null && toSave.Count > 0)
+                    {
+                        var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
+                        if (eventEntities.Count > 0)
+                        {
+                            foreach (var ev in eventEntities)
+                                Context.DbContext.Add(ev);
+                            if (sync)
+                                Context.PersistAuditEntries(eventEntities);
+                            else
+                                await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
+                        }
+
+                        var propEntities = toSave.Where(x => x.Parent != null).ToList();
+                        if (propEntities.Count > 0)
+                        {
+                            foreach (var (entity, parent) in propEntities)
+                            {
+                                if (parent != null)
+                                {
+                                    var parentIdProp = parent.GetType().GetProperty("Id");
+                                    var auditIdProp = entity.GetType().GetProperty("AuditId");
+                                    if (parentIdProp != null && auditIdProp != null)
+                                        auditIdProp.SetValue(entity, parentIdProp.GetValue(parent));
+                                }
+                                Context.DbContext.Add(entity);
+                            }
+                            if (sync)
+                                Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
+                            else
+                                await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
+                        }
+                    }
+
+                    if (ownTransaction != null)
+                    {
+                        if (sync)
+                            ownTransaction.Commit();
+                        else
+                            await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                    }
+                }
+                catch
+                {
+                    // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
+                    lock (_queuedAuditEntities)
+                    {
                         _queuedAuditEntities.Clear();
                     }
-                }
-
-                if (toSave != null && toSave.Count > 0)
-                {
-                    var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
-                    if (eventEntities.Count > 0)
+                    if (ownTransaction != null)
                     {
-                        foreach (var ev in eventEntities)
-                            Context.DbContext.Add(ev);
                         if (sync)
-                            Context.PersistAuditEntries(eventEntities);
+                            ownTransaction.Rollback();
                         else
-                            await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
+                            await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
                     }
-
-                    var propEntities = toSave.Where(x => x.Parent != null).ToList();
-                    if (propEntities.Count > 0)
-                    {
-                        foreach (var (entity, parent) in propEntities)
-                        {
-                            if (parent != null)
-                            {
-                                var parentIdProp = parent.GetType().GetProperty("Id");
-                                var auditIdProp = entity.GetType().GetProperty("AuditId");
-                                if (parentIdProp != null && auditIdProp != null)
-                                    auditIdProp.SetValue(entity, parentIdProp.GetValue(parent));
-                            }
-                            Context.DbContext.Add(entity);
-                        }
-                        if (sync)
-                            Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
-                        else
-                            await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
-                    }
+                    throw;
+                }
+                finally
+                {
+                    ownTransaction?.Dispose();
                 }
 
-                if (ownTransaction != null)
-                {
-                    if (sync)
-                        ownTransaction.Commit();
-                    else
-                        await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-                }
+                return auditEvent.Result;
             }
-            catch
-            {
-                // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
-                lock (_queuedAuditEntities)
-                {
-                    _queuedAuditEntities.Clear();
-                }
-                if (ownTransaction != null)
-                {
-                    if (sync)
-                        ownTransaction.Rollback();
-                    else
-                        await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                }
-                throw;
-            }
-            finally
-            {
-                ownTransaction?.Dispose();
-            }
-
-            return auditEvent.Result;
         }
     }
 }
