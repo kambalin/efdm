@@ -183,6 +183,11 @@ namespace EFDM.Core.Audit
             }
             catch
             {
+                // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
+                lock (_queuedAuditEntities)
+                {
+                    _queuedAuditEntities.Clear();
+                }
                 if (ownTransaction != null)
                 {
                     if (sync)
@@ -875,6 +880,11 @@ namespace EFDM.Core.Audit
             }
             catch
             {
+                // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
+                lock (_queuedAuditEntities)
+                {
+                    _queuedAuditEntities.Clear();
+                }
                 if (ownTransaction != null)
                 {
                     if (sync)
