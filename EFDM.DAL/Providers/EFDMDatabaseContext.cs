@@ -246,20 +246,23 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
             entry.State = EntityState.Unchanged;
         }
 
-        var affectedRows = await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-
-        if (keepExcludedOriginals)
+        try
         {
-            foreach (var state in original)
+            return await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            if (keepExcludedOriginals)
             {
-                foreach (var entry in state)
+                foreach (var state in original)
                 {
-                    entry.State = state.Key;
+                    foreach (var entry in state)
+                    {
+                        entry.State = state.Key;
+                    }
                 }
             }
         }
-
-        return affectedRows;
     }
 
     public void ClearChangeTracker()
