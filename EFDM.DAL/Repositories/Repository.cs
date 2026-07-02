@@ -110,8 +110,17 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
             entities = sync ? dbQuery.Select(select).ToList() : await dbQuery.Select(select).ToListAsync(cancellationToken).ConfigureAwait(false);
         else
             entities = sync ? dbQuery.ToList() : await dbQuery.ToListAsync(cancellationToken).ConfigureAwait(false);
-        if (tracking)
-            DbSet.AttachRange(entities);
+        // projected instances are not tracked by EF, attach them unless an entity
+        // with the same key is already tracked (AttachRange would throw);
+        // without select the query itself is already tracking
+        if (tracking && select != null)
+        {
+            foreach (var entity in entities)
+            {
+                if (!IsAttached(entity.Id))
+                    DbSet.Attach(entity);
+            }
+        }
         return entities;
     }
 
