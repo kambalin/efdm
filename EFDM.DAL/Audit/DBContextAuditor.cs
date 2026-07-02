@@ -470,7 +470,7 @@ namespace EFDM.Core.Audit
                 return eec;
             var navProp = navigations
                 .Where(x => x.ForeignKey.Properties.Any(
-                    y => y.Name == propEntry.Metadata.PropertyInfo.Name)
+                    y => y.Name == propEntry.Metadata.Name)
                 ).FirstOrDefault();
             if (navProp == null)
                 return eec;
@@ -507,7 +507,7 @@ namespace EFDM.Core.Audit
                 return eec;
             var navProp = navigations
                 .Where(x => x.ForeignKey.Properties.Any(
-                    y => y.Name == propEntry.Metadata.PropertyInfo.Name)
+                    y => y.Name == propEntry.Metadata.Name)
                 ).FirstOrDefault();
             if (navProp == null)
                 return eec;
