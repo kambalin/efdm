@@ -82,20 +82,26 @@ namespace EFDM.Core.Audit
             if (auditEvent == null)
                 return sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
 
-            // If no ambient transaction exists, wrap main save + audit persistence in one transaction
+            return await RunAuditedOperation(sync, auditEvent, baseSaveChanges, baseSaveChangesAsync, cancellationToken).ConfigureAwait(false);
+        }
+
+        private async Task<int> RunAuditedOperation(bool sync, IAuditEvent auditEvent,
+            Func<int> execute, Func<Task<int>> executeAsync, CancellationToken cancellationToken)
+        {
+            // If no ambient transaction exists, wrap the operation + audit persistence in one transaction
             // so that audit records are always consistent with the data they describe.
             // The own transaction is started through the execution strategy, otherwise retrying
             // strategies (e.g. EnableRetryOnFailure) throw on user-initiated transactions.
             var hasAmbientTransaction = Context.DbContext.Database.CurrentTransaction != null;
             if (hasAmbientTransaction)
-                return await SaveInTransaction(false).ConfigureAwait(false);
+                return await RunInTransaction(false).ConfigureAwait(false);
 
             var strategy = Context.DbContext.Database.CreateExecutionStrategy();
             return sync
-                ? strategy.Execute(() => SaveInTransaction(true).GetAwaiter().GetResult())
-                : await strategy.ExecuteAsync(() => SaveInTransaction(true)).ConfigureAwait(false);
+                ? strategy.Execute(() => RunInTransaction(true).GetAwaiter().GetResult())
+                : await strategy.ExecuteAsync(() => RunInTransaction(true)).ConfigureAwait(false);
 
-            async Task<int> SaveInTransaction(bool useOwnTransaction)
+            async Task<int> RunInTransaction(bool useOwnTransaction)
             {
                 var ownTransaction = !useOwnTransaction
                     ? null
@@ -106,7 +112,7 @@ namespace EFDM.Core.Audit
                 {
                     try
                     {
-                        auditEvent.Result = sync ? baseSaveChanges() : await baseSaveChangesAsync().ConfigureAwait(false);
+                        auditEvent.Result = sync ? execute() : await executeAsync().ConfigureAwait(false);
                     }
                     catch (Exception ex)
                     {
@@ -329,35 +335,14 @@ namespace EFDM.Core.Audit
         }
 
         #endregion IDBContextAuditor implementation
-        // TODO make ...Core version for duplicate code
-        protected IAuditEvent CreateAuditEvent()
-        {
-            var modifiedEntries = GetModifiedEntries();
-            if (modifiedEntries.Count == 0)
-                return null;
-            var efEvent = new AuditEvent()
-            {
-                Entries = new List<IEventEntry>(),
-                ContextId = Context.DbContext.ContextId.ToString()
-            };
-            foreach (var entry in modifiedEntries)
-            {
-                var entityName = GetEntityName(entry);
-                efEvent.Entries.Add(new EventEntry()
-                {
-                    Entry = entry,
-                    EntityType = entry.Entity.GetType(),
-                    Action = GetStateAction(entry.State),
-                    Changes = entry.State == EntityState.Modified ? GetChanges(entry) : null,
-                    Table = entityName.Table,
-                    Schema = entityName.Schema,
-                    Name = entry.Metadata.DisplayName()
-                });
-            }
-            return efEvent;
-        }
 
-        protected async Task<IAuditEvent> CreateAuditEventAsync()
+        protected IAuditEvent CreateAuditEvent()
+            => CreateAuditEventCore(true).GetAwaiter().GetResult();
+
+        protected Task<IAuditEvent> CreateAuditEventAsync()
+            => CreateAuditEventCore(false);
+
+        private async Task<IAuditEvent> CreateAuditEventCore(bool sync)
         {
             var modifiedEntries = GetModifiedEntries();
             if (modifiedEntries.Count == 0)
@@ -375,7 +360,9 @@ namespace EFDM.Core.Audit
                     Entry = entry,
                     EntityType = entry.Entity.GetType(),
                     Action = GetStateAction(entry.State),
-                    Changes = entry.State == EntityState.Modified ? await GetChangesAsync(entry).ConfigureAwait(false) : null,
+                    Changes = entry.State == EntityState.Modified
+                        ? await GetChangesCore(sync, entry).ConfigureAwait(false)
+                        : null,
                     Table = entityName.Table,
                     Schema = entityName.Schema,
                     Name = entry.Metadata.DisplayName()
@@ -431,27 +418,13 @@ namespace EFDM.Core.Audit
                 }
             }
         }
-        // TODO make ...Core version for duplicate code
         protected List<IEventEntryChange> GetChanges(EntityEntry entry)
-        {
-            var result = new List<IEventEntryChange>();
-            var props = entry.Metadata.GetProperties();
-            var entityType = entry.Entity.GetType();
-            var navigations = Context.DbContext.Model.FindEntityType(entityType)
-                .GetNavigations().ToList();
-            foreach (var prop in props)
-            {
-                PropertyEntry propEntry = entry.Property(prop.Name);
-                if (propEntry.IsModified)
-                {
-                    if (IncludeProperty(entry, prop.Name))
-                        result.Add(GetPropertyChanges(propEntry, navigations, prop));
-                }
-            }
-            return result;
-        }
+            => GetChangesCore(true, entry).GetAwaiter().GetResult();
 
-        protected async Task<List<IEventEntryChange>> GetChangesAsync(EntityEntry entry)
+        protected Task<List<IEventEntryChange>> GetChangesAsync(EntityEntry entry)
+            => GetChangesCore(false, entry);
+
+        private async Task<List<IEventEntryChange>> GetChangesCore(bool sync, EntityEntry entry)
         {
             var result = new List<IEventEntryChange>();
             var props = entry.Metadata.GetProperties();
@@ -464,50 +437,20 @@ namespace EFDM.Core.Audit
                 if (propEntry.IsModified)
                 {
                     if (IncludeProperty(entry, prop.Name))
-                        result.Add(await GetPropertyChangesAsync(propEntry, navigations, prop).ConfigureAwait(false));
+                        result.Add(await GetPropertyChangesCore(sync, propEntry, navigations, prop).ConfigureAwait(false));
                 }
             }
             return result;
         }
-        // TODO make ...Core version for duplicate code
         protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry,
             List<INavigation> navigations, IProperty prop)
-        {
-            var eec = new EventEntryChange()
-            {
-                ColumnName = GetColumnName(prop),
-                NewValue = propEntry.CurrentValue,
-                OriginalValue = propEntry.OriginalValue
-            };
-            if (navigations == null)
-                return eec;
-            var navProp = navigations
-                .Where(x => x.ForeignKey.Properties.Any(
-                    y => y.Name == propEntry.Metadata.Name)
-                ).FirstOrDefault();
-            if (navProp == null)
-                return eec;
-            var relatedType = navProp.ForeignKey.DependentToPrincipal.ClrType;
-            var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
-            if (dbSet != null)
-            {
-                if (eec.NewValue != null)
-                {
-                    var newRelated = dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue)).FirstOrDefault();
-                    if (newRelated != null)
-                        eec.NewValue = GetLookupValue(newRelated);
-                }
-                if (eec.OriginalValue != null)
-                {
-                    var oldRelated = dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue)).FirstOrDefault();
-                    if (oldRelated != null)
-                        eec.OriginalValue = GetLookupValue(oldRelated);
-                }
-            }
-            return eec;
-        }
+            => GetPropertyChangesCore(true, propEntry, navigations, prop).GetAwaiter().GetResult();
 
-        protected async Task<EventEntryChange> GetPropertyChangesAsync(PropertyEntry propEntry,
+        protected Task<EventEntryChange> GetPropertyChangesAsync(PropertyEntry propEntry,
+            List<INavigation> navigations, IProperty prop)
+            => GetPropertyChangesCore(false, propEntry, navigations, prop);
+
+        private async Task<EventEntryChange> GetPropertyChangesCore(bool sync, PropertyEntry propEntry,
             List<INavigation> navigations, IProperty prop)
         {
             var eec = new EventEntryChange()
@@ -530,16 +473,19 @@ namespace EFDM.Core.Audit
             {
                 if (eec.NewValue != null)
                 {
-                    var newRelated = await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
-                        .FirstOrDefaultAsync().ConfigureAwait(false);
+                    var newRelated = sync
+                        ? dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue)).FirstOrDefault()
+                        : await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
+                            .FirstOrDefaultAsync().ConfigureAwait(false);
                     if (newRelated != null)
                         eec.NewValue = GetLookupValue(newRelated);
                 }
-
                 if (eec.OriginalValue != null)
                 {
-                    var oldRelated = await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
-                        .FirstOrDefaultAsync().ConfigureAwait(false);
+                    var oldRelated = sync
+                        ? dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue)).FirstOrDefault()
+                        : await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
+                            .FirstOrDefaultAsync().ConfigureAwait(false);
                     if (oldRelated != null)
                         eec.OriginalValue = GetLookupValue(oldRelated);
                 }
@@ -804,128 +750,7 @@ namespace EFDM.Core.Audit
                 ContextId = Context.DbContext.ContextId.ToString()
             };
 
-            // The own transaction is started through the execution strategy, otherwise retrying
-            // strategies (e.g. EnableRetryOnFailure) throw on user-initiated transactions.
-            var hasAmbientTransaction = Context.DbContext.Database.CurrentTransaction != null;
-            if (hasAmbientTransaction)
-                return await ExecuteInTransaction(false).ConfigureAwait(false);
-
-            var strategy = Context.DbContext.Database.CreateExecutionStrategy();
-            return sync
-                ? strategy.Execute(() => ExecuteInTransaction(true).GetAwaiter().GetResult())
-                : await strategy.ExecuteAsync(() => ExecuteInTransaction(true)).ConfigureAwait(false);
-
-            async Task<int> ExecuteInTransaction(bool useOwnTransaction)
-            {
-                var ownTransaction = !useOwnTransaction
-                    ? null
-                    : sync
-                        ? Context.DbContext.Database.BeginTransaction()
-                        : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-                try
-                {
-                    try
-                    {
-                        auditEvent.Result = sync ? execute() : await executeAsync().ConfigureAwait(false);
-                    }
-                    catch (Exception ex)
-                    {
-                        auditEvent.Success = false;
-                        auditEvent.ErrorMessage = ex.ToString();
-                        throw;
-                    }
-                    auditEvent.Success = true;
-
-                    foreach (var entry in auditEvent.Entries)
-                    {
-                        var eventType = GetEventType(entry.EntityType);
-                        if (eventType == null)
-                            continue;
-                        var entityAuditEvent = Activator.CreateInstance(eventType);
-                        var mapperEventAction = GetMapperEventAction(entry.EntityType);
-                        if (mapperEventAction == null)
-                            continue;
-                        if (sync)
-                            mapperEventAction(auditEvent, entry, entityAuditEvent).GetAwaiter().GetResult();
-                        else
-                            await mapperEventAction(auditEvent, entry, entityAuditEvent).ConfigureAwait(false);
-                    }
-
-                    List<(object Entity, object Parent)> toSave = null;
-                    lock (_queuedAuditEntities)
-                    {
-                        if (_queuedAuditEntities.Count > 0)
-                        {
-                            toSave = [.. _queuedAuditEntities];
-                            _queuedAuditEntities.Clear();
-                        }
-                    }
-
-                    if (toSave != null && toSave.Count > 0)
-                    {
-                        var eventEntities = toSave.Where(x => x.Parent == null).Select(x => x.Entity).ToList();
-                        if (eventEntities.Count > 0)
-                        {
-                            foreach (var ev in eventEntities)
-                                Context.DbContext.Add(ev);
-                            if (sync)
-                                Context.PersistAuditEntries(eventEntities);
-                            else
-                                await Context.PersistAuditEntriesAsync(eventEntities, cancellationToken).ConfigureAwait(false);
-                        }
-
-                        var propEntities = toSave.Where(x => x.Parent != null).ToList();
-                        if (propEntities.Count > 0)
-                        {
-                            foreach (var (entity, parent) in propEntities)
-                            {
-                                if (parent != null)
-                                {
-                                    var parentIdProp = parent.GetType().GetProperty("Id");
-                                    var auditIdProp = entity.GetType().GetProperty("AuditId");
-                                    if (parentIdProp != null && auditIdProp != null)
-                                        auditIdProp.SetValue(entity, parentIdProp.GetValue(parent));
-                                }
-                                Context.DbContext.Add(entity);
-                            }
-                            if (sync)
-                                Context.PersistAuditEntries(propEntities.Select(x => x.Entity));
-                            else
-                                await Context.PersistAuditEntriesAsync(propEntities.Select(x => x.Entity), cancellationToken).ConfigureAwait(false);
-                        }
-                    }
-
-                    if (ownTransaction != null)
-                    {
-                        if (sync)
-                            ownTransaction.Commit();
-                        else
-                            await ownTransaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                }
-                catch
-                {
-                    // drop queued audit entities of the failed event so they don't leak into the next SaveChanges
-                    lock (_queuedAuditEntities)
-                    {
-                        _queuedAuditEntities.Clear();
-                    }
-                    if (ownTransaction != null)
-                    {
-                        if (sync)
-                            ownTransaction.Rollback();
-                        else
-                            await ownTransaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-                    }
-                    throw;
-                }
-                finally
-                {
-                    ownTransaction?.Dispose();
-                }
-
-                return auditEvent.Result;
-            }
+            return await RunAuditedOperation(sync, auditEvent, execute, executeAsync, cancellationToken).ConfigureAwait(false);
         }
     }
 }
