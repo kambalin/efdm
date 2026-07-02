@@ -88,7 +88,7 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
             Skipped = query?.Skip ?? 0
         };
         var dbQuery = FetchPrepare(query, tracking);
-        result.Items = sync ? dbQuery.ToList() : await dbQuery.ToListAsync().ConfigureAwait(false);
+        result.Items = sync ? dbQuery.ToList() : await dbQuery.ToListAsync(cancellationToken).ConfigureAwait(false);
         return result;
     }
 
