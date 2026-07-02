@@ -295,7 +295,6 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         Expression<Func<TEntity, object>>[] updateProperties)
     {
         var type = typeof(TEntity);
-        var modified = false;
         var entityProperties = GetEntityProperties(model);
         bool isEntityDetached = Context.Entry(model).State == EntityState.Detached;
         if (!isEntityDetached)
@@ -343,10 +342,7 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
                 else
                     SetValueCollectionNavProp(property, entry, entity, model);
             }
-            modified = true;
         }
-        if (modified)
-            entry.State = EntityState.Modified;
 
         if (sync)
             Context.SaveChanges();
