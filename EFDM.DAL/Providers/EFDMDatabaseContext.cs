@@ -269,13 +269,4 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
     {
         ChangeTracker.Clear();
     }
-
-    #region IDisposable
-
-    public override void Dispose()
-    {
-        base.Dispose();
-    }
-
-    #endregion IDisposable
 }
