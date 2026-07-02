@@ -601,16 +601,12 @@ namespace EFDM.Core.Audit
 
         protected HashSet<string> EnsurePropertiesIgnoreAttrCache(Type type)
         {
-            if (!IgnoredTypeProperties.ContainsKey(type))
-                IgnoredTypeProperties[type] = null;
-            return IgnoredTypeProperties[type];
+            return IgnoredTypeProperties.GetOrAdd(type, (HashSet<string>)null);
         }
 
         protected HashSet<string> EnsurePropertiesOnlyIncludedAttrCache(Type type)
         {
-            if (!OnlyIncludedTypeProperties.ContainsKey(type))
-                OnlyIncludedTypeProperties[type] = null;
-            return OnlyIncludedTypeProperties[type];
+            return OnlyIncludedTypeProperties.GetOrAdd(type, (HashSet<string>)null);
         }
 
         protected EntityDBData GetEntityName(EntityEntry entry)
