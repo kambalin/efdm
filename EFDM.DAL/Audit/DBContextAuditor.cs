@@ -50,16 +50,19 @@ namespace EFDM.DAL.Audit
             if (auditSettings != null)
             {
                 Enabled = auditSettings.Enabled;
+                // copy the dictionaries: settings are usually a shared (singleton) instance,
+                // storing the references would let every context mutate it (ExcludeProperty,
+                // IncludeAuditEntity, GetOrAdd null-entries in the property caches)
                 if (auditSettings.ExcludedTypeStateActions != null)
-                    ExcludedTypeStateActions = auditSettings.ExcludedTypeStateActions;
+                    ExcludedTypeStateActions = new ConcurrentDictionary<Type, List<int>>(auditSettings.ExcludedTypeStateActions);
                 if (auditSettings.GlobalIgnoredProperties != null)
-                    GlobalIgnoredProperties = auditSettings.GlobalIgnoredProperties;
+                    GlobalIgnoredProperties = new ConcurrentDictionary<string, byte>(auditSettings.GlobalIgnoredProperties);
                 if (auditSettings.IncludedTypes != null)
-                    IncludedTypes = auditSettings.IncludedTypes;
+                    IncludedTypes = new ConcurrentDictionary<Type, byte>(auditSettings.IncludedTypes);
                 if (auditSettings.IgnoredTypeProperties != null)
-                    IgnoredTypeProperties = auditSettings.IgnoredTypeProperties;
+                    IgnoredTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(auditSettings.IgnoredTypeProperties);
                 if (auditSettings.OnlyIncludedTypeProperties != null)
-                    OnlyIncludedTypeProperties = auditSettings.OnlyIncludedTypeProperties;
+                    OnlyIncludedTypeProperties = new ConcurrentDictionary<Type, HashSet<string>>(auditSettings.OnlyIncludedTypeProperties);
             }
         }
 
