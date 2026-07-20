@@ -24,11 +24,22 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
     public abstract int ExecutorId { get; protected set; }
     public Action<ModelConfigurationBuilder> ConventionsAction { get; protected set; }
     public DateTime? CommitTime { get; set; }
-    public IDBContextAuditor Auditor { get { return _auditor; } }
+    public IDBContextAuditor Auditor
+    {
+        get
+        {
+            // lazy init: InitAuditMapping is virtual and must not be called from the base constructor,
+            // where the derived context is not initialized yet
+            if (_auditor == null)
+                InitAuditor(_auditSettings);
+            return _auditor;
+        }
+    }
     public DbContext DbContext { get { return this; } }
 
     protected readonly string ConnectionString;
     private readonly ILoggerFactory _loggerFactory;
+    private readonly IAuditSettings _auditSettings;
     private IDBContextAuditor _auditor;
 
     #endregion fields & properties        
@@ -39,7 +50,7 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
         IAuditSettings auditSettings = null, Action<ModelConfigurationBuilder> conventionsAction = null) : base(options)
     {
         _loggerFactory = loggerFactory;
-        InitAuditor(auditSettings);
+        _auditSettings = auditSettings;
         ConventionsAction = conventionsAction;
     }
 
@@ -47,7 +58,7 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
         Action<ModelConfigurationBuilder> conventionsAction = null)
     {
         ConnectionString = connectionString;
-        InitAuditor(auditSettings);
+        _auditSettings = auditSettings;
         ConventionsAction = conventionsAction;
     }
 
