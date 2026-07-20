@@ -138,6 +138,8 @@ namespace EFDM.Core.Services.Domain
         private async Task DeleteCore(bool sync, TKey id, bool forceDeleteEvenDeletable, CancellationToken cancellationToken)
         {
             var entity = sync ? GetById(id, true) : await GetByIdAsync(id, true, null, cancellationToken).ConfigureAwait(false);
+            if (entity == null)
+                throw new InvalidOperationException($"Cannot find entity with Id = '{id}'");
             await DeleteCore(sync, entity, forceDeleteEvenDeletable, cancellationToken).ConfigureAwait(false);
         }
 
