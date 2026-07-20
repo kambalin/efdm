@@ -1,7 +1,7 @@
 ﻿using EFDM.Abstractions.Audit;
 using EFDM.Abstractions.DAL.Providers;
 using EFDM.Abstractions.Models.Domain;
-using EFDM.Core.Audit;
+using EFDM.DAL.Audit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Storage;

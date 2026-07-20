@@ -1,9 +1,9 @@
 using EFDM.Abstractions.DAL.Repositories;
 using EFDM.Abstractions.DataQueries;
 using EFDM.Abstractions.Models.Responses;
-using EFDM.Core.Extensions;
 using EFDM.Core.Models.Domain;
 using EFDM.Core.Models.Responses;
+using EFDM.DAL.Extensions;
 using EFDM.DAL.Providers;
 using LinqKit;
 using Microsoft.EntityFrameworkCore;

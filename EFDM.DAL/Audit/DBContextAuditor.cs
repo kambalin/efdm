@@ -1,8 +1,9 @@
 ﻿using EFDM.Abstractions.Audit;
 using EFDM.Abstractions.DAL.Providers;
 using EFDM.Abstractions.Models.Domain;
+using EFDM.Core.Audit;
 using EFDM.Core.Constants;
-using EFDM.Core.Extensions;
+using EFDM.DAL.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -15,7 +16,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace EFDM.Core.Audit
+namespace EFDM.DAL.Audit
 {
     public class DBContextAuditor : IDBContextAuditor
     {

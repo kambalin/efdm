@@ -3,7 +3,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 
-namespace EFDM.Core.Extensions
+namespace EFDM.DAL.Extensions
 {
     public static class DbContextExtensions
     {

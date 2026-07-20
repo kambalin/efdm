@@ -6,10 +6,6 @@
 	  <VersionPrefix>8.1</VersionPrefix>
   </PropertyGroup>
 
-  <ItemGroup>
-    <None Remove="EFDM.Abstractions.csproj.lscache" />
-  </ItemGroup>
-
   <ItemGroup>    
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.26" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.26" />
