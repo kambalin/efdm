@@ -324,25 +324,25 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
 
         foreach (var up in updateProperties)
         {
-            MemberExpression memberExpression;
-            if (up.Body is UnaryExpression)
-            {
-                var unaryExpression = (UnaryExpression)up.Body;
-                memberExpression = (MemberExpression)unaryExpression.Operand;
-            }
-            else
-                memberExpression = (MemberExpression)up.Body;
+            var memberExpression = (up.Body is UnaryExpression unaryExpression
+                ? unaryExpression.Operand
+                : up.Body) as MemberExpression;
+            if (memberExpression == null)
+                throw new ArgumentException($"Expression '{up}' is not a property access expression",
+                    nameof(updateProperties));
             var memberName = memberExpression.Member.Name;
             var property = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance)
                 .Where(x => x.Name == memberName).FirstOrDefault();
+            if (property == null)
+                throw new ArgumentException(
+                    $"Public instance property '{memberName}' is not found on type '{typeof(TEntity)}'",
+                    nameof(updateProperties));
 
             if (!entityProperties.NavProps.Any(x => x.Name == memberName))
             {
-                property.SetValue(entity, model.GetType()
-                    .GetProperty(property.Name)
-                    .GetValue(model, null)
-                );
-                entry.Property(up).IsModified = true;
+                property.SetValue(entity, property.GetValue(model, null));
+                // string-based Property() avoids failures on object-boxed lambdas for value-type properties
+                entry.Property(memberName).IsModified = true;
             }
             else
             {
