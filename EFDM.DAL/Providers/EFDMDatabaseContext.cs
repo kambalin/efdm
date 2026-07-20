@@ -194,7 +194,7 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         PreSaveActions();
-        return await Auditor.SaveChangesAsync(async () => await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false)).ConfigureAwait(false);
+        return await Auditor.SaveChangesAsync(async () => await base.SaveChangesAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
     }
 
     protected int BaseSaveChanges() => base.SaveChanges();
