@@ -499,7 +499,9 @@ namespace EFDM.Core.Audit
                 ).FirstOrDefault();
             if (navProp == null)
                 return eec;
-            var relatedType = navProp.ForeignKey.DependentToPrincipal.ClrType;
+            // DependentToPrincipal is null when the navigation is defined only on the principal side,
+            // PrincipalEntityType always points to the FK target type
+            var relatedType = navProp.ForeignKey.PrincipalEntityType.ClrType;
             var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
             if (dbSet != null)
             {
