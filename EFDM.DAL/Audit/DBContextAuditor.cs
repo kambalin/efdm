@@ -131,6 +131,7 @@ namespace EFDM.Core.Audit
                     : sync
                         ? Context.DbContext.Database.BeginTransaction()
                         : await Context.DbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                List<(object Entity, object Parent)> toSave = null;
                 try
                 {
                     try
@@ -165,7 +166,6 @@ namespace EFDM.Core.Audit
                     }
 
                     // Persist queued audit entities after all mapping actions completed
-                    List<(object Entity, object Parent)> toSave = null;
                     lock (_queuedAuditEntities)
                     {
                         if (_queuedAuditEntities.Count > 0)
@@ -225,6 +225,18 @@ namespace EFDM.Core.Audit
                     lock (_queuedAuditEntities)
                     {
                         _queuedAuditEntities.Clear();
+                    }
+                    // detach audit entities persisted during the failed attempt: rollback does not remove them
+                    // from the change tracker, so they would be saved again by an execution strategy retry
+                    // or by the next SaveChanges, producing duplicate audit records
+                    if (toSave != null)
+                    {
+                        foreach (var (entity, _) in toSave)
+                        {
+                            var entityEntry = Context.DbContext.Entry(entity);
+                            if (entityEntry.State != EntityState.Detached)
+                                entityEntry.State = EntityState.Detached;
+                        }
                     }
                     if (ownTransaction != null)
                     {
