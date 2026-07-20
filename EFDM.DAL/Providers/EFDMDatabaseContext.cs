@@ -239,20 +239,23 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
         return await BaseSaveChangesAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task<int> SaveChangesAsync<TEntity>(bool keepExcludedOriginals = false,
-        CancellationToken cancellationToken = default) where TEntity : class
+    /// <summary>
+    /// Selective (partial) commit: saves only the pending changes of <typeparamref name="TEntity"/> entities
+    /// (and its derived types), temporarily "freezing" all other changes accumulated in the context.
+    /// All tracked entries of other types are switched to the Unchanged state, so the save (and audit)
+    /// covers only <typeparamref name="TEntity"/> changes. Afterwards the frozen entries get their original
+    /// states (Added/Modified/Deleted) back — their changes stay pending and can be persisted
+    /// by a subsequent SaveChanges call.
+    /// </summary>
+    public async Task<int> SaveChangesOnlyAsync<TEntity>(CancellationToken cancellationToken = default)
+        where TEntity : class
     {
-        List<IGrouping<EntityState, EntityEntry>> original = null;
+        var original = ChangeTracker.Entries()
+                .Where(x => !typeof(TEntity).IsAssignableFrom(x.Entity.GetType()) && x.State != EntityState.Unchanged)
+                .GroupBy(x => x.State)
+                .ToList();
 
-        if (keepExcludedOriginals)
-        {
-            original = ChangeTracker.Entries()
-                    .Where(x => !typeof(TEntity).IsAssignableFrom(x.Entity.GetType()) && x.State != EntityState.Unchanged)
-                    .GroupBy(x => x.State)
-                    .ToList();
-        }
-
-        foreach (var entry in ChangeTracker.Entries().Where(x => !typeof(TEntity).IsAssignableFrom(x.Entity.GetType())))
+        foreach (var entry in original.SelectMany(x => x))
         {
             entry.State = EntityState.Unchanged;
         }
@@ -263,14 +266,11 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
         }
         finally
         {
-            if (keepExcludedOriginals)
+            foreach (var state in original)
             {
-                foreach (var state in original)
+                foreach (var entry in state)
                 {
-                    foreach (var entry in state)
-                    {
-                        entry.State = state.Key;
-                    }
+                    entry.State = state.Key;
                 }
             }
         }
