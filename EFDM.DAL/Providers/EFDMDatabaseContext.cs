@@ -126,7 +126,7 @@ public abstract class EFDMDatabaseContext : DbContext, IAuditableDBContext
 
     protected virtual void InitAuditor(IAuditSettings auditSettings = null)
     {
-        _auditor = new DBContextAuditor(this, auditSettings);
+        _auditor = new DBContextAuditor(this, auditSettings, _loggerFactory?.CreateLogger<DBContextAuditor>());
         SetDefaultGlobalIgnoredProperties();
         InitAuditMapping();
     }

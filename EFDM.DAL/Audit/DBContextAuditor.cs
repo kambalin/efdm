@@ -7,6 +7,7 @@ using EFDM.DAL.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace EFDM.DAL.Audit
         protected ConcurrentDictionary<Type, List<int>> ExcludedTypeStateActions { get; } = new ConcurrentDictionary<Type, List<int>>();
         protected Func<IAuditEvent, IEventEntry, object, Task> EventCommonAction { get; set; }
         protected readonly IAuditableDBContext Context;
+        protected readonly ILogger Logger;
         private readonly List<(object Entity, object Parent)> _queuedAuditEntities = new List<(object, object)>();
         protected ConcurrentDictionary<Type, Func<object, string>> LookupValueCache { get; } = new ConcurrentDictionary<Type, Func<object, string>>();
         /// <summary>
@@ -43,9 +45,10 @@ namespace EFDM.DAL.Audit
 
         #region constructors
 
-        public DBContextAuditor(IAuditableDBContext context, IAuditSettings auditSettings)
+        public DBContextAuditor(IAuditableDBContext context, IAuditSettings auditSettings, ILogger logger = null)
         {
             Context = context ?? throw new ArgumentNullException(nameof(context));
+            Logger = logger;
 
             if (auditSettings != null)
             {
@@ -583,9 +586,11 @@ namespace EFDM.DAL.Audit
                     if (resolved != null)
                         return resolved;
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // swallow resolver exceptions and fall back to built-in behavior
+                    // fall back to built-in behavior, but don't hide the resolver failure
+                    Logger?.LogWarning(ex, "Audit lookup value resolver failed for entity type {EntityType}",
+                        entity.GetType());
                 }
             }
 
@@ -626,8 +631,10 @@ namespace EFDM.DAL.Audit
 
                     return $"{idValue}: {titleValue}";
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Logger?.LogWarning(ex, "Audit lookup value builder failed for entity type {EntityType}",
+                        entityType);
                     return null;
                 }
             };
