@@ -8,6 +8,7 @@ using EFDM.DAL.Providers;
 using LinqKit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 using System;
@@ -327,7 +328,26 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
                 
                 attachedEntity = sync ? dbQuery.FirstOrDefault() : await dbQuery.FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
                 if (attachedEntity == null)
+                {
+                    // with client-generated keys (no store generation) a non-default Id may still be
+                    // a new entity — insert it; with store-generated keys a missing row is a genuine error
+                    var keyProperties = Context.Model.FindEntityType(typeof(TEntity)).FindPrimaryKey().Properties;
+                    if (keyProperties.All(x => x.ValueGenerated == ValueGenerated.Never))
+                    {
+                        if (sync)
+                        {
+                            Add(entity);
+                            SaveChanges();
+                        }
+                        else
+                        {
+                            await AddAsync(entity).ConfigureAwait(false);
+                            await SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                        }
+                        return entity;
+                    }
                     throw new InvalidOperationException($"Entity is detached, cannot find entity with Id = '{entity.Id}'");
+                }
             }
 
             var entry = Context.Entry(attachedEntity);
