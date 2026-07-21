@@ -11,13 +11,13 @@ namespace EFDM.Core.Models.Domain
     {
         public TKey Id { get; set; }
 
-        #region for DBContextAuditor -> GetPropertyChanges purposes
+        #region for DBContextAuditor -> ResolveFkLookupsCore query translation purposes
 
         [JsonIgnore]
         [XmlIgnore]
         object IEntity.Id { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
-        #endregion for DBContextAuditor -> GetPropertyChanges purposes
+        #endregion for DBContextAuditor -> ResolveFkLookupsCore query translation purposes
 
         [NotMapped]
         [JsonIgnore]

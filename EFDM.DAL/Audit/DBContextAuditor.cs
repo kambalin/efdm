@@ -388,6 +388,9 @@ namespace EFDM.DAL.Audit
                 Entries = new List<IEventEntry>(),
                 ContextId = Context.DbContext.ContextId.ToString()
             };
+            // FK display values for all entries are collected first and resolved afterwards
+            // in one query per related type instead of a query per FK value (classic N+1)
+            var pendingLookups = new List<PendingFkLookup>();
             foreach (var entry in modifiedEntries)
             {
                 var entityName = GetEntityName(entry);
@@ -397,13 +400,14 @@ namespace EFDM.DAL.Audit
                     EntityType = entry.Entity.GetType(),
                     Action = GetStateAction(entry.State),
                     Changes = entry.State == EntityState.Modified
-                        ? await GetChangesCore(sync, entry).ConfigureAwait(false)
+                        ? CollectChanges(entry, pendingLookups)
                         : null,
                     Table = entityName.Table,
                     Schema = entityName.Schema,
                     Name = entry.Metadata.DisplayName()
                 });
             }
+            await ResolveFkLookupsCore(sync, pendingLookups).ConfigureAwait(false);
             return efEvent;
         }
 
@@ -454,13 +458,7 @@ namespace EFDM.DAL.Audit
                 }
             }
         }
-        protected List<IEventEntryChange> GetChanges(EntityEntry entry)
-            => GetChangesCore(true, entry).GetAwaiter().GetResult();
-
-        protected Task<List<IEventEntryChange>> GetChangesAsync(EntityEntry entry)
-            => GetChangesCore(false, entry);
-
-        private async Task<List<IEventEntryChange>> GetChangesCore(bool sync, EntityEntry entry)
+        private List<IEventEntryChange> CollectChanges(EntityEntry entry, List<PendingFkLookup> pendingLookups)
         {
             var result = new List<IEventEntryChange>();
             var props = entry.Metadata.GetProperties();
@@ -473,21 +471,14 @@ namespace EFDM.DAL.Audit
                 if (propEntry.IsModified)
                 {
                     if (IncludeProperty(entry, prop.Name))
-                        result.Add(await GetPropertyChangesCore(sync, propEntry, navigations, prop).ConfigureAwait(false));
+                        result.Add(BuildPropertyChange(propEntry, navigations, prop, pendingLookups));
                 }
             }
             return result;
         }
-        protected EventEntryChange GetPropertyChanges(PropertyEntry propEntry,
-            List<INavigation> navigations, IProperty prop)
-            => GetPropertyChangesCore(true, propEntry, navigations, prop).GetAwaiter().GetResult();
 
-        protected Task<EventEntryChange> GetPropertyChangesAsync(PropertyEntry propEntry,
-            List<INavigation> navigations, IProperty prop)
-            => GetPropertyChangesCore(false, propEntry, navigations, prop);
-
-        private async Task<EventEntryChange> GetPropertyChangesCore(bool sync, PropertyEntry propEntry,
-            List<INavigation> navigations, IProperty prop)
+        private EventEntryChange BuildPropertyChange(PropertyEntry propEntry, List<INavigation> navigations,
+            IProperty prop, List<PendingFkLookup> pendingLookups)
         {
             var eec = new EventEntryChange()
             {
@@ -503,32 +494,79 @@ namespace EFDM.DAL.Audit
                 ).FirstOrDefault();
             if (navProp == null)
                 return eec;
+            if (eec.NewValue == null && eec.OriginalValue == null)
+                return eec;
             // DependentToPrincipal is null when the navigation is defined only on the principal side,
             // PrincipalEntityType always points to the FK target type
-            var relatedType = navProp.ForeignKey.PrincipalEntityType.ClrType;
-            var dbSet = Context.DbContext.Set(relatedType) as IQueryable<IEntity>;
-            if (dbSet != null)
+            pendingLookups.Add(new PendingFkLookup
             {
-                if (eec.NewValue != null)
+                Change = eec,
+                RelatedType = navProp.ForeignKey.PrincipalEntityType.ClrType,
+                OriginalId = eec.OriginalValue,
+                NewId = eec.NewValue
+            });
+            return eec;
+        }
+
+        /// <summary>
+        /// Resolves display values for the collected FK changes with a single query per related type
+        /// instead of a separate query per FK value (classic N+1).
+        /// </summary>
+        private async Task ResolveFkLookupsCore(bool sync, List<PendingFkLookup> pendingLookups)
+        {
+            if (pendingLookups.Count == 0)
+                return;
+            foreach (var typeGroup in pendingLookups.GroupBy(x => x.RelatedType))
+            {
+                var dbSet = Context.DbContext.Set(typeGroup.Key) as IQueryable<IEntity>;
+                if (dbSet == null)
+                    continue;
+                var ids = typeGroup
+                    .SelectMany(x => new[] { x.OriginalId, x.NewId })
+                    .Where(x => x != null)
+                    .Distinct()
+                    .ToList();
+                var predicate = BuildIdsPredicate(ids);
+                var related = sync
+                    ? dbSet.AsNoTracking().Where(predicate).ToList()
+                    : await dbSet.AsNoTracking().Where(predicate).ToListAsync().ConfigureAwait(false);
+                if (related.Count == 0)
+                    continue;
+                // IEntity.Id getter is not implemented on IdKeyEntityBase (the interface property exists
+                // for query translation only), so the key is read through the public CLR property
+                var idProp = typeGroup.Key.GetProperty("Id",
+                    BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+                if (idProp == null)
+                    continue;
+                var lookupValues = new Dictionary<object, string>();
+                foreach (var relatedEntity in related)
+                    lookupValues[idProp.GetValue(relatedEntity)] = GetLookupValue(relatedEntity);
+                foreach (var pending in typeGroup)
                 {
-                    var newRelated = sync
-                        ? dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue)).FirstOrDefault()
-                        : await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.NewValue))
-                            .FirstOrDefaultAsync().ConfigureAwait(false);
-                    if (newRelated != null)
-                        eec.NewValue = GetLookupValue(newRelated);
-                }
-                if (eec.OriginalValue != null)
-                {
-                    var oldRelated = sync
-                        ? dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue)).FirstOrDefault()
-                        : await dbSet.AsNoTracking().Where(x => x.Id.Equals(eec.OriginalValue))
-                            .FirstOrDefaultAsync().ConfigureAwait(false);
-                    if (oldRelated != null)
-                        eec.OriginalValue = GetLookupValue(oldRelated);
+                    if (pending.NewId != null && lookupValues.TryGetValue(pending.NewId, out var newValue))
+                        pending.Change.NewValue = newValue;
+                    if (pending.OriginalId != null && lookupValues.TryGetValue(pending.OriginalId, out var originalValue))
+                        pending.Change.OriginalValue = originalValue;
                 }
             }
-            return eec;
+        }
+
+        /// <summary>
+        /// Builds "x.Id.Equals(id1) OR x.Id.Equals(id2) OR ..." — the same expression shape
+        /// as the previous per-value queries, which EF reliably translates for IEntity.Id.
+        /// </summary>
+        private static Expression<Func<IEntity, bool>> BuildIdsPredicate(List<object> ids)
+        {
+            var param = Expression.Parameter(typeof(IEntity), "x");
+            var idProperty = Expression.Property(param, nameof(IEntity.Id));
+            var equalsMethod = typeof(object).GetMethod(nameof(object.Equals), new[] { typeof(object) });
+            Expression body = null;
+            foreach (var id in ids)
+            {
+                var equalsCall = Expression.Call(idProperty, equalsMethod, Expression.Constant(id, typeof(object)));
+                body = body == null ? equalsCall : Expression.OrElse(body, equalsCall);
+            }
+            return Expression.Lambda<Func<IEntity, bool>>(body, param);
         }
 
         protected string GetLookupValue(object entity)
