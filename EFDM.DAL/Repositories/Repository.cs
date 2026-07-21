@@ -88,13 +88,29 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
     private async Task<IPagedList<TEntity>> FetchPagedCore(bool sync, IDataQuery<TEntity> query, bool tracking,
         CancellationToken cancellationToken)
     {
+        var skip = query?.Skip ?? 0;
+        var take = query?.Take ?? 0;
+        var dbQuery = FetchPrepare(query, tracking);
+        var items = sync ? dbQuery.ToList() : await dbQuery.ToListAsync(cancellationToken).ConfigureAwait(false);
         var result = new PagedList<TEntity>
         {
-            TotalCount = sync ? Count(query) : await CountAsync(query, cancellationToken).ConfigureAwait(false),
-            Skipped = query?.Skip ?? 0
+            Items = items,
+            Skipped = skip
         };
-        var dbQuery = FetchPrepare(query, tracking);
-        result.Items = sync ? dbQuery.ToList() : await dbQuery.ToListAsync(cancellationToken).ConfigureAwait(false);
+        // the page is fetched first and the total is derived from it whenever the page itself
+        // proves it (no paging, or a partially filled last page): one query less and TotalCount
+        // cannot diverge from Items under concurrent changes
+        if ((items.Count > 0 || skip == 0) && (take <= 0 || items.Count < take))
+        {
+            result.TotalCount = skip + items.Count;
+            return result;
+        }
+        var total = sync ? Count(query) : await CountAsync(query, cancellationToken).ConfigureAwait(false);
+        // the count query runs after the page fetch: never report a total smaller than
+        // the rows the returned page has already proven to exist
+        if (items.Count > 0 && total < skip + items.Count)
+            total = skip + items.Count;
+        result.TotalCount = total;
         return result;
     }
 
