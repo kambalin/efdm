@@ -31,6 +31,11 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
     public virtual EFDMDatabaseContext Context { get; }
     public DbSet<TEntity> DbSet { get; protected set; }
     public bool AutoDetectChanges { get; set; } = true;
+    /// <summary>
+    /// Batch size for audited bulk operations: matched rows are snapshotted for audit in chunks
+    /// of this size instead of loading the whole result set into memory at once.
+    /// </summary>
+    public int AuditBulkBatchSize { get; set; } = 100;
     public virtual int ExecutorId { get { return Context.ExecutorId; } }
     public bool AutoDetectChangesEnabled
     {
@@ -194,14 +199,10 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
         if (Context.Auditor.Enabled && Context.Auditor.GetEventType(typeof(TEntity)) != null)
         {
-            var entities = sync
-                ? dbQuery.AsNoTracking().Cast<object>().ToList()
-                : await dbQuery.AsNoTracking().Cast<object>().ToListAsync(cancellationToken).ConfigureAwait(false);
-            return sync
-                ? Context.Auditor.AuditBulkOperation(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Delete,
-                    entities, () => dbQuery.ExecuteDelete())
-                : await Context.Auditor.AuditBulkOperationAsync(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Delete,
-                    entities, () => dbQuery.ExecuteDeleteAsync(cancellationToken), cancellationToken).ConfigureAwait(false);
+            return await AuditedBulkOperationCore(sync, dbQuery, EFDM.Core.Constants.AuditStateActionVals.Delete, null,
+                batchQuery => batchQuery.ExecuteDelete(),
+                batchQuery => batchQuery.ExecuteDeleteAsync(cancellationToken),
+                cancellationToken).ConfigureAwait(false);
         }
         return sync ? dbQuery.ExecuteDelete() : await dbQuery.ExecuteDeleteAsync(cancellationToken).ConfigureAwait(false);
     }
@@ -222,19 +223,75 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
         var dbQuery = FilterByQuery(DbSet.AsQueryable(), query);
         if (Context.Auditor.Enabled && Context.Auditor.GetEventType(typeof(TEntity)) != null)
         {
-            var entities = sync
-                ? dbQuery.AsNoTracking().Cast<object>().ToList()
-                : await dbQuery.AsNoTracking().Cast<object>().ToListAsync(cancellationToken).ConfigureAwait(false);
-            var setters = EFDM.DAL.Helpers.SetPropertyCallsParser.Parse(setPropertyCalls);
-            System.Collections.Generic.IDictionary<string, object> NewValueExtractor(object e) =>
+            var setters = Helpers.SetPropertyCallsParser.Parse(setPropertyCalls);
+            IDictionary<string, object> NewValueExtractor(object e) =>
                 setters.ToDictionary(s => s.PropertyName, s => s.GetNewValue(e));
-            return sync
-                ? Context.Auditor.AuditBulkOperation(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Update,
-                    entities, NewValueExtractor, () => dbQuery.ExecuteUpdate(setPropertyCalls))
-                : await Context.Auditor.AuditBulkOperationAsync(typeof(TEntity), EFDM.Core.Constants.AuditStateActionVals.Update,
-                    entities, NewValueExtractor, () => dbQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken), cancellationToken).ConfigureAwait(false);
+            return await AuditedBulkOperationCore(sync, dbQuery, EFDM.Core.Constants.AuditStateActionVals.Update, NewValueExtractor,
+                batchQuery => batchQuery.ExecuteUpdate(setPropertyCalls),
+                batchQuery => batchQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken),
+                cancellationToken).ConfigureAwait(false);
         }
         return sync ? dbQuery.ExecuteUpdate(setPropertyCalls) : await dbQuery.ExecuteUpdateAsync(setPropertyCalls, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task<int> AuditedBulkOperationCore(bool sync, IQueryable<TEntity> dbQuery, int action,
+        Func<object, IDictionary<string, object>> newValueExtractor,
+        Func<IQueryable<TEntity>, int> executeBatch,
+        Func<IQueryable<TEntity>, Task<int>> executeBatchAsync,
+        CancellationToken cancellationToken)
+    {
+        // snapshot keys only; row data is fetched and audited per batch to keep memory bounded
+        var idsQuery = dbQuery.Select(e => e.Id);
+        var ids = sync ? idsQuery.ToList() : await idsQuery.ToListAsync(cancellationToken).ConfigureAwait(false);
+        if (ids.Count == 0)
+            return 0;
+
+        async Task<int> RunBatches()
+        {
+            var total = 0;
+            foreach (var batchIds in ids.Chunk(AuditBulkBatchSize))
+            {
+                // both the audit snapshot and the bulk statement target the same fixed id set,
+                // so the operation affects exactly the rows that were audited, even if other rows
+                // start/stop matching the original filter in the meantime
+                var batchQuery = DbSet.Where(e => batchIds.Contains(e.Id));
+                var entities = sync
+                    ? batchQuery.AsNoTracking().Cast<object>().ToList()
+                    : await batchQuery.AsNoTracking().Cast<object>().ToListAsync(cancellationToken).ConfigureAwait(false);
+                // the auditor writes audit rows and runs the bulk statement; with an ambient
+                // transaction present (ours or the caller's) it joins it instead of opening its own
+                total += sync
+                    ? Context.Auditor.AuditBulkOperation(typeof(TEntity), action, entities, newValueExtractor,
+                        () => executeBatch(batchQuery))
+                    : await Context.Auditor.AuditBulkOperationAsync(typeof(TEntity), action, entities, newValueExtractor,
+                        () => executeBatchAsync(batchQuery), cancellationToken).ConfigureAwait(false);
+            }
+            return total;
+        }
+
+        // single batch: the auditor wraps it in its own transaction, nothing to coordinate;
+        // ambient transaction: atomicity of the whole operation is already the caller's concern
+        if (ids.Count <= AuditBulkBatchSize || Context.Database.CurrentTransaction != null)
+            return await RunBatches().ConfigureAwait(false);
+
+        // multiple batches: wrap them in one transaction so the whole operation stays atomic,
+        // started through the execution strategy, otherwise retrying strategies throw
+        var strategy = Context.Database.CreateExecutionStrategy();
+        return sync
+            ? strategy.Execute(() =>
+            {
+                using var transaction = Context.Database.BeginTransaction();
+                var result = RunBatches().GetAwaiter().GetResult();
+                transaction.Commit();
+                return result;
+            })
+            : await strategy.ExecuteAsync(async () =>
+            {
+                await using var transaction = await Context.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+                var result = await RunBatches().ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return result;
+            }).ConfigureAwait(false);
     }
 
     public virtual void Update(params TEntity[] entities)
