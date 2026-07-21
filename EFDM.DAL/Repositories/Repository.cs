@@ -513,8 +513,13 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
     /// <returns>Tuple - all nav properties, collection nav properties, objects nav properties</returns>
     private (PropertyInfo[] NavProps, IEnumerable<PropertyInfo> ColProps, IEnumerable<PropertyInfo> NotColProps) GetEntityProperties(TEntity model)
     {
-        var navigationProps = typeof(TEntity).GetProperties(BindingFlags.Public | BindingFlags.Instance)
-            .Where(x => x.CanRead && x.CanWrite && _isIncludable(x.PropertyType) && x.GetValue(model) != null)
+        // navigations are taken from the EF model instead of CLR heuristics, so unmapped
+        // or [NotMapped] class-typed properties are not treated as navigations and cannot
+        // break Include; skip navigations cover many-to-many collections
+        var entityType = Context.Model.FindEntityType(typeof(TEntity));
+        var navigationProps = entityType.GetNavigations().Select(x => x.PropertyInfo)
+            .Concat(entityType.GetSkipNavigations().Select(x => x.PropertyInfo))
+            .Where(x => x != null && x.CanRead && x.CanWrite && x.GetValue(model) != null)
             .ToArray();
         var collectionProps = navigationProps.Where(x => typeof(IEnumerable).IsAssignableFrom(x.PropertyType));
         var notCollectionProps = navigationProps.Where(x => !typeof(IEnumerable).IsAssignableFrom(x.PropertyType));
@@ -592,13 +597,6 @@ public class Repository<TEntity, TKey> : IRepository<TEntity, TKey>
             Expression.Quote(sort));
         return (IOrderedQueryable<T>)source.Provider.CreateQuery<T>(call);
     }
-
-    bool _isIncludable(Type type)
-    {
-        return (type.IsClass || typeof(IEnumerable).IsAssignableFrom(type)) && !_notIncludable.Contains(type);
-    }
-
-    HashSet<Type> _notIncludable = new HashSet<Type> { typeof(string), typeof(byte[]) };
 
     internal class ActionExecutor : IDisposable
     {
