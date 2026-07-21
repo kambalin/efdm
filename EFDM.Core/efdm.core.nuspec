@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
 	<metadata>
 		<id>EFDM.Core</id>
-		<version>8.1</version>
+		<version>8.2</version>
 		<authors>Pavel Kambalin</authors>
 		<owners>kambalin</owners>
 		<requireLicenseAcceptance>false</requireLicenseAcceptance>
@@ -10,7 +10,7 @@
 		<license type="expression">MIT</license>
 		<releaseNotes>
 			<![CDATA[
-			8.1
+			8.2
 			This maintenance release focuses on improving the overall quality and stability of the library. It includes bug fixes, internal logic improvements, refactoring, and technical debt cleanup. No new functionality has been added in this release.
 			]]>
 		</releaseNotes>
