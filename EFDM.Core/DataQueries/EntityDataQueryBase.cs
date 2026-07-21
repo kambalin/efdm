@@ -41,17 +41,10 @@ namespace EFDM.Core.DataQueries
                 {
                     predicate = predicate.And(x => x.Created >= CreatedQueryParams.MoreOrEquals.Value);
                     createdQueryParamsCondition = true;
-                }
-                if (CreatedQueryParams.OrIsNull.HasValue && CreatedQueryParams.OrIsNull.Value == true)
-                {
-                    predicate = predicate.Or(x => x.Created.Equals(null));
-                    createdQueryParamsCondition = true;
-                }
+                }                
 
                 if (createdQueryParamsCondition)
-                {
                     and.Add(x => predicate.Invoke(x));
-                }
             }
 
             if (ModifiedQueryParams != null)
@@ -69,11 +62,7 @@ namespace EFDM.Core.DataQueries
                     predicate = predicate.And(x => x.Modified >= ModifiedQueryParams.MoreOrEquals.Value);
                     modifiedQueryParamsCondition = true;
                 }
-                if (ModifiedQueryParams.OrIsNull.HasValue && ModifiedQueryParams.OrIsNull.Value == true)
-                {
-                    predicate = predicate.Or(x => x.Modified.Equals(null));
-                    modifiedQueryParamsCondition = true;
-                }
+                // OrIsNull is not applicable here: Modified is a non-nullable DateTimeOffset
 
                 if (modifiedQueryParamsCondition)
                 {
